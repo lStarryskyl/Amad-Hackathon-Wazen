@@ -5,6 +5,13 @@ import { eq } from "drizzle-orm";
 import type { Request, Response, NextFunction } from "express";
 
 export const requireConsent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  if (process.env.NODE_ENV === "test" && process.env.ENABLE_TEST_AUTH === "true") {
+    const testUserId = req.headers["x-test-user-id"] as string | undefined;
+    if (testUserId) {
+      return next();
+    }
+  }
+
   const { userId } = getAuth(req);
   if (!userId) {
     res.status(401).json({ error: "Unauthorized", message: "Authentication required" });

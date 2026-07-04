@@ -45,4 +45,13 @@ app.use(
 
 app.use("/api", router);
 
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  logger.error({ err }, "Unhandled route error");
+  const isDev = process.env.NODE_ENV !== "production";
+  res.status(500).json({
+    error: "InternalError",
+    message: isDev ? (err?.message ?? "Unknown error") : "An unexpected error occurred",
+  });
+});
+
 export default app;
