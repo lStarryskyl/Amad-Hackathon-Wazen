@@ -12,6 +12,7 @@ import aiRouter from "./ai";
 import intelligenceRouter from "./intelligence";
 import simulationsRouter from "./simulations";
 import engagementRouter from "./engagement";
+import devResetRouter from "./devReset";
 
 const router: IRouter = Router();
 
@@ -28,5 +29,6 @@ router.use(aiRouter);
 router.use(intelligenceRouter);
 router.use(simulationsRouter);
 router.use(engagementRouter);
+router.use(devResetRouter);
 
 export default router;
