@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -25,6 +25,7 @@ export default function OnboardingCompleteScreen() {
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { mutate: completeOnboarding, isPending } = useCompleteOnboarding();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   const scale = useSharedValue(0);
   
@@ -37,15 +38,38 @@ export default function OnboardingCompleteScreen() {
   }));
 
   const handleFinish = () => {
+    setErrorMessage(null);
     completeOnboarding(
       undefined,
       {
         onSuccess: (data) => {
-          queryClient.setQueryData(getGetOnboardingStatusQueryKey(), data ?? { completed: true, currentStep: 3, totalSteps: 3 });
+          queryClient.setQueryData(
+            getGetOnboardingStatusQueryKey(),
+            data ?? { completed: true, currentStep: 3, totalSteps: 3 }
+          );
           router.replace("/(home)/(tabs)");
+        },
+        onError: () => {
+          // Optimistically let the user through anyway — the home layout will
+          // gracefully allow access if the status query errors on next load.
+          // But first, show an error with a retry and a "skip" escape hatch so
+          // the user is never silently stuck here.
+          setErrorMessage(
+            "We couldn't save your progress. You can try again, or go to the dashboard — your account is ready."
+          );
         },
       }
     );
+  };
+
+  const handleSkipToDashboard = () => {
+    // Optimistically mark onboarding complete in the cache so the home layout
+    // does not redirect back to onboarding on the next render.
+    queryClient.setQueryData(
+      getGetOnboardingStatusQueryKey(),
+      { completed: true, currentStep: 3, totalSteps: 3 }
+    );
+    router.replace("/(home)/(tabs)");
   };
 
   return (
@@ -59,24 +83,57 @@ export default function OnboardingCompleteScreen() {
         <Text style={[styles.description, { color: colors.textSecondary }]}>
           Your financial data is being analyzed. We'll have personalized insights ready for you.
         </Text>
+
+        {errorMessage ? (
+          <View style={[styles.errorBox, { backgroundColor: colors.danger + "18", borderColor: colors.danger + "40" }]}>
+            <Feather name="alert-circle" size={18} color={colors.danger} />
+            <Text style={[styles.errorText, { color: colors.danger }]}>{errorMessage}</Text>
+          </View>
+        ) : null}
       </View>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
-        <TouchableOpacity
-          style={[
-            styles.button,
-            { backgroundColor: colors.primary },
-            isPending && styles.buttonDisabled,
-          ]}
-          onPress={handleFinish}
-          disabled={isPending}
-        >
-          {isPending ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.buttonText}>Go to Dashboard</Text>
-          )}
-        </TouchableOpacity>
+        {errorMessage ? (
+          <>
+            <TouchableOpacity
+              style={[styles.button, styles.retryButton, { borderColor: colors.primary }]}
+              onPress={handleFinish}
+              disabled={isPending}
+            >
+              {isPending ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <>
+                  <Feather name="refresh-cw" size={18} color={colors.primary} style={styles.retryIcon} />
+                  <Text style={[styles.retryButtonText, { color: colors.primary }]}>Try Again</Text>
+                </>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.skipButton}
+              onPress={handleSkipToDashboard}
+              disabled={isPending}
+            >
+              <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>Go to Dashboard Anyway</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <TouchableOpacity
+            style={[
+              styles.button,
+              { backgroundColor: colors.primary },
+              isPending && styles.buttonDisabled,
+            ]}
+            onPress={handleFinish}
+            disabled={isPending}
+          >
+            {isPending ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.buttonText}>Go to Dashboard</Text>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -111,14 +168,32 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     textAlign: "center",
   },
+  errorBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    marginTop: 24,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignSelf: "stretch",
+  },
+  errorText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "500",
+  },
   footer: {
     paddingHorizontal: 24,
+    gap: 12,
   },
   button: {
     height: 56,
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
+    flexDirection: "row",
   },
   buttonDisabled: {
     opacity: 0.7,
@@ -127,5 +202,25 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "700",
+  },
+  retryButton: {
+    borderWidth: 2,
+    backgroundColor: "transparent",
+  },
+  retryIcon: {
+    marginRight: 8,
+  },
+  retryButtonText: {
+    fontSize: 18,
+    fontWeight: "700",
+  },
+  skipButton: {
+    height: 44,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  skipButtonText: {
+    fontSize: 16,
+    fontWeight: "500",
   },
 });
