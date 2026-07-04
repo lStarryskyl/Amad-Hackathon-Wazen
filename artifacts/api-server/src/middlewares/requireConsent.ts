@@ -4,10 +4,11 @@ import { usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import type { Request, Response, NextFunction } from "express";
 
-export const requireConsent = async (req: Request, res: Response, next: NextFunction) => {
+export const requireConsent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const { userId } = getAuth(req);
   if (!userId) {
-    return res.status(401).json({ error: "Unauthorized", message: "Authentication required" });
+    res.status(401).json({ error: "Unauthorized", message: "Authentication required" });
+    return;
   }
 
   const [user] = await db
@@ -17,10 +18,11 @@ export const requireConsent = async (req: Request, res: Response, next: NextFunc
     .limit(1);
 
   if (!user || !user.hasConsented) {
-    return res.status(403).json({
+    res.status(403).json({
       error: "ConsentRequired",
       message: "Privacy consent is required before accessing financial data. Please complete onboarding.",
     });
+    return;
   }
 
   next();

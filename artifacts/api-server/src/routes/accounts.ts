@@ -8,7 +8,7 @@ import { getOrCreateUser } from "../lib/userProvisioning";
 
 const router = Router();
 
-router.get("/accounts", requireAuth, requireConsent, async (req, res) => {
+router.get("/accounts", requireAuth, requireConsent, async (req, res): Promise<void> => {
   const userId = (req as any).userId as string;
   await getOrCreateUser(userId);
 
@@ -20,9 +20,9 @@ router.get("/accounts", requireAuth, requireConsent, async (req, res) => {
   res.json(accounts);
 });
 
-router.get("/accounts/:id", requireAuth, requireConsent, async (req, res) => {
+router.get("/accounts/:id", requireAuth, requireConsent, async (req, res): Promise<void> => {
   const userId = (req as any).userId as string;
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
 
   const [account] = await db
     .select()
@@ -30,7 +30,8 @@ router.get("/accounts/:id", requireAuth, requireConsent, async (req, res) => {
     .where(and(eq(accountsTable.id, id), eq(accountsTable.userId, userId)));
 
   if (!account) {
-    return res.status(404).json({ error: "Not found", message: "Account not found" });
+    res.status(404).json({ error: "Not found", message: "Account not found" });
+    return;
   }
 
   res.json(account);

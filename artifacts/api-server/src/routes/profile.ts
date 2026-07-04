@@ -7,7 +7,7 @@ import { getOrCreateUser } from "../lib/userProvisioning";
 
 const router = Router();
 
-router.get("/profile", requireAuth, async (req, res) => {
+router.get("/profile", requireAuth, async (req, res): Promise<void> => {
   const userId = (req as any).userId as string;
   const user = await getOrCreateUser(userId);
   res.json({
@@ -20,7 +20,7 @@ router.get("/profile", requireAuth, async (req, res) => {
   });
 });
 
-router.put("/profile", requireAuth, async (req, res) => {
+router.put("/profile", requireAuth, async (req, res): Promise<void> => {
   const userId = (req as any).userId as string;
   const { name } = req.body as { name?: string };
 
@@ -39,7 +39,8 @@ router.put("/profile", requireAuth, async (req, res) => {
     .limit(1);
 
   if (!user) {
-    return res.status(500).json({ error: "ServerError", message: "Failed to retrieve updated profile." });
+    res.status(500).json({ error: "ServerError", message: "Failed to retrieve updated profile." });
+    return;
   }
 
   res.json({

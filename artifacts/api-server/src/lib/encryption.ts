@@ -6,7 +6,12 @@ const AUTH_TAG_LENGTH = 16;
 const SALT = "guardia-openai-key-v1";
 
 function getDerivedKey(): Buffer {
-  const secret = process.env.CLERK_SECRET_KEY ?? "dev-fallback-secret-do-not-use-in-prod";
+  const secret = process.env.CLERK_SECRET_KEY;
+  if (!secret) {
+    throw new Error(
+      "CLERK_SECRET_KEY is required for encrypting user API keys. Ensure it is set in environment secrets.",
+    );
+  }
   return scryptSync(secret, SALT, 32);
 }
 
@@ -18,7 +23,6 @@ export function encryptApiKey(plaintext: string): string {
   const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
   const authTag = cipher.getAuthTag();
 
-  // Store as base64-encoded: iv:authTag:ciphertext
   return [iv.toString("base64"), authTag.toString("base64"), encrypted.toString("base64")].join(":");
 }
 
@@ -37,8 +41,4 @@ export function decryptApiKey(stored: string): string {
   decipher.setAuthTag(authTag);
 
   return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
-}
-
-export function hasOpenAiKey(): boolean {
-  return !!process.env.OPENAI_API_KEY;
 }

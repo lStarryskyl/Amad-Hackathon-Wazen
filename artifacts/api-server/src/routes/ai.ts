@@ -8,8 +8,8 @@ import { encryptApiKey, decryptApiKey } from "../lib/encryption";
 
 const router = Router();
 
-// Get user's OpenAI key status (does not return the key itself)
-router.get("/ai/key/status", requireAuth, async (req, res) => {
+// Get user's OpenAI key status (never returns the key itself)
+router.get("/ai/key/status", requireAuth, async (req, res): Promise<void> => {
   const userId = (req as any).userId as string;
   const user = await getOrCreateUser(userId);
   res.json({
@@ -19,12 +19,13 @@ router.get("/ai/key/status", requireAuth, async (req, res) => {
 });
 
 // Submit/update user's OpenAI API key (encrypted before storage)
-router.post("/ai/key", requireAuth, async (req, res) => {
+router.post("/ai/key", requireAuth, async (req, res): Promise<void> => {
   const userId = (req as any).userId as string;
   const { apiKey } = req.body as { apiKey?: string };
 
   if (!apiKey || typeof apiKey !== "string" || !apiKey.startsWith("sk-")) {
-    return res.status(400).json({ error: "BadRequest", message: "A valid OpenAI API key (starting with sk-) is required." });
+    res.status(400).json({ error: "BadRequest", message: "A valid OpenAI API key (starting with sk-) is required." });
+    return;
   }
 
   await getOrCreateUser(userId);
@@ -38,7 +39,7 @@ router.post("/ai/key", requireAuth, async (req, res) => {
 });
 
 // Remove user's stored OpenAI API key
-router.delete("/ai/key", requireAuth, async (req, res) => {
+router.delete("/ai/key", requireAuth, async (req, res): Promise<void> => {
   const userId = (req as any).userId as string;
   await getOrCreateUser(userId);
 
@@ -49,12 +50,11 @@ router.delete("/ai/key", requireAuth, async (req, res) => {
   res.json({ success: true, message: "OpenAI API key removed." });
 });
 
-// Test AI service connectivity using the user's key (falls back to server key)
-router.get("/ai/test", requireAuth, async (req, res) => {
+// Test AI connectivity — uses user's key first, falls back to server key
+router.get("/ai/test", requireAuth, async (req, res): Promise<void> => {
   const userId = (req as any).userId as string;
   const user = await getOrCreateUser(userId);
 
-  // Resolve which key to use: user's key takes priority over server key
   let apiKey: string | null = null;
   let keySource: "user" | "server" | null = null;
 
@@ -63,7 +63,7 @@ router.get("/ai/test", requireAuth, async (req, res) => {
       apiKey = decryptApiKey(user.encryptedOpenAiKey);
       keySource = "user";
     } catch {
-      // Decryption failed — treat as no key
+      // Decryption failed — fall through to server key
     }
   }
 
@@ -73,12 +73,13 @@ router.get("/ai/test", requireAuth, async (req, res) => {
   }
 
   if (!apiKey) {
-    return res.json({
+    res.json({
       success: false,
       message: "No OpenAI API key configured. Submit your key via POST /api/ai/key or ask your admin to set OPENAI_API_KEY.",
       model: null,
       keySource: null,
     });
+    return;
   }
 
   try {
@@ -98,7 +99,7 @@ router.get("/ai/test", requireAuth, async (req, res) => {
   } catch (err: any) {
     res.json({
       success: false,
-      message: err?.message ?? "AI service error",
+      message: (err as Error)?.message ?? "AI service error",
       model: null,
       keySource,
     });

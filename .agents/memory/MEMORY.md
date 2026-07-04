@@ -1,1 +1,2 @@
 - [AI Finance App Architecture](ai-finance-arch.md) — Expo SDK 54 + Express API + PostgreSQL + Clerk auth; key wiring decisions for prod
+- [lib/db composite build](lib-db-composite-build.md) — lib/db uses tsc composite mode; schema changes require a manual `tsc` rebuild before api-server typechecks.

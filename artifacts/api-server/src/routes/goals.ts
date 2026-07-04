@@ -18,14 +18,14 @@ function formatGoal(goal: Goal) {
   };
 }
 
-router.get("/goals", requireAuth, requireConsent, async (req, res) => {
+router.get("/goals", requireAuth, requireConsent, async (req, res): Promise<void> => {
   const userId = (req as any).userId as string;
   await getOrCreateUser(userId);
   const goals = await db.select().from(goalsTable).where(eq(goalsTable.userId, userId));
   res.json(goals.map(formatGoal));
 });
 
-router.post("/goals", requireAuth, requireConsent, async (req, res) => {
+router.post("/goals", requireAuth, requireConsent, async (req, res): Promise<void> => {
   const userId = (req as any).userId as string;
   const { name, targetAmount, currentAmount, targetDate, category } = req.body as {
     name: string;
@@ -50,20 +50,23 @@ router.post("/goals", requireAuth, requireConsent, async (req, res) => {
   res.status(201).json(formatGoal(goal));
 });
 
-router.get("/goals/:id", requireAuth, requireConsent, async (req, res) => {
+router.get("/goals/:id", requireAuth, requireConsent, async (req, res): Promise<void> => {
   const userId = (req as any).userId as string;
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const [goal] = await db
     .select()
     .from(goalsTable)
     .where(and(eq(goalsTable.id, id), eq(goalsTable.userId, userId)));
-  if (!goal) return res.status(404).json({ error: "Not found", message: "Goal not found" });
+  if (!goal) {
+    res.status(404).json({ error: "Not found", message: "Goal not found" });
+    return;
+  }
   res.json(formatGoal(goal));
 });
 
-router.put("/goals/:id", requireAuth, requireConsent, async (req, res) => {
+router.put("/goals/:id", requireAuth, requireConsent, async (req, res): Promise<void> => {
   const userId = (req as any).userId as string;
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   const { name, targetAmount, currentAmount, targetDate, category, status } = req.body as {
     name?: string;
     targetAmount?: string;
@@ -79,13 +82,16 @@ router.put("/goals/:id", requireAuth, requireConsent, async (req, res) => {
     .where(and(eq(goalsTable.id, id), eq(goalsTable.userId, userId)))
     .returning();
 
-  if (!goal) return res.status(404).json({ error: "Not found", message: "Goal not found" });
+  if (!goal) {
+    res.status(404).json({ error: "Not found", message: "Goal not found" });
+    return;
+  }
   res.json(formatGoal(goal));
 });
 
-router.delete("/goals/:id", requireAuth, requireConsent, async (req, res) => {
+router.delete("/goals/:id", requireAuth, requireConsent, async (req, res): Promise<void> => {
   const userId = (req as any).userId as string;
-  const id = parseInt(req.params.id, 10);
+  const id = parseInt(String(req.params.id), 10);
   await db.delete(goalsTable).where(and(eq(goalsTable.id, id), eq(goalsTable.userId, userId)));
   res.status(204).send();
 });
