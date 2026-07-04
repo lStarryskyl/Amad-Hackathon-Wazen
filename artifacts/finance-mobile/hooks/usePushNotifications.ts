@@ -44,8 +44,14 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
     return null;
   }
 
-  const tokenData = await Notifications.getExpoPushTokenAsync();
-  return tokenData.data;
+  try {
+    const tokenData = await Notifications.getExpoPushTokenAsync();
+    return tokenData.data;
+  } catch {
+    // Push tokens require an EAS project ID — not available in Expo Go or web preview
+    console.log("[push] Push tokens unavailable in this environment (Expo Go / no projectId)");
+    return null;
+  }
 }
 
 export function usePushNotifications() {

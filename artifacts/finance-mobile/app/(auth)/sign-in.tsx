@@ -76,9 +76,8 @@ export default function SignInScreen() {
           <Image
             source={require("../../assets/images/logo.png")}
             style={styles.logoImg}
-            resizeMode="contain"
+            resizeMode="cover"
           />
-          <Text style={[styles.wordmark, { color: colors.text }]}>Pulse</Text>
           <Text style={[styles.tagline, { color: colors.mutedForeground }]}>
             Your AI-powered financial pulse
           </Text>
@@ -178,8 +177,7 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1, paddingHorizontal: 20 },
 
   brand: { alignItems: "center", marginBottom: 28 },
-  logoImg: { width: 72, height: 72, marginBottom: 12 },
-  wordmark: { fontSize: 30, fontWeight: "800", letterSpacing: -0.5, marginBottom: 4 },
+  logoImg: { width: 100, height: 100, borderRadius: 22, marginBottom: 14 },
   tagline: { fontSize: 14, textAlign: "center", marginBottom: 16 },
   featurePills: { flexDirection: "row", flexWrap: "wrap", gap: 6, justifyContent: "center" },
   pill: {
