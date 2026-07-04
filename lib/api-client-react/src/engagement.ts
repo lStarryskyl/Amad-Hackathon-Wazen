@@ -121,6 +121,22 @@ export interface AlertsResult {
   unreadCount: number;
 }
 
+// ─── Transaction Count ────────────────────────────────────────────────────────
+
+export interface TransactionCountResult {
+  count: number;
+}
+
+export const getTransactionCountUrl = () => `/api/transactions/count`;
+export const getTransactionCount = async (): Promise<TransactionCountResult> =>
+  customFetch<TransactionCountResult>(getTransactionCountUrl(), { method: "GET" });
+export const getTransactionCountQueryKey = () => [getTransactionCountUrl()] as const;
+
+export const useGetTransactionCount = <TData = TransactionCountResult, TError = unknown>(
+  options?: Omit<UseQueryOptions<TransactionCountResult, TError, TData>, "queryKey" | "queryFn">
+): UseQueryResult<TData, TError> =>
+  useQuery({ queryKey: getTransactionCountQueryKey(), queryFn: () => getTransactionCount(), ...options });
+
 // ─── Patterns ─────────────────────────────────────────────────────────────────
 
 export const getPatternsUrl = () => `/api/ai/patterns`;

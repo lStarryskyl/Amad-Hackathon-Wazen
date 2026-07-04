@@ -539,7 +539,7 @@ function MoneyStoriesSection() {
       </View>
       <TouchableOpacity
         style={[styles.noDataCTA, { backgroundColor: colors.primary }]}
-        onPress={() => router.navigate("/(home)/(tabs)/")}
+        onPress={() => router.navigate("/")}
         activeOpacity={0.85}
       >
         <Feather name="plus-circle" size={18} color="#fff" />
