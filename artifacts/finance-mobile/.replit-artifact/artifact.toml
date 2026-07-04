@@ -1,6 +1,6 @@
 kind = "mobile"
-previewPath = "/"
-title = "AI Finance"
+previewPath = "/finance-mobile/"
+title = "Pulse — AI Finance"
 version = "1.0.0"
 id = "artifacts/finance-mobile"
 router = "expo-domain"
@@ -12,7 +12,7 @@ version = "1.0.0"
 [[services]]
 ensurePreviewReachable = "/status"
 name = "expo"
-paths = [ "/" ]
+paths = [ "/finance-mobile/" ]
 localPort = 21672
 
 [services.development]
@@ -24,4 +24,4 @@ run = [ "pnpm", "--filter", "@workspace/finance-mobile", "run", "serve" ]
 
 [services.env]
 PORT = "21672"
-BASE_PATH = "/"
+BASE_PATH = "/finance-mobile/"
