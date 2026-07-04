@@ -20,6 +20,10 @@ author = "agent"
 task = "workflow.run"
 args = "compare-flow-tests"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "typecheck"
+
 [[workflows.workflow]]
 name = "compare-flow-tests"
 author = "agent"
@@ -27,6 +31,17 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd artifacts/finance-mobile && npx jest __tests__/compare-flow.test.ts --no-coverage"
+
+[workflows.workflow.metadata]
+isValidation = true
+
+[[workflows.workflow]]
+name = "typecheck"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd artifacts/finance-mobile && pnpm typecheck"
 
 [workflows.workflow.metadata]
 isValidation = true
