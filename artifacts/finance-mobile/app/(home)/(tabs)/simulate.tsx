@@ -22,7 +22,7 @@ import {
 import type { SimulationRun, ScenarioInputs, MonthDataPoint } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 
-type Screen = "list" | "builder" | "results";
+type Screen = "list" | "builder" | "results" | "compare";
 
 // ─── Mini sparkline ───────────────────────────────────────────────────────────
 
@@ -53,7 +53,7 @@ function MiniSparkline({ dataPoints, color }: { dataPoints: MonthDataPoint[]; co
   );
 }
 
-// ─── Balance trajectory chart ─────────────────────────────────────────────────
+// ─── Balance trajectory chart (single) ───────────────────────────────────────
 
 function BalanceChart({ dataPoints, width }: { dataPoints: MonthDataPoint[]; width: number }) {
   const colors = useColors();
@@ -128,6 +128,118 @@ function BalanceChart({ dataPoints, width }: { dataPoints: MonthDataPoint[]; wid
   );
 }
 
+// ─── Dual comparison chart ────────────────────────────────────────────────────
+
+const COMPARE_COLOR_A = "#6C63FF";
+const COMPARE_COLOR_B = "#FF6B6B";
+
+function CompareChart({
+  dataPointsA,
+  dataPointsB,
+  labelA,
+  labelB,
+  width,
+}: {
+  dataPointsA: MonthDataPoint[];
+  dataPointsB: MonthDataPoint[];
+  labelA: string;
+  labelB: string;
+  width: number;
+}) {
+  const colors = useColors();
+  const H = 200;
+  const padLeft = 58;
+  const padBottom = 32;
+  const cw = Math.max(width - padLeft - 8, 10);
+  const ch = H - padBottom;
+
+  if (width < 10) return null;
+
+  const allBalances = [
+    ...dataPointsA.map((d) => d.balance),
+    ...dataPointsB.map((d) => d.balance),
+  ];
+  const minV = Math.min(...allBalances);
+  const maxV = Math.max(...allBalances);
+  const range = maxV - minV || 1;
+
+  const lenA = dataPointsA.length;
+  const lenB = dataPointsB.length;
+  const maxLen = Math.max(lenA, lenB);
+
+  const toXA = (i: number) => padLeft + (i / Math.max(lenA - 1, 1)) * cw;
+  const toXB = (i: number) => padLeft + (i / Math.max(lenB - 1, 1)) * cw;
+  const toY = (v: number) => ((maxV - v) / range) * ch;
+
+  const fmt = (v: number) => {
+    const abs = Math.abs(v);
+    if (abs >= 1000000) return `$${(v / 1000000).toFixed(1)}M`;
+    if (abs >= 1000) return `$${(v / 1000).toFixed(0)}k`;
+    return `$${Math.round(v)}`;
+  };
+
+  const yGridVals = [minV, minV + range * 0.5, maxV];
+
+  const ptsA = dataPointsA.length >= 2
+    ? dataPointsA.map((d, i) => `${toXA(i).toFixed(1)},${toY(d.balance).toFixed(1)}`).join(" ")
+    : "";
+  const ptsB = dataPointsB.length >= 2
+    ? dataPointsB.map((d, i) => `${toXB(i).toFixed(1)},${toY(d.balance).toFixed(1)}`).join(" ")
+    : "";
+
+  const labelIdxs: number[] = [0];
+  const step = Math.max(1, Math.floor((maxLen - 1) / 4));
+  for (let i = step; i < maxLen - 1; i += step) labelIdxs.push(i);
+  labelIdxs.push(maxLen - 1);
+  const uniqueLabelIdxs = [...new Set(labelIdxs)];
+
+  return (
+    <View style={{ width, height: H + 28 }}>
+      <Svg width={width} height={H}>
+        {yGridVals.map((v, idx) => {
+          const y = toY(v);
+          return (
+            <G key={idx}>
+              <Line x1={padLeft} y1={y} x2={width - 8} y2={y} stroke={colors.border} strokeWidth={1} strokeDasharray="3,3" />
+              <SvgText x={padLeft - 4} y={y + 4} fill={colors.mutedForeground} fontSize={9} textAnchor="end">
+                {fmt(v)}
+              </SvgText>
+            </G>
+          );
+        })}
+        {ptsA ? (
+          <Polyline points={ptsA} fill="none" stroke={COMPARE_COLOR_A} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+        ) : null}
+        {ptsB ? (
+          <Polyline points={ptsB} fill="none" stroke={COMPARE_COLOR_B} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" strokeDasharray="6,3" />
+        ) : null}
+        {uniqueLabelIdxs.map((i) => {
+          const srcA = dataPointsA[Math.min(i, lenA - 1)];
+          const srcB = dataPointsB[Math.min(i, lenB - 1)];
+          const src = srcA || srcB;
+          const x = padLeft + (i / Math.max(maxLen - 1, 1)) * cw;
+          return (
+            <SvgText key={i} x={x} y={H - 6} fill={colors.mutedForeground} fontSize={9} textAnchor="middle">
+              {src?.label ?? ""}
+            </SvgText>
+          );
+        })}
+      </Svg>
+      {/* Legend */}
+      <View style={{ flexDirection: "row", gap: 20, marginTop: 8, paddingLeft: padLeft }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <View style={{ width: 20, height: 3, backgroundColor: COMPARE_COLOR_A, borderRadius: 2 }} />
+          <Text style={{ fontSize: 11, color: colors.mutedForeground }} numberOfLines={1}>{labelA}</Text>
+        </View>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+          <View style={{ width: 20, height: 3, backgroundColor: COMPARE_COLOR_B, borderRadius: 2, borderStyle: "dashed" }} />
+          <Text style={{ fontSize: 11, color: colors.mutedForeground }} numberOfLines={1}>{labelB}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 // ─── Slider row ───────────────────────────────────────────────────────────────
 
 function SliderRow({
@@ -195,10 +307,16 @@ function ScenarioCard({
   run,
   onOpen,
   onDelete,
+  selectMode,
+  selected,
+  onToggleSelect,
 }: {
   run: SimulationRun;
   onOpen: () => void;
   onDelete: () => void;
+  selectMode: boolean;
+  selected: boolean;
+  onToggleSelect: () => void;
 }) {
   const colors = useColors();
   const results = run.results;
@@ -223,22 +341,38 @@ function ScenarioCard({
 
   const dateLabel = new Date(run.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
+  const borderColor = selected ? COMPARE_COLOR_A : colors.border;
+
   return (
     <TouchableOpacity
-      style={[cardStyles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
-      onPress={onOpen}
+      style={[
+        cardStyles.container,
+        { backgroundColor: colors.card, borderColor, borderWidth: selected ? 2 : 1 },
+      ]}
+      onPress={selectMode ? onToggleSelect : onOpen}
       activeOpacity={0.75}
     >
       <View style={cardStyles.header}>
         <View style={cardStyles.titleRow}>
-          <View style={[cardStyles.dot, { backgroundColor: changeColor }]} />
+          {selectMode ? (
+            <View style={[
+              cardStyles.checkbox,
+              { borderColor: selected ? COMPARE_COLOR_A : colors.border, backgroundColor: selected ? COMPARE_COLOR_A : "transparent" },
+            ]}>
+              {selected && <Feather name="check" size={11} color="#fff" />}
+            </View>
+          ) : (
+            <View style={[cardStyles.dot, { backgroundColor: changeColor }]} />
+          )}
           <Text style={[cardStyles.title, { color: colors.text }]} numberOfLines={1}>
             {run.scenarioName}
           </Text>
         </View>
-        <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Feather name="trash-2" size={14} color={colors.mutedForeground} />
-        </TouchableOpacity>
+        {!selectMode && (
+          <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Feather name="trash-2" size={14} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={cardStyles.metrics}>
@@ -276,6 +410,7 @@ const cardStyles = StyleSheet.create({
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1 },
   dot: { width: 8, height: 8, borderRadius: 4 },
+  checkbox: { width: 20, height: 20, borderRadius: 6, borderWidth: 2, justifyContent: "center", alignItems: "center" },
   title: { fontSize: 16, fontWeight: "700", flex: 1 },
   metrics: { flexDirection: "row", gap: 16, marginBottom: 12 },
   metric: { flex: 1 },
@@ -392,6 +527,50 @@ function InputSummaryRow({ label, value, colors }: { label: string; value: strin
   );
 }
 
+// ─── Diff table row ───────────────────────────────────────────────────────────
+
+function DiffRow({
+  label,
+  valueA,
+  valueB,
+  winnerIsA,
+  colors,
+}: {
+  label: string;
+  valueA: string;
+  valueB: string;
+  winnerIsA: boolean | null;
+  colors: ReturnType<typeof useColors>;
+}) {
+  return (
+    <View style={diffStyles.row}>
+      <Text style={[diffStyles.label, { color: colors.mutedForeground }]}>{label}</Text>
+      <View style={diffStyles.values}>
+        <View style={[diffStyles.cell, winnerIsA === true && { backgroundColor: COMPARE_COLOR_A + "20", borderRadius: 8 }]}>
+          {winnerIsA === true && <Feather name="award" size={10} color={COMPARE_COLOR_A} style={{ marginRight: 3 }} />}
+          <Text style={[diffStyles.val, { color: winnerIsA === true ? COMPARE_COLOR_A : colors.textSecondary, fontWeight: winnerIsA === true ? "800" : "600" }]}>
+            {valueA}
+          </Text>
+        </View>
+        <View style={[diffStyles.cell, winnerIsA === false && { backgroundColor: COMPARE_COLOR_B + "20", borderRadius: 8 }]}>
+          {winnerIsA === false && <Feather name="award" size={10} color={COMPARE_COLOR_B} style={{ marginRight: 3 }} />}
+          <Text style={[diffStyles.val, { color: winnerIsA === false ? COMPARE_COLOR_B : colors.textSecondary, fontWeight: winnerIsA === false ? "800" : "600" }]}>
+            {valueB}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+const diffStyles = StyleSheet.create({
+  row: { flexDirection: "row", alignItems: "center", paddingVertical: 10, borderBottomWidth: 1 },
+  label: { fontSize: 13, flex: 1 },
+  values: { flexDirection: "row", gap: 8 },
+  cell: { width: 90, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", paddingHorizontal: 8, paddingVertical: 4 },
+  val: { fontSize: 14 },
+});
+
 // ─── Default inputs ───────────────────────────────────────────────────────────
 
 const DEFAULT_INPUTS: Omit<ScenarioInputs, "scenarioName"> = {
@@ -415,6 +594,12 @@ export default function SimulateScreen() {
   const [scenarioName, setScenarioName] = useState("My Scenario");
   const [inputs, setInputs] = useState<Omit<ScenarioInputs, "scenarioName">>(DEFAULT_INPUTS);
   const [chartWidth, setChartWidth] = useState(0);
+
+  // Compare selection state
+  const [compareIds, setCompareIds] = useState<number[]>([]);
+  const [compareRuns, setCompareRuns] = useState<[SimulationRun, SimulationRun] | null>(null);
+
+  const selectMode = compareIds.length > 0;
 
   const { data: simulations, isLoading: listLoading } = useGetSimulations({ staleTime: 30_000, retry: 1 });
 
@@ -450,16 +635,45 @@ export default function SimulateScreen() {
     setScreen("builder");
   }, []);
 
+  const handleToggleCompare = useCallback((id: number) => {
+    setCompareIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id);
+      if (prev.length >= 2) return prev;
+      return [...prev, id];
+    });
+  }, []);
+
+  const handleStartCompare = useCallback(() => {
+    if (compareIds.length !== 2 || !simulations) return;
+    const runA = simulations.find((r) => r.id === compareIds[0]);
+    const runB = simulations.find((r) => r.id === compareIds[1]);
+    if (!runA || !runB || !runA.results || !runB.results) return;
+    setCompareRuns([runA, runB]);
+    setScreen("compare");
+  }, [compareIds, simulations]);
+
+  const handleCancelCompare = useCallback(() => {
+    setCompareIds([]);
+  }, []);
+
   const formatPct = (v: number) => (v >= 0 ? `+${v}%` : `${v}%`);
   const formatDollar = (v: number) => (v === 0 ? "$0" : `$${v.toLocaleString()}`);
 
+  const fmtK = (v: number) => {
+    const abs = Math.abs(v);
+    if (abs >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+    if (abs >= 1_000) return `$${(Math.abs(v) / 1_000).toFixed(1)}k`;
+    return `$${Math.abs(Math.round(v))}`;
+  };
+
   // ─── List screen ───────────────────────────────────────────────────────────
   if (screen === "list") {
+    const hasEnough = (simulations?.length ?? 0) >= 2;
     return (
       <View style={[gs.flex, { backgroundColor: colors.background }]}>
         <ScrollView
           style={gs.flex}
-          contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 20, paddingBottom: insets.bottom + 100 }}
+          contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 20, paddingBottom: insets.bottom + 120 }}
         >
           <View style={gs.pageHeader}>
             <View>
@@ -471,6 +685,22 @@ export default function SimulateScreen() {
               <Text style={gs.newBtnText}>New</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Compare mode hint */}
+          {hasEnough && !selectMode && (
+            <View style={[compareHintStyles.banner, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="columns" size={14} color={COMPARE_COLOR_A} />
+              <Text style={[compareHintStyles.text, { color: colors.mutedForeground }]}>
+                Select two scenarios to compare them side by side
+              </Text>
+              <TouchableOpacity
+                onPress={() => handleToggleCompare(simulations![0].id)}
+                style={[compareHintStyles.btn, { backgroundColor: COMPARE_COLOR_A + "18" }]}
+              >
+                <Text style={{ fontSize: 12, fontWeight: "700", color: COMPARE_COLOR_A }}>Select</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {listLoading ? (
             <View style={gs.center}>
@@ -486,10 +716,47 @@ export default function SimulateScreen() {
                 run={run}
                 onOpen={() => { setSelectedRun(run); setScreen("results"); }}
                 onDelete={() => handleDelete(run.id)}
+                selectMode={selectMode}
+                selected={compareIds.includes(run.id)}
+                onToggleSelect={() => handleToggleCompare(run.id)}
               />
             ))
           )}
         </ScrollView>
+
+        {/* Bottom bar: compare controls or normal */}
+        {selectMode ? (
+          <View style={[gs.fixedBottom, { paddingBottom: insets.bottom + 12, backgroundColor: colors.background, borderTopColor: colors.border }]}>
+            <View style={{ flexDirection: "row", gap: 12 }}>
+              <TouchableOpacity
+                style={[gs.runBtn, { flex: 1, backgroundColor: colors.cardElevated, borderWidth: 1, borderColor: colors.border }]}
+                onPress={handleCancelCompare}
+                activeOpacity={0.8}
+              >
+                <Feather name="x" size={16} color={colors.textSecondary} />
+                <Text style={[gs.runBtnText, { color: colors.textSecondary }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[gs.runBtn, { flex: 2, backgroundColor: compareIds.length === 2 ? COMPARE_COLOR_A : colors.border }]}
+                onPress={handleStartCompare}
+                disabled={compareIds.length !== 2}
+                activeOpacity={0.8}
+              >
+                <Feather name="columns" size={16} color="#fff" />
+                <Text style={gs.runBtnText}>
+                  {compareIds.length === 2 ? "Compare These Two" : `Select ${2 - compareIds.length} more`}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          <View style={[gs.fixedBottom, { paddingBottom: insets.bottom + 12, backgroundColor: colors.background, borderTopColor: colors.border }]}>
+            <TouchableOpacity style={[gs.runBtn, { backgroundColor: colors.primary }]} onPress={openBuilder} activeOpacity={0.8}>
+              <Feather name="plus" size={18} color="#fff" />
+              <Text style={gs.runBtnText}>New Scenario</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     );
   }
@@ -615,6 +882,203 @@ export default function SimulateScreen() {
     );
   }
 
+  // ─── Compare screen ────────────────────────────────────────────────────────
+  if (screen === "compare" && compareRuns) {
+    const [runA, runB] = compareRuns;
+    const resA = runA.results!;
+    const resB = runB.results!;
+
+    const balA = resA.finalBalance - resA.startingBalance;
+    const balB = resB.finalBalance - resB.startingBalance;
+
+    // Determine winner per metric (higher is better for all three)
+    const winnerBalance: boolean | null = balA === balB ? null : balA > balB;
+    const winnerSavingsRate: boolean | null = resA.finalSavingsRate === resB.finalSavingsRate ? null : resA.finalSavingsRate > resB.finalSavingsRate;
+    const winnerTotalSaved: boolean | null = resA.totalSaved === resB.totalSaved ? null : resA.totalSaved > resB.totalSaved;
+    const winnerFinalBalance: boolean | null = resA.finalBalance === resB.finalBalance ? null : resA.finalBalance > resB.finalBalance;
+
+    // Overall winner: A wins if it wins more metrics
+    const aWins = [winnerBalance, winnerSavingsRate, winnerTotalSaved, winnerFinalBalance].filter((w) => w === true).length;
+    const bWins = [winnerBalance, winnerSavingsRate, winnerTotalSaved, winnerFinalBalance].filter((w) => w === false).length;
+    const overallWinnerIsA = aWins > bWins ? true : bWins > aWins ? false : null;
+
+    const signedFmtK = (v: number) => {
+      const abs = Math.abs(v);
+      const prefix = v >= 0 ? "+" : "-";
+      if (abs >= 1_000_000) return `${prefix}$${(abs / 1_000_000).toFixed(1)}M`;
+      if (abs >= 1_000) return `${prefix}$${(abs / 1_000).toFixed(1)}k`;
+      return `${prefix}$${Math.round(abs)}`;
+    };
+
+    const horizonA =
+      runA.inputs.timeHorizonMonths < 12
+        ? `${runA.inputs.timeHorizonMonths}mo`
+        : runA.inputs.timeHorizonMonths === 12
+        ? "1yr"
+        : `${(runA.inputs.timeHorizonMonths / 12).toFixed(0)}yr`;
+    const horizonB =
+      runB.inputs.timeHorizonMonths < 12
+        ? `${runB.inputs.timeHorizonMonths}mo`
+        : runB.inputs.timeHorizonMonths === 12
+        ? "1yr"
+        : `${(runB.inputs.timeHorizonMonths / 12).toFixed(0)}yr`;
+
+    return (
+      <View style={[gs.flex, { backgroundColor: colors.background }]}>
+        <ScrollView
+          style={gs.flex}
+          contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 20, paddingBottom: insets.bottom + 100 }}
+          onLayout={(e) => setChartWidth(e.nativeEvent.layout.width - 40)}
+        >
+          <View style={gs.navRow}>
+            <TouchableOpacity
+              onPress={() => { setScreen("list"); setCompareIds([]); }}
+              style={gs.navBtn}
+            >
+              <Feather name="arrow-left" size={20} color={colors.text} />
+            </TouchableOpacity>
+            <Text style={[gs.navTitle, { color: colors.text }]}>Side-by-Side</Text>
+            <View style={gs.navBtn} />
+          </View>
+
+          {/* Winner banner */}
+          {overallWinnerIsA !== null && (
+            <View style={[
+              gs.heroCard,
+              { backgroundColor: (overallWinnerIsA ? COMPARE_COLOR_A : COMPARE_COLOR_B) + "18", borderColor: (overallWinnerIsA ? COMPARE_COLOR_A : COMPARE_COLOR_B) + "50", marginBottom: 16 }
+            ]}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <Feather name="award" size={18} color={overallWinnerIsA ? COMPARE_COLOR_A : COMPARE_COLOR_B} />
+                <Text style={{ fontSize: 13, fontWeight: "700", color: overallWinnerIsA ? COMPARE_COLOR_A : COMPARE_COLOR_B }}>
+                  BETTER PATH
+                </Text>
+              </View>
+              <Text style={[gs.heroValue, { color: overallWinnerIsA ? COMPARE_COLOR_A : COMPARE_COLOR_B, fontSize: 22, marginBottom: 2 }]}>
+                {overallWinnerIsA ? runA.scenarioName : runB.scenarioName}
+              </Text>
+              <Text style={[gs.heroSub, { color: colors.mutedForeground }]}>
+                Wins {overallWinnerIsA ? aWins : bWins} of {aWins + bWins} metrics compared
+              </Text>
+            </View>
+          )}
+
+          {/* Column headers */}
+          <View style={[compareColStyles.headerRow, { borderColor: colors.border }]}>
+            <View style={compareColStyles.labelCol} />
+            <View style={[compareColStyles.col, { borderLeftColor: colors.border }]}>
+              <View style={[compareColStyles.colorDot, { backgroundColor: COMPARE_COLOR_A }]} />
+              <Text style={[compareColStyles.colTitle, { color: COMPARE_COLOR_A }]} numberOfLines={2}>{runA.scenarioName}</Text>
+              <Text style={[compareColStyles.colSub, { color: colors.mutedForeground }]}>{horizonA}</Text>
+            </View>
+            <View style={[compareColStyles.col, { borderLeftColor: colors.border }]}>
+              <View style={[compareColStyles.colorDot, { backgroundColor: COMPARE_COLOR_B }]} />
+              <Text style={[compareColStyles.colTitle, { color: COMPARE_COLOR_B }]} numberOfLines={2}>{runB.scenarioName}</Text>
+              <Text style={[compareColStyles.colSub, { color: colors.mutedForeground }]}>{horizonB}</Text>
+            </View>
+          </View>
+
+          {/* Chart */}
+          <View
+            style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onLayout={(e) => setChartWidth(e.nativeEvent.layout.width - 32)}
+          >
+            <Text style={[gs.sectionLabel, { color: colors.mutedForeground, marginBottom: 16 }]}>BALANCE TRAJECTORIES</Text>
+            {chartWidth > 10 && resA.dataPoints && resB.dataPoints && (
+              <CompareChart
+                dataPointsA={resA.dataPoints}
+                dataPointsB={resB.dataPoints}
+                labelA={runA.scenarioName}
+                labelB={runB.scenarioName}
+                width={chartWidth}
+              />
+            )}
+          </View>
+
+          {/* Diff table */}
+          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[gs.sectionLabel, { color: colors.mutedForeground, marginBottom: 4 }]}>METRIC COMPARISON</Text>
+            <View style={{ borderTopWidth: 1, borderColor: colors.border }}>
+              <DiffRow
+                label="Balance change"
+                valueA={signedFmtK(balA)}
+                valueB={signedFmtK(balB)}
+                winnerIsA={winnerBalance}
+                colors={colors}
+              />
+              <DiffRow
+                label="Final balance"
+                valueA={fmtK(resA.finalBalance)}
+                valueB={fmtK(resB.finalBalance)}
+                winnerIsA={winnerFinalBalance}
+                colors={colors}
+              />
+              <DiffRow
+                label="Savings rate"
+                valueA={`${resA.finalSavingsRate.toFixed(1)}%`}
+                valueB={`${resB.finalSavingsRate.toFixed(1)}%`}
+                winnerIsA={winnerSavingsRate}
+                colors={colors}
+              />
+              <DiffRow
+                label="Total saved"
+                valueA={fmtK(resA.totalSaved)}
+                valueB={fmtK(resB.totalSaved)}
+                winnerIsA={winnerTotalSaved}
+                colors={colors}
+              />
+            </View>
+          </View>
+
+          {/* Inputs comparison */}
+          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[gs.sectionLabel, { color: colors.mutedForeground, marginBottom: 4 }]}>SCENARIO INPUTS</Text>
+            <View style={{ borderTopWidth: 1, borderColor: colors.border }}>
+              <DiffRow
+                label="Income change"
+                valueA={`${runA.inputs.incomeChangePercent >= 0 ? "+" : ""}${runA.inputs.incomeChangePercent}%`}
+                valueB={`${runB.inputs.incomeChangePercent >= 0 ? "+" : ""}${runB.inputs.incomeChangePercent}%`}
+                winnerIsA={null}
+                colors={colors}
+              />
+              <DiffRow
+                label="Spending change"
+                valueA={`${runA.inputs.spendingChangePercent >= 0 ? "+" : ""}${runA.inputs.spendingChangePercent}%`}
+                valueB={`${runB.inputs.spendingChangePercent >= 0 ? "+" : ""}${runB.inputs.spendingChangePercent}%`}
+                winnerIsA={null}
+                colors={colors}
+              />
+              <DiffRow
+                label="Extra savings"
+                valueA={runA.inputs.additionalMonthlySaving > 0 ? `+$${runA.inputs.additionalMonthlySaving}/mo` : "—"}
+                valueB={runB.inputs.additionalMonthlySaving > 0 ? `+$${runB.inputs.additionalMonthlySaving}/mo` : "—"}
+                winnerIsA={null}
+                colors={colors}
+              />
+              <DiffRow
+                label="Time horizon"
+                valueA={horizonA}
+                valueB={horizonB}
+                winnerIsA={null}
+                colors={colors}
+              />
+            </View>
+          </View>
+        </ScrollView>
+
+        <View style={[gs.fixedBottom, { paddingBottom: insets.bottom + 12, backgroundColor: colors.background, borderTopColor: colors.border }]}>
+          <TouchableOpacity
+            style={[gs.runBtn, { backgroundColor: colors.primary }]}
+            onPress={() => { setScreen("list"); setCompareIds([]); }}
+            activeOpacity={0.8}
+          >
+            <Feather name="arrow-left" size={18} color="#fff" />
+            <Text style={gs.runBtnText}>Back to Scenarios</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   // ─── Results screen ────────────────────────────────────────────────────────
   const run = selectedRun;
   if (!run || !run.results) { setScreen("list"); return null; }
@@ -623,13 +1087,6 @@ export default function SimulateScreen() {
   const balanceChange = results.finalBalance - results.startingBalance;
   const isPositive = balanceChange >= 0;
   const changeColor = isPositive ? colors.accent : colors.danger;
-
-  const fmtK = (v: number) => {
-    const abs = Math.abs(v);
-    if (abs >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
-    if (abs >= 1_000) return `$${(Math.abs(v) / 1_000).toFixed(1)}k`;
-    return `$${Math.abs(Math.round(v))}`;
-  };
 
   const horizonText =
     run.inputs.timeHorizonMonths < 12
@@ -727,6 +1184,23 @@ export default function SimulateScreen() {
     </View>
   );
 }
+
+// ─── Compare column header styles ─────────────────────────────────────────────
+
+const compareColStyles = StyleSheet.create({
+  headerRow: { flexDirection: "row", marginBottom: 16, borderRadius: 16, overflow: "hidden", borderWidth: 1 },
+  labelCol: { flex: 1 },
+  col: { flex: 2, borderLeftWidth: 1, padding: 12, alignItems: "center" },
+  colorDot: { width: 10, height: 10, borderRadius: 5, marginBottom: 6 },
+  colTitle: { fontSize: 13, fontWeight: "700", textAlign: "center", marginBottom: 2 },
+  colSub: { fontSize: 11, textAlign: "center" },
+});
+
+const compareHintStyles = StyleSheet.create({
+  banner: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 16 },
+  text: { flex: 1, fontSize: 12, lineHeight: 18 },
+  btn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+});
 
 // ─── Global styles ────────────────────────────────────────────────────────────
 
