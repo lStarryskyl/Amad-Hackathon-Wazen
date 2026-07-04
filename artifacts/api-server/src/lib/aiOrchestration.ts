@@ -1,7 +1,8 @@
 import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { decryptApiKey } from "./encryption";
+import { decryptApiKey } from "./encryption.js";
+import { generateFallbackRescueNarrative, generateFallbackMoneyStory } from "./fallbackNarratives.js";
 
 export async function getOpenAIClient(userId: string): Promise<{ openai: import("openai").default; source: "user" | "server" } | null> {
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
@@ -93,21 +94,6 @@ Respond with just the narrative text — no headers, no bullet points.`;
     });
     return { narrative: generateFallbackRescueNarrative(riskLevel, actions, context), aiUnavailable: true };
   }
-}
-
-function generateFallbackRescueNarrative(
-  riskLevel: string,
-  actions: Array<{ title: string; tag: string }>,
-  context: { savingsRate: number }
-): string {
-  if (riskLevel === "low") {
-    return `Your finances are in great shape with a ${context.savingsRate}% savings rate. Keep your current habits going — consistency is the real superpower in personal finance.`;
-  }
-  if (riskLevel === "medium") {
-    const top = actions[0];
-    return `Things are manageable, but there's room to strengthen your position. Your most impactful move right now is: ${top?.tag} ${top?.title}. Small adjustments today create big protection tomorrow.`;
-  }
-  return `Your spending signals need attention, but you're already ahead by seeing this clearly. Start with the highest-priority action and tackle one thing at a time — financial recovery is a series of small, consistent wins.`;
 }
 
 export async function generateMoneyStory(
@@ -253,12 +239,4 @@ function generateFallbackSimulationNarrative(
   return `Under this scenario your balance would decrease by $${absChange.toLocaleString()} over ${inputs.timeHorizonMonths} months. While the short-term impact is negative, understanding this cost up front lets you plan ahead — consider whether you can offset it with reduced discretionary spending or an income boost.`;
 }
 
-function generateFallbackMoneyStory(periodLabel: string, signals: Record<string, unknown>): string {
-  const breakdowns = signals.monthlyBreakdowns as Array<{ month: string; income: number; expenses: number; savingsRate: number }>;
-  if (!breakdowns || breakdowns.length === 0) {
-    return `Over the period of ${periodLabel}, your financial activity reflects a snapshot of your daily choices and commitments. Keep tracking your spending to uncover deeper patterns in your financial story.`;
-  }
-  const avgSavings = breakdowns.reduce((s, m) => s + m.savingsRate, 0) / breakdowns.length;
-  const trend = breakdowns[0].savingsRate > breakdowns[breakdowns.length - 1].savingsRate ? "improving" : "steady";
-  return `Over ${periodLabel}, your financial story has been one of ${trend} discipline. With an average savings rate of ${avgSavings.toFixed(0)}%, you've balanced $${signals.recurringObligationsTotal} in monthly fixed commitments while navigating everyday spending. Your patterns reflect someone who is thoughtful about their money — and each month of data gives you more clarity about where your financial energy goes. Keep building on this foundation.`;
-}
+export { generateFallbackMoneyStory, generateFallbackRescueNarrative } from "./fallbackNarratives.js";
