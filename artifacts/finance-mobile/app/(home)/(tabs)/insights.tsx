@@ -498,7 +498,17 @@ function MoneyStoriesSection() {
         </View>
       )}
 
-      {story && (
+      {story && (story as any).noData && (
+        <View style={[styles.emptyState, { backgroundColor: colors.cardElevated }]}>
+          <Feather name="book" size={32} color={colors.accent} style={{ marginBottom: 12 }} />
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>No Transactions Yet</Text>
+          <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
+            {story.narrative}
+          </Text>
+        </View>
+      )}
+
+      {story && !(story as any).noData && (
         <View>
           <View style={[styles.storyPeriod, { backgroundColor: colors.accent + "15", borderColor: colors.accent + "30" }]}>
             <Feather name="calendar" size={14} color={colors.accent} />

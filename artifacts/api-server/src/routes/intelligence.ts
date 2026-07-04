@@ -124,6 +124,22 @@ router.post("/ai/money-story", requireAuth, requireConsent, async (req, res): Pr
 
   try {
     const context = await buildMoneyStoryContext(userId);
+
+    const hasTransactionData = context.months.some((m) => m.income > 0 || m.expenses > 0);
+    if (!hasTransactionData) {
+      const periodLabel = new Date().toLocaleString("default", { month: "long", year: "numeric" });
+      res.json({
+        id: null,
+        periodLabel,
+        narrative:
+          "Your money story is waiting to be written. Once you record at least one month of transactions, we'll turn your spending and saving patterns into a personalized financial narrative — giving you a clear picture of where your money goes and where it's headed.",
+        signals: { monthlyBreakdowns: [], totalBalance: 0, recurringObligationsTotal: 0 },
+        generatedAt: new Date().toISOString(),
+        noData: true,
+      });
+      return;
+    }
+
     const latestMonth = context.months[context.months.length - 1];
     const periodLabel = latestMonth?.label ?? new Date().toLocaleString("default", { month: "long", year: "numeric" });
     const signals: Record<string, unknown> = {
