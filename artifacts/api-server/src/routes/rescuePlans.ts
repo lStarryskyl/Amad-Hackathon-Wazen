@@ -35,18 +35,18 @@ router.get("/rescue-plans", requireAuth, requireConsent, async (req, res): Promi
     let apiKey: string | null = null;
     if (user.encryptedOpenAiKey) {
       apiKey = decryptApiKey(user.encryptedOpenAiKey);
-    } else if (process.env.OPENAI_API_KEY) {
-      apiKey = process.env.OPENAI_API_KEY;
+    } else if (process.env.AI_API_KEY) {
+      apiKey = process.env.AI_API_KEY;
     }
 
     if (!apiKey) {
-      console.warn("[rescuePlans] GET /rescue-plans: No OpenAI API key available. Serving deterministic fallback.", { userId: (req as any).userId, riskLevel: score.level });
+      console.warn("[ai] rescue-plans: No AI key available. Serving deterministic fallback.", { userId: (req as any).userId, riskLevel: score.level });
       aiUnavailable = true;
     } else {
       const { default: OpenAI } = await import("openai");
-      const openai = new OpenAI({ apiKey });
-      const prompt = `You are a compassionate financial coach for "Guardia". The user's financial regret risk score is ${score.score}/100 (${score.level} risk). Key factors: ${score.factors.map((f) => f.label).join(", ")}. Write a warm, non-judgmental 2-sentence intro for their rescue plan. Be specific and actionable. No markdown.`;
-      const resp = await openai.chat.completions.create({
+      const client = new OpenAI({ apiKey });
+      const prompt = `You are a compassionate financial coach for "Pulse". The user's financial regret risk score is ${score.score}/100 (${score.level} risk). Key factors: ${score.factors.map((f) => f.label).join(", ")}. Write a warm, non-judgmental 2-sentence intro for their rescue plan. Be specific and actionable. No markdown.`;
+      const resp = await client.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 100,
@@ -54,14 +54,14 @@ router.get("/rescue-plans", requireAuth, requireConsent, async (req, res): Promi
       });
       narrative = resp.choices[0]?.message?.content?.trim() ?? null;
       if (!narrative) {
-        console.warn("[rescuePlans] GET /rescue-plans: OpenAI returned empty content. Serving deterministic fallback.", { userId: (req as any).userId, riskLevel: score.level });
+        console.warn("[ai] rescue-plans: Empty response from model. Serving deterministic fallback.", { userId: (req as any).userId, riskLevel: score.level });
         aiUnavailable = true;
       }
     }
   } catch (err) {
     const errorCode = (err as any)?.status ?? (err as any)?.code ?? "unknown";
     const errorMessage = (err as any)?.message ?? String(err);
-    console.error("[rescuePlans] GET /rescue-plans: OpenAI call failed. Serving deterministic fallback.", {
+    console.error("[ai] rescue-plans: Model call failed. Serving deterministic fallback.", {
       userId: (req as any).userId,
       riskLevel: score.level,
       errorCode,

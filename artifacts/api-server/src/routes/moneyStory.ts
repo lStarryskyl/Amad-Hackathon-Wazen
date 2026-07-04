@@ -82,14 +82,14 @@ Number of transactions: ${monthTxs.length}
     let apiKey: string | null = null;
     if (user.encryptedOpenAiKey) {
       apiKey = decryptApiKey(user.encryptedOpenAiKey);
-    } else if (process.env.OPENAI_API_KEY) {
-      apiKey = process.env.OPENAI_API_KEY;
+    } else if (process.env.AI_API_KEY) {
+      apiKey = process.env.AI_API_KEY;
     }
 
     if (apiKey) {
       const { default: OpenAI } = await import("openai");
-      const openai = new OpenAI({ apiKey });
-      const resp = await openai.chat.completions.create({
+      const client = new OpenAI({ apiKey });
+      const resp = await client.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {

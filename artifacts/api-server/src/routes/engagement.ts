@@ -16,7 +16,7 @@ import { requireConsent } from "../middlewares/requireConsent";
 import { getOrCreateUser } from "../lib/userProvisioning";
 import { detectBehavioralPatterns } from "../lib/patternDetection";
 import { computeRegretScore } from "../lib/financialIntelligence";
-import { getOpenAIClient } from "../lib/aiOrchestration";
+import { getAIClient } from "../lib/aiOrchestration";
 import { sendPushNotifications } from "../lib/pushNotifications";
 
 const router = Router();
@@ -281,10 +281,10 @@ router.post("/checkin", requireAuth, requireConsent, async (req, res): Promise<v
       moodEmoji = "😟";
     }
 
-    const aiClient = await getOpenAIClient(userId);
+    const aiClient = await getAIClient(userId);
     if (aiClient) {
       const prompt = `Write a 1-sentence personalized daily financial check-in message for someone with a ${scoreResult.level} financial risk level and ${scoreResult.savingsRate}% savings rate. Be warm, brief, and actionable. No bullet points.`;
-      const resp = await aiClient.openai.chat.completions.create({
+      const resp = await aiClient.client.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 60,

@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { decryptApiKey } from "./encryption.js";
 import { generateFallbackRescueNarrative, generateFallbackMoneyStory } from "./fallbackNarratives.js";
 
-export async function getOpenAIClient(userId: string): Promise<{ openai: import("openai").default; source: "user" | "server" } | null> {
+export async function getAIClient(userId: string): Promise<{ client: import("openai").default; source: "user" | "server" } | null> {
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
 
   let apiKey: string | null = null;
@@ -19,15 +19,15 @@ export async function getOpenAIClient(userId: string): Promise<{ openai: import(
     }
   }
 
-  if (!apiKey && process.env.OPENAI_API_KEY) {
-    apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey && process.env.AI_API_KEY) {
+    apiKey = process.env.AI_API_KEY;
     source = "server";
   }
 
   if (!apiKey || !source) return null;
 
   const { default: OpenAI } = await import("openai");
-  return { openai: new OpenAI({ apiKey }), source };
+  return { client: new OpenAI({ apiKey }), source };
 }
 
 export interface NarrativeResult {
@@ -41,9 +41,9 @@ export async function generateRescueNarrative(
   actions: Array<{ title: string; description: string; tag: string; estimatedSaving?: number }>,
   context: { savingsRate: number; spendingVelocityRatio: number; recurringBurdenPct: number }
 ): Promise<NarrativeResult> {
-  const client = await getOpenAIClient(userId);
-  if (!client) {
-    console.warn("[aiOrchestration] generateRescueNarrative: No OpenAI client available (missing or invalid API key). Serving fallback narrative.", { userId, riskLevel });
+  const aiClient = await getAIClient(userId);
+  if (!aiClient) {
+    console.warn("[ai] generateRescueNarrative: No AI key available. Serving fallback narrative.", { userId, riskLevel });
     return { narrative: generateFallbackRescueNarrative(riskLevel, actions, context), aiUnavailable: true };
   }
 
@@ -70,7 +70,7 @@ Write a concise, encouraging 2–3 sentence narrative (max 80 words) that:
 Respond with just the narrative text — no headers, no bullet points.`;
 
   try {
-    const response = await client.openai.chat.completions.create({
+    const response = await aiClient.client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       max_tokens: 150,
@@ -78,20 +78,14 @@ Respond with just the narrative text — no headers, no bullet points.`;
     });
     const text = response.choices[0]?.message?.content?.trim();
     if (!text) {
-      console.warn("[aiOrchestration] generateRescueNarrative: OpenAI returned empty content. Serving fallback narrative.", { userId, riskLevel, source: client.source });
+      console.warn("[ai] generateRescueNarrative: Empty response from model. Serving fallback.", { userId, riskLevel });
       return { narrative: generateFallbackRescueNarrative(riskLevel, actions, context), aiUnavailable: true };
     }
     return { narrative: text, aiUnavailable: false };
   } catch (err) {
     const errorCode = (err as any)?.status ?? (err as any)?.code ?? "unknown";
     const errorMessage = (err as any)?.message ?? String(err);
-    console.error("[aiOrchestration] generateRescueNarrative: OpenAI call failed. Serving fallback narrative.", {
-      userId,
-      riskLevel,
-      source: client.source,
-      errorCode,
-      errorMessage,
-    });
+    console.error("[ai] generateRescueNarrative: Model call failed. Serving fallback.", { userId, riskLevel, errorCode, errorMessage });
     return { narrative: generateFallbackRescueNarrative(riskLevel, actions, context), aiUnavailable: true };
   }
 }
@@ -101,9 +95,9 @@ export async function generateMoneyStory(
   periodLabel: string,
   signals: Record<string, unknown>
 ): Promise<NarrativeResult> {
-  const client = await getOpenAIClient(userId);
-  if (!client) {
-    console.warn("[aiOrchestration] generateMoneyStory: No OpenAI client available (missing or invalid API key). Serving fallback narrative.", { userId, periodLabel });
+  const aiClient = await getAIClient(userId);
+  if (!aiClient) {
+    console.warn("[ai] generateMoneyStory: No AI key available. Serving fallback.", { userId, periodLabel });
     return { narrative: generateFallbackMoneyStory(periodLabel, signals), aiUnavailable: true };
   }
 
@@ -137,7 +131,7 @@ Write in second person ("you", "your"). The story should:
 Make it feel human and insightful — not like a spreadsheet summary. No bullet points or headers.`;
 
   try {
-    const response = await client.openai.chat.completions.create({
+    const response = await aiClient.client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       max_tokens: 300,
@@ -145,20 +139,14 @@ Make it feel human and insightful — not like a spreadsheet summary. No bullet 
     });
     const text = response.choices[0]?.message?.content?.trim();
     if (!text) {
-      console.warn("[aiOrchestration] generateMoneyStory: OpenAI returned empty content. Serving fallback narrative.", { userId, periodLabel, source: client.source });
+      console.warn("[ai] generateMoneyStory: Empty response from model. Serving fallback.", { userId, periodLabel });
       return { narrative: generateFallbackMoneyStory(periodLabel, signals), aiUnavailable: true };
     }
     return { narrative: text, aiUnavailable: false };
   } catch (err) {
     const errorCode = (err as any)?.status ?? (err as any)?.code ?? "unknown";
     const errorMessage = (err as any)?.message ?? String(err);
-    console.error("[aiOrchestration] generateMoneyStory: OpenAI call failed. Serving fallback narrative.", {
-      userId,
-      periodLabel,
-      source: client.source,
-      errorCode,
-      errorMessage,
-    });
+    console.error("[ai] generateMoneyStory: Model call failed. Serving fallback.", { userId, periodLabel, errorCode, errorMessage });
     return { narrative: generateFallbackMoneyStory(periodLabel, signals), aiUnavailable: true };
   }
 }
@@ -168,8 +156,8 @@ export async function generateSimulationNarrative(
   inputs: import("./simulationEngine").ScenarioInputs,
   results: import("./simulationEngine").SimulationResults
 ): Promise<string> {
-  const client = await getOpenAIClient(userId);
-  if (!client) {
+  const aiClient = await getAIClient(userId);
+  if (!aiClient) {
     return generateFallbackSimulationNarrative(inputs, results);
   }
 
@@ -209,7 +197,7 @@ Write a concise, honest 2–3 sentence summary (max 90 words) that:
 Respond with just the narrative — no headers, no bullet points.`;
 
   try {
-    const response = await client.openai.chat.completions.create({
+    const response = await aiClient.client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       max_tokens: 160,
