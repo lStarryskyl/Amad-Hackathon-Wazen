@@ -11,6 +11,7 @@ import summaryRouter from "./summary";
 import aiRouter from "./ai";
 import intelligenceRouter from "./intelligence";
 import simulationsRouter from "./simulations";
+import engagementRouter from "./engagement";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(summaryRouter);
 router.use(aiRouter);
 router.use(intelligenceRouter);
 router.use(simulationsRouter);
+router.use(engagementRouter);
 
 export default router;

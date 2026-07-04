@@ -7,3 +7,7 @@ export * from "./alerts";
 export * from "./consent";
 export * from "./recurring-obligations";
 export * from "./ai-outputs";
+export * from "./guardrails";
+export * from "./streaks";
+export * from "./achievements";
+export * from "./daily-checkins";

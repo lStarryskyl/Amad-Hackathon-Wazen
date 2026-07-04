@@ -353,6 +353,8 @@ export interface MoneyStoryContext {
     recurringObligationCount: number;
     topMerchants: Record<string, number>;
   }>;
+  periodLabel: string;
+  signals: Record<string, unknown>;
 }
 
 export async function buildMoneyStoryContext(userId: string): Promise<MoneyStoryContext> {
@@ -405,5 +407,40 @@ export async function buildMoneyStoryContext(userId: string): Promise<MoneyStory
     });
   }
 
-  return { userId, months };
+  const periodLabel =
+    months.length >= 2
+      ? `${months[0].label} — ${months[months.length - 1].label}`
+      : months[0]?.label ?? "Recent months";
+
+  const monthlyBreakdowns = months.map((m) => ({
+    month: m.label,
+    income: m.income,
+    expenses: m.expenses,
+    savingsRate: m.savingsRate,
+    topCategories: Object.entries(m.topCategories)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, amount]) => ({ name, amount: Math.round(amount) })),
+  }));
+
+  const recurringObligationsTotal = months[0]?.recurringObligationCount ?? 0;
+
+  const signals: Record<string, unknown> = {
+    monthlyBreakdowns,
+    totalBalance: 0,
+    recurringObligationsTotal,
+    topMerchantsAllTime: Object.entries(
+      months.reduce((acc: Record<string, number>, m) => {
+        for (const [k, v] of Object.entries(m.topMerchants)) {
+          acc[k] = (acc[k] ?? 0) + v;
+        }
+        return acc;
+      }, {})
+    )
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([name, amount]) => ({ name, amount: Math.round(amount) })),
+  };
+
+  return { userId, months, periodLabel, signals };
 }

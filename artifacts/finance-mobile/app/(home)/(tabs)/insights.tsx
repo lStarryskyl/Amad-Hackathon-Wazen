@@ -19,8 +19,9 @@ import {
   useGetLatestRescuePlan,
   useGenerateMoneyStory,
   useGetLatestMoneyStory,
+  useGetPatterns,
 } from "@workspace/api-client-react";
-import type { RegretFactor, RescueAction } from "@workspace/api-client-react";
+import type { RegretFactor, RescueAction, BehavioralPattern } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useColors } from "@/hooks/useColors";
 
@@ -44,6 +45,111 @@ function impactColor(impact: string, colors: ReturnType<typeof useColors>) {
   if (impact === "high") return colors.danger;
   if (impact === "medium") return colors.warning;
   return colors.accent;
+}
+
+// ─── Behavioral Patterns Section ─────────────────────────────────────────────
+
+function BehavioralPatternsSection() {
+  const colors = useColors();
+  const { data, isLoading, refetch, isRefetching } = useGetPatterns({
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+
+  const severityColor = (severity: BehavioralPattern["severity"]) => {
+    if (severity === "positive") return colors.accent;
+    if (severity === "warning") return colors.warning;
+    return colors.primary;
+  };
+
+  return (
+    <View style={[styles.card, { backgroundColor: colors.card }]}>
+      <View style={styles.cardHeader}>
+        <View style={styles.row}>
+          <View style={[styles.iconCircle, { backgroundColor: colors.warning + "20" }]}>
+            <Feather name="activity" size={20} color={colors.warning} />
+          </View>
+          <View>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>Behavioral Patterns</Text>
+            <Text style={[styles.cardSubtitle, { color: colors.mutedForeground }]}>Detected from your transaction history</Text>
+          </View>
+        </View>
+        <TouchableOpacity
+          onPress={() => refetch()}
+          disabled={isRefetching}
+          style={[styles.refreshBtn, { borderColor: colors.border }]}
+        >
+          {isRefetching
+            ? <ActivityIndicator size="small" color={colors.primary} />
+            : <Feather name="refresh-cw" size={16} color={colors.mutedForeground} />}
+        </TouchableOpacity>
+      </View>
+
+      {isLoading && (
+        <View style={[styles.emptyState, { backgroundColor: colors.cardElevated }]}>
+          <ActivityIndicator color={colors.primary} style={{ marginBottom: 8 }} />
+          <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>Analyzing your spending patterns…</Text>
+        </View>
+      )}
+
+      {!isLoading && (!data?.patterns || data.patterns.length === 0) && (
+        <View style={[styles.emptyState, { backgroundColor: colors.cardElevated }]}>
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>No Patterns Yet</Text>
+          <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
+            Add more transactions to start seeing behavioral patterns.
+          </Text>
+        </View>
+      )}
+
+      {data?.patterns && data.patterns.length > 0 && (
+        <View style={styles.patternsContainer}>
+          {data.patterns.map((pattern) => (
+            <PatternCard key={pattern.key} pattern={pattern} severityColor={severityColor} colors={colors} />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+function PatternCard({
+  pattern,
+  severityColor,
+  colors,
+}: {
+  pattern: BehavioralPattern;
+  severityColor: (s: BehavioralPattern["severity"]) => string;
+  colors: ReturnType<typeof useColors>;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const color = severityColor(pattern.severity);
+
+  return (
+    <TouchableOpacity
+      style={[styles.patternCard, { backgroundColor: colors.cardElevated, borderLeftColor: color, borderLeftWidth: 3 }]}
+      onPress={() => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        setExpanded(!expanded);
+      }}
+      activeOpacity={0.8}
+    >
+      <View style={styles.patternHeader}>
+        <Text style={styles.patternEmoji}>{pattern.icon}</Text>
+        <View style={styles.patternMiddle}>
+          <Text style={[styles.patternTitle, { color: colors.text }]}>{pattern.title}</Text>
+          {pattern.dataPoint && (
+            <View style={[styles.dataPill, { backgroundColor: color + "20" }]}>
+              <Text style={[styles.dataPillText, { color }]}>{pattern.dataPoint}</Text>
+            </View>
+          )}
+        </View>
+        <Feather name={expanded ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedForeground} />
+      </View>
+      {expanded && (
+        <Text style={[styles.patternDesc, { color: colors.textSecondary }]}>{pattern.description}</Text>
+      )}
+    </TouchableOpacity>
+  );
 }
 
 // ─── Regret Meter Section ────────────────────────────────────────────────────
@@ -433,6 +539,7 @@ export default function InsightsScreen() {
         </Text>
       </View>
 
+      <BehavioralPatternsSection />
       <RegretMeterSection />
       <RescuePlanSection />
       <MoneyStoriesSection />
@@ -486,6 +593,20 @@ const styles = StyleSheet.create({
   generateBtnText: { color: "#fff", fontSize: 13, fontWeight: "700" },
 
   loadingText: { textAlign: "center", marginTop: 8, fontSize: 13 },
+
+  patternsContainer: { gap: 10 },
+  patternCard: {
+    padding: 14,
+    borderRadius: 16,
+    marginBottom: 0,
+  },
+  patternHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
+  patternEmoji: { fontSize: 24 },
+  patternMiddle: { flex: 1 },
+  patternTitle: { fontSize: 15, fontWeight: "700", marginBottom: 4 },
+  dataPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, alignSelf: "flex-start" },
+  dataPillText: { fontSize: 11, fontWeight: "700" },
+  patternDesc: { fontSize: 13, lineHeight: 19, marginTop: 10, paddingLeft: 34 },
 
   scoreDisplay: {
     flexDirection: "row",
