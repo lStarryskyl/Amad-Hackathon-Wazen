@@ -10,6 +10,7 @@ import onboardingRouter from "./onboarding";
 import summaryRouter from "./summary";
 import aiRouter from "./ai";
 import intelligenceRouter from "./intelligence";
+import simulationsRouter from "./simulations";
 
 const router: IRouter = Router();
 
@@ -24,5 +25,6 @@ router.use(onboardingRouter);
 router.use(summaryRouter);
 router.use(aiRouter);
 router.use(intelligenceRouter);
+router.use(simulationsRouter);
 
 export default router;
