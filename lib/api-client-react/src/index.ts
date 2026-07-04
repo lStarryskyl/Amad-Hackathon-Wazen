@@ -8,6 +8,7 @@ export type {
   RescueAction,
   RescuePlan,
   MoneyStory,
+  TransactionCount,
 } from "./intelligence";
 export {
   getRegretScoreUrl,
@@ -32,6 +33,10 @@ export {
   getLatestMoneyStory,
   getLatestMoneyStoryQueryKey,
   useGetLatestMoneyStory,
+  getTransactionCountUrl,
+  getTransactionCount,
+  getTransactionCountQueryKey,
+  useGetTransactionCount,
 } from "./intelligence";
 export * from "./generated/api";
 export * from "./generated/api.schemas";

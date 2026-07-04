@@ -1,12 +1,24 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { transactionsTable, categoriesTable } from "@workspace/db";
-import { eq, and, gte, lte, desc } from "drizzle-orm";
+import { eq, and, gte, lte, desc, count } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
 import { requireConsent } from "../middlewares/requireConsent";
 import { getOrCreateUser } from "../lib/userProvisioning";
 
 const router = Router();
+
+router.get("/transactions/count", requireAuth, requireConsent, async (req, res) => {
+  const userId = (req as any).userId as string;
+  await getOrCreateUser(userId);
+
+  const [result] = await db
+    .select({ count: count() })
+    .from(transactionsTable)
+    .where(eq(transactionsTable.userId, userId));
+
+  res.json({ count: result?.count ?? 0 });
+});
 
 router.get("/transactions", requireAuth, requireConsent, async (req, res) => {
   const userId = (req as any).userId as string;

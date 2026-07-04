@@ -167,3 +167,25 @@ export const useGetLatestMoneyStory = <TData = MoneyStory, TError = unknown>(
     queryFn: () => getLatestMoneyStory(),
     ...options,
   });
+
+// --- Transaction Count ---
+
+export interface TransactionCount {
+  count: number;
+}
+
+export const getTransactionCountUrl = () => `/api/transactions/count`;
+
+export const getTransactionCount = async (options?: RequestInit): Promise<TransactionCount> =>
+  customFetch<TransactionCount>(getTransactionCountUrl(), { ...options, method: "GET" });
+
+export const getTransactionCountQueryKey = () => [getTransactionCountUrl()] as const;
+
+export const useGetTransactionCount = <TData = TransactionCount, TError = unknown>(
+  options?: Omit<UseQueryOptions<TransactionCount, TError, TData>, "queryKey" | "queryFn">
+): UseQueryResult<TData, TError> =>
+  useQuery({
+    queryKey: getTransactionCountQueryKey(),
+    queryFn: () => getTransactionCount(),
+    ...options,
+  });

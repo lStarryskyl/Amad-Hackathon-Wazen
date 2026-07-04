@@ -21,6 +21,7 @@ import {
   useGenerateMoneyStory,
   useGetLatestMoneyStory,
   useGetPatterns,
+  useGetTransactionCount,
 } from "@workspace/api-client-react";
 import type { RegretFactor, RescueAction, BehavioralPattern } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -494,10 +495,58 @@ function MoneyStoriesSection() {
   const { mutate: generate, isPending, data: freshStory } = useGenerateMoneyStory({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/ai/money-story/latest"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions/count"] });
     },
+  });
+  const { data: txCountData, isLoading: isCountLoading } = useGetTransactionCount({
+    staleTime: 30 * 1000,
+    retry: 1,
   });
 
   const story = freshStory ?? latest;
+  const hasNoTransactions = !isCountLoading && txCountData !== undefined && txCountData.count === 0;
+
+  const noDataContent = (
+    <View style={[styles.noDataState, { backgroundColor: colors.cardElevated }]}>
+      <View style={[styles.noDataIconRow]}>
+        <View style={[styles.noDataIconBubble, { backgroundColor: colors.accent + "18" }]}>
+          <Feather name="book-open" size={36} color={colors.accent} />
+        </View>
+      </View>
+      <Text style={[styles.noDataTitle, { color: colors.text }]}>Your Story Hasn't Started Yet</Text>
+      <Text style={[styles.noDataDesc, { color: colors.mutedForeground }]}>
+        Money Stories turns your spending and saving into a personalized financial narrative. Add at least one transaction to get started.
+      </Text>
+      <View style={[styles.noDataSteps, { borderColor: colors.border }]}>
+        <View style={styles.noDataStep}>
+          <View style={[styles.noDataStepNum, { backgroundColor: colors.primary + "20" }]}>
+            <Text style={[styles.noDataStepNumText, { color: colors.primary }]}>1</Text>
+          </View>
+          <Text style={[styles.noDataStepText, { color: colors.textSecondary }]}>Add your first transaction on the Home tab</Text>
+        </View>
+        <View style={styles.noDataStep}>
+          <View style={[styles.noDataStepNum, { backgroundColor: colors.primary + "20" }]}>
+            <Text style={[styles.noDataStepNumText, { color: colors.primary }]}>2</Text>
+          </View>
+          <Text style={[styles.noDataStepText, { color: colors.textSecondary }]}>Keep logging for a month to build context</Text>
+        </View>
+        <View style={styles.noDataStep}>
+          <View style={[styles.noDataStepNum, { backgroundColor: colors.accent + "20" }]}>
+            <Text style={[styles.noDataStepNumText, { color: colors.accent }]}>3</Text>
+          </View>
+          <Text style={[styles.noDataStepText, { color: colors.textSecondary }]}>Generate your personalized financial narrative</Text>
+        </View>
+      </View>
+      <TouchableOpacity
+        style={[styles.noDataCTA, { backgroundColor: colors.primary }]}
+        onPress={() => router.navigate("/(home)/(tabs)/")}
+        activeOpacity={0.85}
+      >
+        <Feather name="plus-circle" size={18} color="#fff" />
+        <Text style={styles.noDataCTAText}>Add Your First Transaction</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <View style={[styles.card, { backgroundColor: colors.card }]}>
@@ -511,18 +560,22 @@ function MoneyStoriesSection() {
             <Text style={[styles.cardSubtitle, { color: colors.mutedForeground }]}>Your financial life, narrated</Text>
           </View>
         </View>
-        <TouchableOpacity
-          style={[styles.generateBtn, { backgroundColor: colors.accent }]}
-          onPress={() => generate()}
-          disabled={isPending}
-        >
-          {isPending
-            ? <ActivityIndicator size="small" color="#fff" />
-            : <Text style={styles.generateBtnText}>{story ? "Refresh" : "Generate"}</Text>}
-        </TouchableOpacity>
+        {!hasNoTransactions && (
+          <TouchableOpacity
+            style={[styles.generateBtn, { backgroundColor: colors.accent }]}
+            onPress={() => generate()}
+            disabled={isPending}
+          >
+            {isPending
+              ? <ActivityIndicator size="small" color="#fff" />
+              : <Text style={styles.generateBtnText}>{story ? "Refresh" : "Generate"}</Text>}
+          </TouchableOpacity>
+        )}
       </View>
 
-      {!story && !isPending && (
+      {hasNoTransactions && noDataContent}
+
+      {!hasNoTransactions && !story && !isPending && (
         <View style={[styles.emptyState, { backgroundColor: colors.cardElevated }]}>
           <Feather name="book" size={32} color={colors.accent} style={{ marginBottom: 12 }} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>Your Financial Story</Text>
@@ -532,7 +585,7 @@ function MoneyStoriesSection() {
         </View>
       )}
 
-      {isPending && !story && (
+      {!hasNoTransactions && isPending && !story && (
         <View style={[styles.emptyState, { backgroundColor: colors.cardElevated }]}>
           <ActivityIndicator color={colors.accent} style={{ marginBottom: 12 }} />
           <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
@@ -541,49 +594,9 @@ function MoneyStoriesSection() {
         </View>
       )}
 
-      {story && (story as any).noData && (
-        <View style={[styles.noDataState, { backgroundColor: colors.cardElevated }]}>
-          <View style={[styles.noDataIconRow]}>
-            <View style={[styles.noDataIconBubble, { backgroundColor: colors.accent + "18" }]}>
-              <Feather name="book-open" size={36} color={colors.accent} />
-            </View>
-          </View>
-          <Text style={[styles.noDataTitle, { color: colors.text }]}>Your Story Hasn't Started Yet</Text>
-          <Text style={[styles.noDataDesc, { color: colors.mutedForeground }]}>
-            Money Stories turns your spending and saving into a personalized financial narrative. Add at least one transaction to get started.
-          </Text>
-          <View style={[styles.noDataSteps, { borderColor: colors.border }]}>
-            <View style={styles.noDataStep}>
-              <View style={[styles.noDataStepNum, { backgroundColor: colors.primary + "20" }]}>
-                <Text style={[styles.noDataStepNumText, { color: colors.primary }]}>1</Text>
-              </View>
-              <Text style={[styles.noDataStepText, { color: colors.textSecondary }]}>Add your first transaction on the Home tab</Text>
-            </View>
-            <View style={styles.noDataStep}>
-              <View style={[styles.noDataStepNum, { backgroundColor: colors.primary + "20" }]}>
-                <Text style={[styles.noDataStepNumText, { color: colors.primary }]}>2</Text>
-              </View>
-              <Text style={[styles.noDataStepText, { color: colors.textSecondary }]}>Keep logging for a month to build context</Text>
-            </View>
-            <View style={styles.noDataStep}>
-              <View style={[styles.noDataStepNum, { backgroundColor: colors.accent + "20" }]}>
-                <Text style={[styles.noDataStepNumText, { color: colors.accent }]}>3</Text>
-              </View>
-              <Text style={[styles.noDataStepText, { color: colors.textSecondary }]}>Generate your personalized financial narrative</Text>
-            </View>
-          </View>
-          <TouchableOpacity
-            style={[styles.noDataCTA, { backgroundColor: colors.primary }]}
-            onPress={() => router.navigate("/(home)/(tabs)/")}
-            activeOpacity={0.85}
-          >
-            <Feather name="plus-circle" size={18} color="#fff" />
-            <Text style={styles.noDataCTAText}>Add Your First Transaction</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {!hasNoTransactions && story && (story as any).noData && noDataContent}
 
-      {story && !(story as any).noData && (
+      {!hasNoTransactions && story && !(story as any).noData && (
         <View>
           <View style={[styles.storyPeriod, { backgroundColor: colors.accent + "15", borderColor: colors.accent + "30" }]}>
             <Feather name="calendar" size={14} color={colors.accent} />
