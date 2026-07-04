@@ -1,0 +1,1 @@
+- [AI Finance App Architecture](ai-finance-arch.md) — Expo SDK 54 + Express API + PostgreSQL + Clerk auth; key wiring decisions for prod

@@ -3,13 +3,31 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AI-enabled personal finance API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: profile
+    description: User profile management
+  - name: accounts
+    description: Financial accounts
+  - name: transactions
+    description: Transaction history
+  - name: categories
+    description: Spending categories
+  - name: goals
+    description: Financial goals
+  - name: consent
+    description: Consent management
+  - name: onboarding
+    description: Onboarding flow
+  - name: summary
+    description: Dashboard summary
+  - name: ai
+    description: AI services
 paths:
   /healthz:
     get:
@@ -24,7 +42,372 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get user profile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Update user profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+      responses:
+        "200":
+          description: Updated user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /accounts:
+    get:
+      operationId: getAccounts
+      tags: [accounts]
+      summary: List all linked accounts
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Account"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /accounts/{id}:
+    get:
+      operationId: getAccount
+      tags: [accounts]
+      summary: Get account by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Account detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /transactions:
+    get:
+      operationId: getTransactions
+      tags: [transactions]
+      summary: List transactions with optional filters
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accountId
+          in: query
+          schema:
+            type: integer
+        - name: categoryId
+          in: query
+          schema:
+            type: integer
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Paginated transaction list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransactionList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /categories:
+    get:
+      operationId: getCategories
+      tags: [categories]
+      summary: List spending categories
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /goals:
+    get:
+      operationId: getGoals
+      tags: [goals]
+      summary: List financial goals
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of goals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Goal"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createGoal
+      tags: [goals]
+      summary: Create a financial goal
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGoalRequest"
+      responses:
+        "201":
+          description: Created goal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Goal"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /goals/{id}:
+    get:
+      operationId: getGoal
+      tags: [goals]
+      summary: Get goal by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Goal detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Goal"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateGoal
+      tags: [goals]
+      summary: Update a financial goal
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGoalRequest"
+      responses:
+        "200":
+          description: Updated goal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Goal"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteGoal
+      tags: [goals]
+      summary: Delete a financial goal
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted successfully
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /consent:
+    get:
+      operationId: getConsentStatus
+      tags: [consent]
+      summary: Get user consent status
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Consent status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsentStatus"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /consent/accept:
+    post:
+      operationId: acceptConsent
+      tags: [consent]
+      summary: Accept data consent
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Consent accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsentStatus"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /onboarding:
+    get:
+      operationId: getOnboardingStatus
+      tags: [onboarding]
+      summary: Get onboarding status
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Onboarding status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingStatus"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      operationId: completeOnboarding
+      tags: [onboarding]
+      summary: Mark onboarding as complete
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Updated onboarding status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingStatus"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /summary:
+    get:
+      operationId: getFinancialSummary
+      tags: [summary]
+      summary: Get dashboard financial summary
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Financial summary for dashboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FinancialSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /ai/test:
+    get:
+      operationId: testAiService
+      tags: [ai]
+      summary: Test AI service connection
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: AI test result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiTestResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  responses:
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiError"
   schemas:
     HealthStatus:
       type: object
@@ -33,4 +416,311 @@ components:
           type: string
       required:
         - status
-
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        hasConsented:
+          type: boolean
+        onboardingCompleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - hasConsented
+        - onboardingCompleted
+        - createdAt
+    UpdateProfileRequest:
+      type: object
+      properties:
+        name:
+          type: string
+    Account:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        institutionName:
+          type: string
+        accountName:
+          type: string
+        accountType:
+          type: string
+        balance:
+          type: string
+        currency:
+          type: string
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - institutionName
+        - accountName
+        - accountType
+        - balance
+        - currency
+        - isActive
+        - createdAt
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        accountId:
+          type: integer
+        categoryId:
+          type: integer
+          nullable: true
+        amount:
+          type: string
+        description:
+          type: string
+        merchantName:
+          type: string
+          nullable: true
+        date:
+          type: string
+        type:
+          type: string
+          enum: [debit, credit]
+        isRecurring:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        categoryName:
+          type: string
+          nullable: true
+        categoryColor:
+          type: string
+          nullable: true
+        categoryIcon:
+          type: string
+          nullable: true
+      required:
+        - id
+        - accountId
+        - amount
+        - description
+        - date
+        - type
+        - isRecurring
+        - createdAt
+    TransactionList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+      required:
+        - items
+        - total
+        - limit
+        - offset
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        icon:
+          type: string
+        color:
+          type: string
+      required:
+        - id
+        - name
+        - icon
+        - color
+    Goal:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: string
+        name:
+          type: string
+        targetAmount:
+          type: string
+        currentAmount:
+          type: string
+        targetDate:
+          type: string
+          nullable: true
+        category:
+          type: string
+        status:
+          type: string
+          enum: [active, completed, paused]
+        createdAt:
+          type: string
+          format: date-time
+        progressPercent:
+          type: number
+      required:
+        - id
+        - userId
+        - name
+        - targetAmount
+        - currentAmount
+        - category
+        - status
+        - createdAt
+        - progressPercent
+    CreateGoalRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        targetAmount:
+          type: string
+        currentAmount:
+          type: string
+        targetDate:
+          type: string
+        category:
+          type: string
+      required:
+        - name
+        - targetAmount
+    UpdateGoalRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        targetAmount:
+          type: string
+        currentAmount:
+          type: string
+        targetDate:
+          type: string
+          nullable: true
+        category:
+          type: string
+        status:
+          type: string
+          enum: [active, completed, paused]
+    ConsentStatus:
+      type: object
+      properties:
+        hasConsented:
+          type: boolean
+        consentGivenAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - hasConsented
+    OnboardingStatus:
+      type: object
+      properties:
+        completed:
+          type: boolean
+        currentStep:
+          type: integer
+        totalSteps:
+          type: integer
+      required:
+        - completed
+        - currentStep
+        - totalSteps
+    CategorySummary:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+        categoryName:
+          type: string
+        categoryColor:
+          type: string
+        categoryIcon:
+          type: string
+        totalAmount:
+          type: number
+        percentage:
+          type: number
+      required:
+        - categoryId
+        - categoryName
+        - categoryColor
+        - categoryIcon
+        - totalAmount
+        - percentage
+    FinancialSummary:
+      type: object
+      properties:
+        totalBalance:
+          type: number
+        totalIncome:
+          type: number
+        totalExpenses:
+          type: number
+        savingsRate:
+          type: number
+        topCategories:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategorySummary"
+        recentTransactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+        accountCount:
+          type: integer
+        transactionCount:
+          type: integer
+      required:
+        - totalBalance
+        - totalIncome
+        - totalExpenses
+        - savingsRate
+        - topCategories
+        - recentTransactions
+        - accountCount
+        - transactionCount
+    AiTestResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        model:
+          type: string
+          nullable: true
+      required:
+        - success
+        - message
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required:
+        - error
