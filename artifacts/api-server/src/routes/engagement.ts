@@ -8,6 +8,7 @@ import {
   alertsTable,
   transactionsTable,
   categoriesTable,
+  pushTokensTable,
 } from "@workspace/db";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
@@ -16,6 +17,7 @@ import { getOrCreateUser } from "../lib/userProvisioning";
 import { detectBehavioralPatterns } from "../lib/patternDetection";
 import { computeRegretScore } from "../lib/financialIntelligence";
 import { getOpenAIClient } from "../lib/aiOrchestration";
+import { sendPushNotifications } from "../lib/pushNotifications";
 
 const router = Router();
 
@@ -378,6 +380,28 @@ router.patch("/alerts/:id/read", requireAuth, requireConsent, async (req, res): 
   res.json({ ok: true });
 });
 
+// ─── Push Token Registration ──────────────────────────────────────────────────
+
+router.post("/push-token", requireAuth, async (req, res): Promise<void> => {
+  const userId = (req as any).userId as string;
+  const { token } = req.body as { token?: string };
+
+  if (!token || typeof token !== "string") {
+    res.status(400).json({ error: "InvalidToken", message: "token is required" });
+    return;
+  }
+
+  await db
+    .insert(pushTokensTable)
+    .values({ userId, token })
+    .onConflictDoUpdate({
+      target: pushTokensTable.token,
+      set: { userId, updatedAt: new Date() },
+    });
+
+  res.json({ ok: true });
+});
+
 router.post("/alerts/read-all", requireAuth, requireConsent, async (req, res): Promise<void> => {
   const userId = (req as any).userId as string;
   await db
@@ -444,6 +468,24 @@ router.post("/guardrails/check-alerts", requireAuth, requireConsent, async (req,
         relatedEntityId: String(g.id),
       }).returning();
       newAlerts.push(a);
+    }
+  }
+
+  if (newAlerts.length > 0) {
+    const tokenRows = await db
+      .select({ token: pushTokensTable.token })
+      .from(pushTokensTable)
+      .where(eq(pushTokensTable.userId, userId));
+
+    const tokens = tokenRows.map((r) => r.token);
+    if (tokens.length > 0) {
+      for (const alert of newAlerts) {
+        sendPushNotifications(tokens, {
+          title: alert.title,
+          body: alert.message,
+          data: { screen: "progress", guardrailId: alert.relatedEntityId },
+        }).catch((err) => console.error("[push] Notification send error", err));
+      }
     }
   }
 

@@ -4,6 +4,7 @@ import { Redirect, Stack } from "expo-router";
 import { useAuth } from "@clerk/expo";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { useGetOnboardingStatus } from "@workspace/api-client-react";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 function LoadingScreen() {
   return (
@@ -43,6 +44,8 @@ export default function HomeLayout() {
   useEffect(() => {
     setAuthTokenGetter(() => getToken());
   }, [getToken]);
+
+  usePushNotifications();
 
   if (!isSignedIn) return <Redirect href="/(auth)/sign-in" />;
 

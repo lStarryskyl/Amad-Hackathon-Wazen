@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Animated,
   Alert,
 } from "react-native";
+import { useLocalSearchParams } from "expo-router";
 import {
   useGetGoals,
   useGetStreaks,
@@ -135,8 +136,9 @@ function AchievementsSection({ colors }: { colors: ReturnType<typeof useColors> 
 
 // ─── Guardrails ───────────────────────────────────────────────────────────────
 
-function GuardrailBar({ standing, colors }: { standing: GuardrailStanding; colors: ReturnType<typeof useColors> }) {
+function GuardrailBar({ standing, colors, highlighted }: { standing: GuardrailStanding; colors: ReturnType<typeof useColors>; highlighted?: boolean }) {
   const anim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   React.useEffect(() => {
     Animated.spring(anim, {
@@ -147,14 +149,30 @@ function GuardrailBar({ standing, colors }: { standing: GuardrailStanding; color
     }).start();
   }, [standing.spentPercent]);
 
+  React.useEffect(() => {
+    if (highlighted) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 0.6, duration: 600, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+        ]),
+        { iterations: 3 }
+      ).start();
+    }
+  }, [highlighted]);
+
   const barColor =
     standing.status === "breached" ? colors.danger :
     standing.status === "warning" ? colors.warning : colors.accent;
 
   const width = anim.interpolate({ inputRange: [0, 1], outputRange: ["0%", "100%"] });
 
+  const highlightBorder = highlighted
+    ? { borderWidth: 2, borderColor: barColor }
+    : {};
+
   return (
-    <View style={[styles.guardrailBar, { backgroundColor: colors.card }]}>
+    <Animated.View style={[styles.guardrailBar, { backgroundColor: colors.card, opacity: pulseAnim }, highlightBorder]}>
       <View style={styles.guardrailBarHeader}>
         <View style={styles.guardrailBarLeft}>
           <View style={[styles.guardrailDot, { backgroundColor: standing.guardrail.color }]} />
@@ -181,7 +199,7 @@ function GuardrailBar({ standing, colors }: { standing: GuardrailStanding; color
             : `$${standing.remaining.toFixed(0)} remaining`}
         </Text>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -196,7 +214,7 @@ const CATEGORY_OPTIONS = [
   { name: "Other", color: "#64748b" },
 ];
 
-function GuardrailsSection({ colors }: { colors: ReturnType<typeof useColors> }) {
+function GuardrailsSection({ colors, highlightId }: { colors: ReturnType<typeof useColors>; highlightId?: string }) {
   const queryClient = useQueryClient();
   const { data: standing, isLoading } = useGetGuardrailStanding({ staleTime: 60_000 });
   const { mutate: createGuardrail, isPending: creating } = useCreateGuardrail({
@@ -269,7 +287,11 @@ function GuardrailsSection({ colors }: { colors: ReturnType<typeof useColors> })
           onLongPress={() => handleDelete(s.guardrail.id, s.guardrail.categoryName)}
           activeOpacity={0.9}
         >
-          <GuardrailBar standing={s} colors={colors} />
+          <GuardrailBar
+            standing={s}
+            colors={colors}
+            highlighted={highlightId === String(s.guardrail.id)}
+          />
         </TouchableOpacity>
       ))}
 
@@ -471,9 +493,22 @@ function GoalCard({ item, colors }: { item: any; colors: ReturnType<typeof useCo
 export default function ProgressScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const { guardrailId } = useLocalSearchParams<{ guardrailId?: string }>();
+  const scrollRef = useRef<ScrollView>(null);
+  const guardrailSectionY = useRef(0);
+
+  useEffect(() => {
+    if (guardrailId && scrollRef.current) {
+      const timer = setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: guardrailSectionY.current, animated: true });
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [guardrailId]);
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: insets.top + 20, paddingBottom: 120, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}
@@ -485,7 +520,13 @@ export default function ProgressScreen() {
 
       <StreaksSection colors={colors} />
       <AchievementsSection colors={colors} />
-      <GuardrailsSection colors={colors} />
+      <View
+        onLayout={(e) => {
+          guardrailSectionY.current = e.nativeEvent.layout.y;
+        }}
+      >
+        <GuardrailsSection colors={colors} highlightId={guardrailId} />
+      </View>
       <GoalsSection colors={colors} />
     </ScrollView>
   );

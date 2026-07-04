@@ -42,5 +42,5 @@ export * from "./generated/api";
 export * from "./generated/api.schemas";
 export * from "./simulations";
 export * from "./engagement";
-export { setBaseUrl, setAuthTokenGetter } from "./custom-fetch";
+export { setBaseUrl, setAuthTokenGetter, customFetch } from "./custom-fetch";
 export type { AuthTokenGetter } from "./custom-fetch";

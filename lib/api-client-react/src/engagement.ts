@@ -250,3 +250,11 @@ export const useMarkAllAlertsRead = <TError = unknown, TContext = unknown>(
   options?: UseMutationOptions<{ ok: boolean }, TError, void, TContext>
 ): UseMutationResult<{ ok: boolean }, TError, void, TContext> =>
   useMutation({ mutationFn: () => markAllAlertsRead(), ...options });
+
+// ─── Push Token ───────────────────────────────────────────────────────────────
+
+export const registerPushToken = async (token: string): Promise<{ ok: boolean }> =>
+  customFetch<{ ok: boolean }>("/api/push-token", {
+    method: "POST",
+    body: JSON.stringify({ token }),
+  });
