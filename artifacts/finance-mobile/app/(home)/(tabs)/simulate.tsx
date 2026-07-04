@@ -647,7 +647,16 @@ export default function SimulateScreen() {
     if (compareIds.length !== 2 || !simulations) return;
     const runA = simulations.find((r) => r.id === compareIds[0]);
     const runB = simulations.find((r) => r.id === compareIds[1]);
-    if (!runA || !runB || !runA.results || !runB.results) return;
+    if (!runA || !runB) return;
+    if (!runA.results || !runB.results) {
+      const missingName = !runA.results ? runA.scenarioName : runB.scenarioName;
+      Alert.alert(
+        "Scenario unavailable",
+        `"${missingName}" has no simulation results yet and can't be compared. Please select a different scenario.`,
+        [{ text: "OK" }]
+      );
+      return;
+    }
     setCompareRuns([runA, runB]);
     setScreen("compare");
   }, [compareIds, simulations]);
@@ -983,15 +992,33 @@ export default function SimulateScreen() {
             onLayout={(e) => setChartWidth(e.nativeEvent.layout.width - 32)}
           >
             <Text style={[gs.sectionLabel, { color: colors.mutedForeground, marginBottom: 16 }]}>BALANCE TRAJECTORIES</Text>
-            {chartWidth > 10 && resA.dataPoints && resB.dataPoints && (
-              <CompareChart
-                dataPointsA={resA.dataPoints}
-                dataPointsB={resB.dataPoints}
-                labelA={runA.scenarioName}
-                labelB={runB.scenarioName}
-                width={chartWidth}
-              />
-            )}
+            {(() => {
+              const dpA = resA.dataPoints ?? [];
+              const dpB = resB.dataPoints ?? [];
+              const hasData = dpA.length >= 2 && dpB.length >= 2;
+              if (!hasData) {
+                return (
+                  <View style={{ alignItems: "center", paddingVertical: 28 }}>
+                    <Feather name="bar-chart-2" size={28} color={colors.mutedForeground} style={{ marginBottom: 10 }} />
+                    <Text style={{ fontSize: 14, fontWeight: "600", color: colors.textSecondary, marginBottom: 4 }}>
+                      Not enough data to chart
+                    </Text>
+                    <Text style={{ fontSize: 12, color: colors.mutedForeground, textAlign: "center", maxWidth: 240 }}>
+                      One or both scenarios don't have enough data points to draw a trajectory.
+                    </Text>
+                  </View>
+                );
+              }
+              return chartWidth > 10 ? (
+                <CompareChart
+                  dataPointsA={dpA}
+                  dataPointsB={dpB}
+                  labelA={runA.scenarioName}
+                  labelB={runB.scenarioName}
+                  width={chartWidth}
+                />
+              ) : null;
+            })()}
           </View>
 
           {/* Diff table */}
