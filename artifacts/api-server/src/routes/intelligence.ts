@@ -123,7 +123,20 @@ router.post("/ai/money-story", requireAuth, requireConsent, async (req, res): Pr
   await getOrCreateUser(userId);
 
   try {
-    const { periodLabel, signals } = await buildMoneyStoryContext(userId);
+    const context = await buildMoneyStoryContext(userId);
+    const latestMonth = context.months[context.months.length - 1];
+    const periodLabel = latestMonth?.label ?? new Date().toLocaleString("default", { month: "long", year: "numeric" });
+    const signals: Record<string, unknown> = {
+      monthlyBreakdowns: context.months.map((m) => ({
+        month: m.label,
+        income: m.income,
+        expenses: m.expenses,
+        savingsRate: m.savingsRate,
+        topCategories: Object.entries(m.topCategories).map(([name, amount]) => ({ name, amount })),
+      })),
+      totalBalance: context.months.reduce((s, m) => s + m.income - m.expenses, 0),
+      recurringObligationsTotal: latestMonth?.recurringObligationCount ?? 0,
+    };
     const narrative = await generateMoneyStory(userId, periodLabel, signals);
 
     const [saved] = await db.insert(moneyStoriesTable).values({

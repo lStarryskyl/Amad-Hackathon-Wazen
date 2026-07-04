@@ -26,7 +26,7 @@ router.get("/rescue-plans", requireAuth, requireConsent, async (req, res): Promi
 
   const monthlyExpenses = monthTxs.filter((t) => t.type === "debit").reduce((s, t) => s + parseFloat(t.amount), 0);
 
-  const actions = buildRescueActions(score, monthlyExpenses);
+  const actions = await buildRescueActions(userId, score);
 
   // Try to enrich with AI narrative (best-effort, non-blocking)
   let narrative: string | null = null;
