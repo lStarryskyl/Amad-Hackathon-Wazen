@@ -93,6 +93,7 @@ router.get("/rescue-plans", requireAuth, requireConsent, async (req, res): Promi
     riskLevel: plan.riskLevel,
     actions: plan.actions as any,
     narrative: plan.narrative,
+    aiUnavailable: plan.aiUnavailable,
   });
 
   res.json(plan);

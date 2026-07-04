@@ -86,6 +86,7 @@ router.post("/ai/rescue-plan", requireAuth, requireConsent, async (req, res): Pr
       riskLevel: scoreResult.level,
       actions: actions as any,
       narrative: narrativeResult.narrative,
+      aiUnavailable: narrativeResult.aiUnavailable ?? false,
     }).returning();
 
     res.json({
@@ -168,6 +169,7 @@ router.post("/ai/money-story", requireAuth, requireConsent, async (req, res): Pr
       userId,
       periodLabel,
       narrative: narrativeResult.narrative,
+      aiUnavailable: narrativeResult.aiUnavailable ?? false,
     }).returning();
 
     res.json({

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, jsonb, boolean } from "drizzle-orm/pg-core";
 
 export const regretScoresTable = pgTable("regret_scores", {
   id: serial("id").primaryKey(),
@@ -16,6 +16,7 @@ export const rescuePlansTable = pgTable("rescue_plans", {
   riskLevel: text("risk_level").notNull(),
   actions: jsonb("actions").notNull(), // JSON array of action objects
   narrative: text("narrative"),
+  aiUnavailable: boolean("ai_unavailable").default(false),
   generatedAt: timestamp("generated_at").notNull().defaultNow(),
 });
 
@@ -24,6 +25,7 @@ export const moneyStoriesTable = pgTable("money_stories", {
   userId: text("user_id").notNull(),
   periodLabel: text("period_label").notNull(),
   narrative: text("narrative").notNull(),
+  aiUnavailable: boolean("ai_unavailable").default(false),
   generatedAt: timestamp("generated_at").notNull().defaultNow(),
 });
 
