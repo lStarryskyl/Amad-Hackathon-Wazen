@@ -16,6 +16,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import icon from "@/assets/icon.png";
+import logo from "@/assets/logo.png";
 import { useRef, useEffect, useState, useCallback } from "react";
 
 const GOLD = "#F59E0B";
@@ -94,6 +95,29 @@ function StatCard({ value, suffix, label, delay }: { value: number; suffix: stri
       </div>
       <div className="text-sm font-medium uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.4)" }}>
         {label}
+      </div>
+    </motion.div>
+  );
+}
+
+function CapabilityCard({ eyebrow, heading, sub, delay }: { eyebrow: string; heading: string; sub: string; delay: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      className="flex-1 px-10 py-12 last:border-r-0 text-center"
+      style={{ borderRight: `1px solid ${BORDER}` }}
+    >
+      <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: GOLD }}>
+        {eyebrow}
+      </div>
+      <div className="text-4xl md:text-5xl font-black text-white tracking-tight mb-3">
+        {heading}
+      </div>
+      <div className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.4)" }}>
+        {sub}
       </div>
     </motion.div>
   );
@@ -194,14 +218,11 @@ export default function Home() {
       >
         <div className="max-w-7xl mx-auto px-6 h-18 flex items-center justify-between" style={{ height: 72 }}>
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <img
-                src={icon}
-                alt="Pulse"
-                className="w-8 h-8 rounded-xl"
-                style={{ boxShadow: `0 0 0 1px ${BORDER}` }}
-              />
-            </div>
+            <img
+              src={logo}
+              alt="Pulse"
+              className="w-10 h-10 rounded-xl object-cover"
+            />
             <span className="font-bold text-lg tracking-tight text-white">Pulse</span>
           </div>
           <motion.button
@@ -378,15 +399,30 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ── STATS ── */}
+      {/* ── CAPABILITIES ── */}
       <section
         className="border-b"
         style={{ borderColor: BORDER, background: "#0D0D0F" }}
       >
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row divide-y md:divide-y-0" style={{ borderColor: BORDER }}>
-          <StatCard value={48000} suffix="+" label="Active Users" delay={0} />
-          <StatCard value={94} suffix="%" label="Regret Reduction" delay={0.1} />
-          <StatCard value={2400000} suffix="+" label="Transactions Analyzed" delay={0.2} />
+          <CapabilityCard
+            eyebrow="Regret Score"
+            heading="0 – 100"
+            sub="Every purchase scored in real-time against your personal spending patterns and stated goals"
+            delay={0}
+          />
+          <CapabilityCard
+            eyebrow="History Analyzed"
+            heading="6 months"
+            sub="Pulse ingests your full transaction history to build a financial model that's specific to you"
+            delay={0.1}
+          />
+          <CapabilityCard
+            eyebrow="AI Rescue Plan"
+            heading="< 30 sec"
+            sub="When budgets slip, a personalized step-by-step recovery plan generated from your actual data"
+            delay={0.2}
+          />
         </div>
       </section>
 

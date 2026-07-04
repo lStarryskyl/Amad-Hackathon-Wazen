@@ -300,10 +300,18 @@ export default function DashboardScreen() {
           <Text style={[styles.balanceAmount, { color: colors.text }]}>
             ${summary?.totalBalance?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </Text>
-          <View style={styles.balanceChangeContainer}>
-            <Feather name="trending-up" size={16} color={colors.accent} />
-            <Text style={[styles.balanceChange, { color: colors.accent }]}>+2.4% vs last month</Text>
-          </View>
+          {summary && summary.savingsRate !== undefined && (
+            <View style={styles.balanceChangeContainer}>
+              <Feather
+                name={summary.savingsRate >= 0 ? "trending-up" : "trending-down"}
+                size={16}
+                color={summary.savingsRate >= 0 ? colors.accent : colors.danger}
+              />
+              <Text style={[styles.balanceChange, { color: summary.savingsRate >= 0 ? colors.accent : colors.danger }]}>
+                {summary.savingsRate >= 0 ? "+" : ""}{summary.savingsRate.toFixed(1)}% savings rate this month
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* Regret Meter Widget */}
