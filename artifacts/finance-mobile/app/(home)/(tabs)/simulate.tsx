@@ -19,6 +19,7 @@ import {
   useGetSimulations,
   useRunSimulation,
   useDeleteSimulation,
+  useUpdateSimulation,
   getSimulationsQueryKey,
 } from "@workspace/api-client-react";
 import type { SimulationRun, ScenarioInputs, MonthDataPoint } from "@workspace/api-client-react";
@@ -321,6 +322,31 @@ function ScenarioCard({
   onToggleSelect: () => void;
 }) {
   const colors = useColors();
+  const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState(run.scenarioName);
+  const [editNote, setEditNote] = useState(run.inputs.note ?? "");
+
+  const { mutate: updateSim, isPending: isSaving } = useUpdateSimulation({
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: getSimulationsQueryKey() });
+      setIsEditing(false);
+    },
+    onError: () => Alert.alert("Error", "Could not save changes. Please try again."),
+  });
+
+  const handleSave = () => {
+    const trimmedName = editName.trim();
+    if (!trimmedName) { Alert.alert("Name required", "Scenario name cannot be empty."); return; }
+    updateSim({ id: run.id, scenarioName: trimmedName, note: editNote.trim() });
+  };
+
+  const handleCancelEdit = () => {
+    setEditName(run.scenarioName);
+    setEditNote(run.inputs.note ?? "");
+    setIsEditing(false);
+  };
+
   const results = run.results;
   if (!results) return null;
 
@@ -343,7 +369,65 @@ function ScenarioCard({
 
   const dateLabel = new Date(run.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
-  const borderColor = selected ? COMPARE_COLOR_A : colors.border;
+  const borderColor = selected ? COMPARE_COLOR_A : isEditing ? colors.primary : colors.border;
+  const currentNote = run.inputs.note;
+
+  if (isEditing) {
+    return (
+      <View style={[cardStyles.container, { backgroundColor: colors.card, borderColor: colors.primary, borderWidth: 2 }]}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <View style={[cardStyles.dot, { backgroundColor: changeColor }]} />
+          <Text style={{ fontSize: 11, fontWeight: "700", letterSpacing: 0.6, color: colors.primary, flex: 1 }}>EDITING SCENARIO</Text>
+          <TouchableOpacity onPress={handleCancelEdit} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Feather name="x" size={16} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        </View>
+
+        <Text style={{ fontSize: 11, color: colors.mutedForeground, marginBottom: 6, fontWeight: "600" }}>NAME</Text>
+        <TextInput
+          value={editName}
+          onChangeText={setEditName}
+          placeholder="Scenario name"
+          placeholderTextColor={colors.mutedForeground}
+          style={[gs.nameInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.cardElevated, marginBottom: 14 }]}
+          maxLength={60}
+          autoFocus
+        />
+
+        <Text style={{ fontSize: 11, color: colors.mutedForeground, marginBottom: 6, fontWeight: "600" }}>NOTE (optional)</Text>
+        <TextInput
+          value={editNote}
+          onChangeText={setEditNote}
+          placeholder="e.g. aggressive savings plan, worst-case scenario…"
+          placeholderTextColor={colors.mutedForeground}
+          style={[gs.nameInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.cardElevated, marginBottom: 16, fontSize: 14 }]}
+          maxLength={120}
+          multiline
+        />
+
+        <View style={{ flexDirection: "row", gap: 10 }}>
+          <TouchableOpacity
+            style={[cardStyles.editBtn, { backgroundColor: colors.cardElevated, borderWidth: 1, borderColor: colors.border, flex: 1 }]}
+            onPress={handleCancelEdit}
+            activeOpacity={0.8}
+          >
+            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.textSecondary }}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[cardStyles.editBtn, { backgroundColor: colors.primary, flex: 2, opacity: isSaving ? 0.7 : 1 }]}
+            onPress={handleSave}
+            disabled={isSaving}
+            activeOpacity={0.8}
+          >
+            {isSaving
+              ? <ActivityIndicator size="small" color="#fff" />
+              : <Feather name="check" size={15} color="#fff" />}
+            <Text style={{ fontSize: 14, fontWeight: "700", color: "#fff" }}>{isSaving ? "Saving…" : "Save"}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <TouchableOpacity
@@ -366,9 +450,30 @@ function ScenarioCard({
           ) : (
             <View style={[cardStyles.dot, { backgroundColor: changeColor }]} />
           )}
-          <Text style={[cardStyles.title, { color: colors.text }]} numberOfLines={1}>
-            {run.scenarioName}
-          </Text>
+          <TouchableOpacity
+            style={{ flex: 1 }}
+            onPress={selectMode ? onToggleSelect : () => setIsEditing(true)}
+            activeOpacity={0.7}
+            hitSlop={{ top: 4, bottom: 4, left: 0, right: 0 }}
+          >
+            <Text style={[cardStyles.title, { color: colors.text }]} numberOfLines={1}>
+              {run.scenarioName}
+            </Text>
+            {currentNote ? (
+              <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 1 }} numberOfLines={1}>
+                {currentNote}
+              </Text>
+            ) : !selectMode ? (
+              <Text style={{ fontSize: 11, color: colors.primary + "80", marginTop: 1 }}>
+                Tap to rename / add note
+              </Text>
+            ) : null}
+          </TouchableOpacity>
+          {!selectMode && (
+            <TouchableOpacity onPress={() => setIsEditing(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ marginRight: 8 }}>
+              <Feather name="edit-2" size={13} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          )}
         </View>
         {!selectMode && (
           <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -413,12 +518,13 @@ const cardStyles = StyleSheet.create({
   titleRow: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1 },
   dot: { width: 8, height: 8, borderRadius: 4 },
   checkbox: { width: 20, height: 20, borderRadius: 6, borderWidth: 2, justifyContent: "center", alignItems: "center" },
-  title: { fontSize: 16, fontWeight: "700", flex: 1 },
+  title: { fontSize: 16, fontWeight: "700" },
   metrics: { flexDirection: "row", gap: 16, marginBottom: 12 },
   metric: { flex: 1 },
   metricLabel: { fontSize: 11, marginBottom: 2 },
   metricValue: { fontSize: 15, fontWeight: "700" },
   date: { fontSize: 11 },
+  editBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 12, borderRadius: 10 },
 });
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
@@ -1214,11 +1320,21 @@ export default function SimulateScreen() {
               <View style={[compareColStyles.colorDot, { backgroundColor: COMPARE_COLOR_A }]} />
               <Text style={[compareColStyles.colTitle, { color: COMPARE_COLOR_A }]} numberOfLines={2}>{runA.scenarioName}</Text>
               <Text style={[compareColStyles.colSub, { color: colors.mutedForeground }]}>{horizonA}</Text>
+              {runA.inputs.note ? (
+                <Text style={[compareColStyles.colNote, { color: colors.mutedForeground, backgroundColor: COMPARE_COLOR_A + "14" }]} numberOfLines={2}>
+                  {runA.inputs.note}
+                </Text>
+              ) : null}
             </View>
             <View style={[compareColStyles.col, { borderLeftColor: colors.border }]}>
               <View style={[compareColStyles.colorDot, { backgroundColor: COMPARE_COLOR_B }]} />
               <Text style={[compareColStyles.colTitle, { color: COMPARE_COLOR_B }]} numberOfLines={2}>{runB.scenarioName}</Text>
               <Text style={[compareColStyles.colSub, { color: colors.mutedForeground }]}>{horizonB}</Text>
+              {runB.inputs.note ? (
+                <Text style={[compareColStyles.colNote, { color: colors.mutedForeground, backgroundColor: COMPARE_COLOR_B + "14" }]} numberOfLines={2}>
+                  {runB.inputs.note}
+                </Text>
+              ) : null}
             </View>
           </View>
 
@@ -1467,6 +1583,7 @@ const compareColStyles = StyleSheet.create({
   colorDot: { width: 10, height: 10, borderRadius: 5, marginBottom: 6 },
   colTitle: { fontSize: 13, fontWeight: "700", textAlign: "center", marginBottom: 2 },
   colSub: { fontSize: 11, textAlign: "center" },
+  colNote: { fontSize: 11, textAlign: "center", marginTop: 6, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, lineHeight: 16 },
 });
 
 const compareHintStyles = StyleSheet.create({

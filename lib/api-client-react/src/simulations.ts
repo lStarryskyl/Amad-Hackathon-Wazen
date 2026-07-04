@@ -15,6 +15,7 @@ export interface ScenarioInputs {
   newMonthlyObligation: number;
   oneTimeExpense: number;
   timeHorizonMonths: number;
+  note?: string;
 }
 
 export interface MonthDataPoint {
@@ -114,6 +115,31 @@ export const useGetSimulation = <TData = SimulationRun, TError = unknown>(
   useQuery({
     queryKey: getSimulationQueryKey(id),
     queryFn: () => getSimulation(id),
+    ...options,
+  });
+
+// --- Update Simulation (rename / annotate) ---
+
+export interface UpdateSimulationBody {
+  scenarioName?: string;
+  note?: string;
+}
+
+export const updateSimulationUrl = (id: number) => `/api/simulations/${id}`;
+
+export const updateSimulation = async (id: number, body: UpdateSimulationBody, options?: RequestInit): Promise<SimulationRun> =>
+  customFetch<SimulationRun>(updateSimulationUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...(options?.headers ?? {}) },
+    body: JSON.stringify(body),
+  });
+
+export const useUpdateSimulation = <TError = unknown, TContext = unknown>(
+  options?: UseMutationOptions<SimulationRun, TError, { id: number } & UpdateSimulationBody, TContext>
+): UseMutationResult<SimulationRun, TError, { id: number } & UpdateSimulationBody, TContext> =>
+  useMutation({
+    mutationFn: ({ id, ...body }) => updateSimulation(id, body),
     ...options,
   });
 

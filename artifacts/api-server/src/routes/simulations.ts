@@ -131,6 +131,78 @@ router.get("/simulations/:id", requireAuth, requireConsent, async (req, res): Pr
   }
 });
 
+// PATCH /simulations/:id — rename or annotate a simulation
+router.patch("/simulations/:id", requireAuth, requireConsent, async (req, res): Promise<void> => {
+  const userId = (req as any).userId as string;
+  const id = parseInt(String(req.params.id), 10);
+
+  if (isNaN(id)) {
+    res.status(400).json({ error: "BadRequest", message: "Invalid simulation id" });
+    return;
+  }
+
+  const { scenarioName, note } = req.body as { scenarioName?: string; note?: string };
+
+  if (scenarioName !== undefined && (typeof scenarioName !== "string" || scenarioName.trim().length === 0)) {
+    res.status(400).json({ error: "BadRequest", message: "scenarioName must be a non-empty string" });
+    return;
+  }
+  if (note !== undefined && typeof note !== "string") {
+    res.status(400).json({ error: "BadRequest", message: "note must be a string" });
+    return;
+  }
+
+  try {
+    const [row] = await db
+      .select()
+      .from(simulationRunsTable)
+      .where(eq(simulationRunsTable.id, id))
+      .limit(1);
+
+    if (!row || row.userId !== userId) {
+      res.status(404).json({ error: "NotFound", message: "Simulation not found" });
+      return;
+    }
+
+    const updateFields: Record<string, unknown> = {};
+    if (scenarioName !== undefined) updateFields.scenarioName = scenarioName.trim();
+    if (note !== undefined) {
+      const currentInputs = (row.inputs as Record<string, unknown>) ?? {};
+      updateFields.inputs = { ...currentInputs, note: note.trim() };
+    }
+
+    if (Object.keys(updateFields).length === 0) {
+      res.json({
+        id: row.id,
+        scenarioName: row.scenarioName,
+        inputs: row.inputs,
+        results: row.results,
+        narrative: row.narrative,
+        createdAt: row.createdAt,
+      });
+      return;
+    }
+
+    const [updated] = await db
+      .update(simulationRunsTable)
+      .set(updateFields as any)
+      .where(eq(simulationRunsTable.id, id))
+      .returning();
+
+    res.json({
+      id: updated.id,
+      scenarioName: updated.scenarioName,
+      inputs: updated.inputs,
+      results: updated.results,
+      narrative: updated.narrative,
+      createdAt: updated.createdAt,
+    });
+  } catch (err) {
+    console.error("patch simulation error", err);
+    res.status(500).json({ error: "InternalError", message: "Failed to update simulation" });
+  }
+});
+
 // DELETE /simulations/:id — delete a simulation
 router.delete("/simulations/:id", requireAuth, requireConsent, async (req, res): Promise<void> => {
   const userId = (req as any).userId as string;
