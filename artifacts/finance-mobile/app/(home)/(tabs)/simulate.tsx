@@ -24,6 +24,11 @@ import {
 } from "@workspace/api-client-react";
 import type { SimulationRun, ScenarioInputs, MonthDataPoint } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
+import {
+  checkCompareEligibility,
+  hasEnoughChartData,
+  computeCompareWinners,
+} from "@/utils/compare-flow";
 
 type Screen = "list" | "builder" | "results" | "compare";
 
@@ -795,13 +800,9 @@ export default function SimulateScreen() {
     const runA = simulations.find((r) => r.id === compareIds[0]);
     const runB = simulations.find((r) => r.id === compareIds[1]);
     if (!runA || !runB) return;
-    if (!runA.results || !runB.results) {
-      const missingName = !runA.results ? runA.scenarioName : runB.scenarioName;
-      Alert.alert(
-        "Scenario unavailable",
-        `"${missingName}" has no simulation results yet and can't be compared. Please select a different scenario.`,
-        [{ text: "OK" }]
-      );
+    const eligibility = checkCompareEligibility(runA, runB);
+    if (!eligibility.eligible) {
+      Alert.alert("Scenario unavailable", eligibility.alertMessage, [{ text: "OK" }]);
       return;
     }
     setCompareRuns([runA, runB]);
@@ -1283,16 +1284,16 @@ export default function SimulateScreen() {
     const balA = resA.finalBalance - resA.startingBalance;
     const balB = resB.finalBalance - resB.startingBalance;
 
-    // Determine winner per metric (higher is better for all three)
-    const winnerBalance: boolean | null = balA === balB ? null : balA > balB;
-    const winnerSavingsRate: boolean | null = resA.finalSavingsRate === resB.finalSavingsRate ? null : resA.finalSavingsRate > resB.finalSavingsRate;
-    const winnerTotalSaved: boolean | null = resA.totalSaved === resB.totalSaved ? null : resA.totalSaved > resB.totalSaved;
-    const winnerFinalBalance: boolean | null = resA.finalBalance === resB.finalBalance ? null : resA.finalBalance > resB.finalBalance;
-
-    // Overall winner: A wins if it wins more metrics
-    const aWins = [winnerBalance, winnerSavingsRate, winnerTotalSaved, winnerFinalBalance].filter((w) => w === true).length;
-    const bWins = [winnerBalance, winnerSavingsRate, winnerTotalSaved, winnerFinalBalance].filter((w) => w === false).length;
-    const overallWinnerIsA = aWins > bWins ? true : bWins > aWins ? false : null;
+    // Determine winner per metric using utility
+    const {
+      winnerBalance,
+      winnerSavingsRate,
+      winnerTotalSaved,
+      winnerFinalBalance,
+      aWins,
+      bWins,
+      overallWinnerIsA,
+    } = computeCompareWinners(runA, runB);
 
     const signedFmtK = (v: number) => {
       const abs = Math.abs(v);
@@ -1390,7 +1391,7 @@ export default function SimulateScreen() {
             {(() => {
               const dpA = resA.dataPoints ?? [];
               const dpB = resB.dataPoints ?? [];
-              const hasData = dpA.length >= 2 && dpB.length >= 2;
+              const hasData = hasEnoughChartData(resA, resB);
               if (!hasData) {
                 return (
                   <View style={{ alignItems: "center", paddingVertical: 28 }}>
