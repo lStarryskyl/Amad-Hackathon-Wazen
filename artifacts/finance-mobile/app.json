@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Guardia",
-    "slug": "guardia",
+    "name": "Pulse",
+    "slug": "pulse-finance",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "guardia",
+    "scheme": "pulse",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
@@ -15,10 +15,10 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.guardia.app"
+      "bundleIdentifier": "com.pulse.finance"
     },
     "android": {
-      "package": "com.guardia.app",
+      "package": "com.pulse.finance",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#0A0E1A"

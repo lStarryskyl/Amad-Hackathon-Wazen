@@ -136,9 +136,9 @@ export default function ProfileScreen() {
           {user?.primaryEmailAddress?.emailAddress}
         </Text>
         <View style={[styles.memberBadge, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Feather name="shield" size={11} color={colors.accent} />
+          <Feather name="activity" size={11} color={colors.accent} />
           <Text style={[styles.memberText, { color: colors.accent }]}>
-            Guardia Member
+            Pulse Member
           </Text>
         </View>
       </View>
@@ -167,7 +167,7 @@ export default function ProfileScreen() {
         </Text>
         <View style={[styles.settingsCard, { backgroundColor: colors.card }]}>
           <SettingItem icon="help-circle" title="Help & Support" />
-          <SettingItem icon="info" title="About Guardia" />
+          <SettingItem icon="info" title="About Pulse" />
         </View>
       </View>
 
@@ -217,7 +217,7 @@ export default function ProfileScreen() {
           style={styles.brandLogo}
           resizeMode="contain"
         />
-        <Text style={[styles.brandName, { color: colors.mutedForeground }]}>Guardia</Text>
+        <Text style={[styles.brandName, { color: colors.mutedForeground }]}>Pulse</Text>
         <Text style={[styles.brandVersion, { color: colors.mutedForeground }]}>v1.0.0</Text>
       </View>
     </ScrollView>

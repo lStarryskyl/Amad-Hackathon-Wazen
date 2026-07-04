@@ -28,10 +28,10 @@ export default function WelcomeScreen() {
         />
         
         <Text style={[styles.title, { color: colors.text }]}>
-          Your Financial Guardian
+          Your Financial Pulse
         </Text>
         <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-          AI-powered protection from financial regret
+          AI-powered insights for smarter money decisions
         </Text>
 
         <View style={styles.pillsContainer}>

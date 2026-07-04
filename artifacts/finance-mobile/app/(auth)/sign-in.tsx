@@ -22,8 +22,8 @@ import { useColors } from "@/hooks/useColors";
 WebBrowser.maybeCompleteAuthSession();
 
 const FEATURES = [
-  { icon: "shield", label: "AI-Powered Protection" },
-  { icon: "trending-up", label: "Smart Regret Meter" },
+  { icon: "activity", label: "AI Finance Pulse" },
+  { icon: "trending-up", label: "Smart Money Insights" },
   { icon: "zap", label: "Digital Twin Scenarios" },
 ];
 
@@ -102,9 +102,9 @@ export default function SignInScreen() {
             style={styles.logoImg}
             resizeMode="contain"
           />
-          <Text style={[styles.wordmark, { color: colors.text }]}>Guardia</Text>
+          <Text style={[styles.wordmark, { color: colors.text }]}>Pulse</Text>
           <Text style={[styles.tagline, { color: colors.mutedForeground }]}>
-            Your AI financial security layer
+            Your AI-powered financial pulse
           </Text>
 
           <View style={styles.featurePills}>

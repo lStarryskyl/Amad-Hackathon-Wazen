@@ -115,11 +115,11 @@ export default function SignUpScreen() {
             style={styles.logoImg}
             resizeMode="contain"
           />
-          <Text style={[styles.wordmark, { color: colors.text }]}>Guardia</Text>
+          <Text style={[styles.wordmark, { color: colors.text }]}>Pulse</Text>
           <Text style={[styles.tagline, { color: colors.mutedForeground }]}>
             {isVerifying
               ? "Check your inbox for a code"
-              : "Start protecting your financial future"}
+              : "Start tracking your financial pulse"}
           </Text>
         </View>
 

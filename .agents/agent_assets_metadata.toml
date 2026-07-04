@@ -5,7 +5,7 @@ outputs = []
 id = "0ZzuUVMDYZDRESM_CMPuj"
 uri = "file://artifacts/finance-mobile/assets/images/icon.png"
 type = "image"
-title = "finance app icon"
+title = "pulse-app-icon"
 
 [[generated]]
 id = "cn8q7nV0OXP6xLoZfVTQh"
@@ -24,3 +24,9 @@ id = "6dKAhpgWnbRZMk-jN0Et2"
 uri = "file://artifacts/finance-mobile/assets/adaptive-icon.png"
 type = "image"
 title = "guardia adaptive icon white bg shield"
+
+[[generated]]
+id = "_vKEA7CLyVflHSxBXNS8k"
+uri = "file://artifacts/finance-mobile/assets/images/logo.png"
+type = "image"
+title = "pulse-finance-logo"
