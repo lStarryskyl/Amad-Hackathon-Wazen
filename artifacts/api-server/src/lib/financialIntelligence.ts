@@ -1,270 +1,409 @@
 import { db } from "@workspace/db";
-import { transactionsTable, accountsTable, goalsTable, categoriesTable } from "@workspace/db";
+import {
+  transactionsTable,
+  accountsTable,
+  recurringObligationsTable,
+  categoriesTable,
+} from "@workspace/db";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
 
 export interface RegretFactor {
   key: string;
   label: string;
   description: string;
-  impact: number;
+  impact: "positive" | "negative" | "neutral";
+  weight: number;
 }
 
 export interface RegretScoreResult {
   score: number;
   level: "low" | "medium" | "high";
   factors: RegretFactor[];
-  computedAt: string;
+  summary: string;
+  safeZoneBalance: number;
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  savingsRate: number;
+  spendingVelocityRatio: number;
+  recurringBurdenPct: number;
 }
 
 export interface RescueAction {
+  id: string;
+  priority: number;
   title: string;
   description: string;
-  estimatedSaving: number;
-  difficulty: "easy" | "medium" | "hard";
+  impact: "high" | "medium" | "low";
   category: string;
-  icon: string;
+  estimatedSaving?: number;
+  tag: string;
 }
 
-function daysAgo(n: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - n);
-  return d.toISOString().substring(0, 10);
+function pad(n: number) {
+  return String(n).padStart(2, "0");
 }
 
-function today(): string {
-  return new Date().toISOString().substring(0, 10);
+function dateRange(monthsAgo: number) {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth() - monthsAgo, 1);
+  const end = new Date(now.getFullYear(), now.getMonth() - monthsAgo + 1, 0);
+  return {
+    start: `${start.getFullYear()}-${pad(start.getMonth() + 1)}-01`,
+    end: `${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())}`,
+  };
 }
 
-function monthStart(): string {
-  const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().substring(0, 10);
-}
-
-function monthsAgo(n: number): string {
-  const d = new Date();
-  d.setMonth(d.getMonth() - n);
-  return d.toISOString().substring(0, 10);
+function currentMonthRange() {
+  const now = new Date();
+  const start = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`;
+  const end = now.toISOString().substring(0, 10);
+  return { start, end };
 }
 
 export async function computeRegretScore(userId: string): Promise<RegretScoreResult> {
-  const now = today();
-  const weekStart = daysAgo(7);
-  const monthBegin = monthStart();
-  const twoMonthsAgo = monthsAgo(2);
+  const now = currentMonthRange();
+  const prev = dateRange(1);
 
-  const [allAccounts, recentTxs, monthTxs, historicalTxs, goals, categories] = await Promise.all([
+  const [accounts, recurringObs, catRows, currentTxs, prevTxs] = await Promise.all([
     db.select().from(accountsTable).where(and(eq(accountsTable.userId, userId), eq(accountsTable.isActive, true))),
-    db.select().from(transactionsTable).where(and(eq(transactionsTable.userId, userId), gte(transactionsTable.date, weekStart), lte(transactionsTable.date, now))),
-    db.select().from(transactionsTable).where(and(eq(transactionsTable.userId, userId), gte(transactionsTable.date, monthBegin), lte(transactionsTable.date, now))),
-    db.select().from(transactionsTable).where(and(eq(transactionsTable.userId, userId), gte(transactionsTable.date, twoMonthsAgo), lte(transactionsTable.date, monthBegin))),
-    db.select().from(goalsTable).where(and(eq(goalsTable.userId, userId), eq(goalsTable.status, "active"))),
+    db.select().from(recurringObligationsTable).where(and(eq(recurringObligationsTable.userId, userId), eq(recurringObligationsTable.isActive, true))),
     db.select().from(categoriesTable),
+    db.select().from(transactionsTable).where(and(eq(transactionsTable.userId, userId), gte(transactionsTable.date, now.start), lte(transactionsTable.date, now.end))),
+    db.select().from(transactionsTable).where(and(eq(transactionsTable.userId, userId), gte(transactionsTable.date, prev.start), lte(transactionsTable.date, prev.end))),
   ]);
 
-  const catMap = new Map(categories.map((c) => [c.id, c]));
+  const catMap = new Map(catRows.map((c) => [c.id, c]));
+
+  const totalBalance = accounts.reduce((s, a) => s + parseFloat(a.balance), 0);
+  const liquidBalance = accounts
+    .filter((a) => a.accountType === "checking" || a.accountType === "savings")
+    .reduce((s, a) => s + parseFloat(a.balance), 0);
+
+  const currentIncome = currentTxs.filter((t) => t.type === "credit").reduce((s, t) => s + parseFloat(t.amount), 0);
+  const currentExpenses = currentTxs.filter((t) => t.type === "debit").reduce((s, t) => s + parseFloat(t.amount), 0);
+  const prevIncome = prevTxs.filter((t) => t.type === "credit").reduce((s, t) => s + parseFloat(t.amount), 0);
+  const prevExpenses = prevTxs.filter((t) => t.type === "debit").reduce((s, t) => s + parseFloat(t.amount), 0);
+
+  const savingsRate = currentIncome > 0 ? ((currentIncome - currentExpenses) / currentIncome) * 100 : 0;
+
+  const monthlyRecurring = recurringObs.reduce((s, o) => {
+    const amt = parseFloat(o.amount);
+    if (o.frequency === "weekly") return s + amt * 4.33;
+    if (o.frequency === "yearly") return s + amt / 12;
+    return s + amt;
+  }, 0);
+
+  const estimatedMonthlyIncome = currentIncome > 0 ? currentIncome : prevIncome || 4800;
+  const recurringBurdenPct = estimatedMonthlyIncome > 0 ? (monthlyRecurring / estimatedMonthlyIncome) * 100 : 0;
+
+  const spendingVelocityRatio = prevExpenses > 0 ? currentExpenses / prevExpenses : 1;
+
+  const currentDiscretionary = currentTxs
+    .filter((t) => {
+      if (t.type !== "debit" || !t.categoryId) return false;
+      const cat = catMap.get(t.categoryId);
+      return cat && ["Food & Dining", "Entertainment", "Shopping", "Personal Care"].includes(cat.name);
+    })
+    .reduce((s, t) => s + parseFloat(t.amount), 0);
+
+  const prevDiscretionary = prevTxs
+    .filter((t) => {
+      if (t.type !== "debit" || !t.categoryId) return false;
+      const cat = catMap.get(t.categoryId);
+      return cat && ["Food & Dining", "Entertainment", "Shopping", "Personal Care"].includes(cat.name);
+    })
+    .reduce((s, t) => s + parseFloat(t.amount), 0);
+
+  const discretionarySpike = prevDiscretionary > 0 ? currentDiscretionary / prevDiscretionary : 1;
+
+  const safeZoneBalance = estimatedMonthlyIncome * 1.5;
+  const balanceSafetyRatio = liquidBalance / Math.max(safeZoneBalance, 1);
+
+  // Score components (each 0–100, weighted)
   let score = 0;
   const factors: RegretFactor[] = [];
 
-  // ── Factor 1: Spending velocity (0–30 pts)
-  const weekDebits = recentTxs.filter((t) => t.type === "debit").reduce((s, t) => s + parseFloat(t.amount), 0);
-  const historicalDebits = historicalTxs.filter((t) => t.type === "debit").reduce((s, t) => s + parseFloat(t.amount), 0);
-  const weeksInHistory = Math.max(1, historicalTxs.length > 0 ? 8 : 1);
-  const avgWeeklySpend = historicalDebits / weeksInHistory;
-  let velocityImpact = 0;
-  if (avgWeeklySpend > 0) {
-    const ratio = weekDebits / avgWeeklySpend;
-    if (ratio > 2.0) velocityImpact = 30;
-    else if (ratio > 1.5) velocityImpact = 20;
-    else if (ratio > 1.2) velocityImpact = 10;
-  }
-  if (velocityImpact > 0) {
-    score += velocityImpact;
-    factors.push({
-      key: "spending_velocity",
-      label: "Spending Spike",
-      description: `You've spent $${weekDebits.toFixed(0)} this week — significantly above your typical pace.`,
-      impact: velocityImpact,
-    });
-  }
-
-  // ── Factor 2: Monthly savings rate (0–20 pts)
-  const monthIncome = monthTxs.filter((t) => t.type === "credit").reduce((s, t) => s + parseFloat(t.amount), 0);
-  const monthExpenses = monthTxs.filter((t) => t.type === "debit").reduce((s, t) => s + parseFloat(t.amount), 0);
-  const savingsRate = monthIncome > 0 ? (monthIncome - monthExpenses) / monthIncome : -1;
-  let savingsImpact = 0;
-  if (savingsRate < 0) savingsImpact = 20;
-  else if (savingsRate < 0.05) savingsImpact = 15;
-  else if (savingsRate < 0.15) savingsImpact = 8;
-  if (savingsImpact > 0) {
-    score += savingsImpact;
-    factors.push({
-      key: "low_savings_rate",
-      label: "Low Savings Rate",
-      description: savingsRate < 0
-        ? "You're spending more than you're earning this month."
-        : `Your savings rate is only ${(savingsRate * 100).toFixed(0)}% — below the healthy 15% target.`,
-      impact: savingsImpact,
-    });
-  }
-
-  // ── Factor 3: Discretionary spending ratio (0–25 pts)
-  const discretionaryNames = ["dining", "restaurants", "entertainment", "shopping", "clothing", "bars", "recreation"];
-  const discretionaryCatIds = categories.filter((c) => discretionaryNames.some((n) => c.name.toLowerCase().includes(n))).map((c) => c.id);
-  const discretionaryTotal = monthTxs
-    .filter((t) => t.type === "debit" && t.categoryId != null && discretionaryCatIds.includes(t.categoryId))
-    .reduce((s, t) => s + parseFloat(t.amount), 0);
-  const discretionaryRatio = monthExpenses > 0 ? discretionaryTotal / monthExpenses : 0;
-  let discretionaryImpact = 0;
-  if (discretionaryRatio > 0.5) discretionaryImpact = 25;
-  else if (discretionaryRatio > 0.35) discretionaryImpact = 15;
-  else if (discretionaryRatio > 0.2) discretionaryImpact = 8;
-  if (discretionaryImpact > 0) {
-    score += discretionaryImpact;
-    factors.push({
-      key: "discretionary_ratio",
-      label: "High Discretionary Spending",
-      description: `${(discretionaryRatio * 100).toFixed(0)}% of your expenses are on dining, entertainment & shopping.`,
-      impact: discretionaryImpact,
-    });
-  }
-
-  // ── Factor 4: Goal trajectory (0–15 pts)
-  let goalImpact = 0;
-  const behindGoals = goals.filter((g) => {
-    if (!g.targetDate) return false;
-    const target = parseFloat(g.targetAmount);
-    const current = parseFloat(g.currentAmount);
-    const created = new Date(g.createdAt).getTime();
-    const due = new Date(g.targetDate).getTime();
-    const now_ = Date.now();
-    const totalTime = due - created;
-    if (totalTime <= 0) return false;
-    const elapsed = now_ - created;
-    const expectedProgress = elapsed / totalTime;
-    const actualProgress = target > 0 ? current / target : 1;
-    return actualProgress < expectedProgress * 0.75; // more than 25% behind
+  // 1. Savings rate (weight 30)
+  const savingsScore = Math.max(0, Math.min(100, (30 - savingsRate) * 3.33));
+  score += savingsScore * 0.3;
+  factors.push({
+    key: "savings_rate",
+    label: "Savings Rate",
+    description: savingsRate >= 20
+      ? `You're saving ${savingsRate.toFixed(0)}% of income — excellent discipline.`
+      : savingsRate >= 10
+      ? `Your savings rate is ${savingsRate.toFixed(0)}% — there's room to grow.`
+      : `Savings rate is ${savingsRate.toFixed(0)}% — below the recommended 20%.`,
+    impact: savingsRate >= 20 ? "positive" : savingsRate >= 10 ? "neutral" : "negative",
+    weight: 0.3,
   });
-  if (behindGoals.length > 0) {
-    goalImpact = Math.min(15, behindGoals.length * 7);
-    score += goalImpact;
-    factors.push({
-      key: "goal_trajectory",
-      label: "Behind on Goals",
-      description: `${behindGoals.length} of your goal${behindGoals.length > 1 ? "s are" : " is"} behind schedule.`,
-      impact: goalImpact,
-    });
-  }
 
-  // ── Factor 5: Large one-off transaction (0–10 pts)
-  const last3Days = recentTxs.filter((t) => t.date >= daysAgo(3));
-  const avgDailySpend = historicalDebits / 60;
-  const largeTx = last3Days.filter((t) => t.type === "debit" && parseFloat(t.amount) > Math.max(50, avgDailySpend * 2));
-  if (largeTx.length > 0) {
-    const impactPts = 10;
-    score += impactPts;
-    const biggest = largeTx.reduce((max, t) => parseFloat(t.amount) > parseFloat(max.amount) ? t : max, largeTx[0]);
-    factors.push({
-      key: "large_transaction",
-      label: "Large Recent Purchase",
-      description: `A $${parseFloat(biggest.amount).toFixed(0)} purchase at "${biggest.merchantName || biggest.description}" is outside your normal pattern.`,
-      impact: impactPts,
-    });
-  }
+  // 2. Spending velocity (weight 25)
+  const velocityScore = Math.max(0, Math.min(100, (spendingVelocityRatio - 0.8) * 125));
+  score += velocityScore * 0.25;
+  factors.push({
+    key: "spending_velocity",
+    label: "Spending Velocity",
+    description: spendingVelocityRatio <= 0.9
+      ? `You're spending ${Math.round((1 - spendingVelocityRatio) * 100)}% less than last month.`
+      : spendingVelocityRatio <= 1.1
+      ? "Your spending pace matches last month."
+      : `You're spending ${Math.round((spendingVelocityRatio - 1) * 100)}% more than last month.`,
+    impact: spendingVelocityRatio <= 0.95 ? "positive" : spendingVelocityRatio <= 1.1 ? "neutral" : "negative",
+    weight: 0.25,
+  });
 
-  score = Math.min(100, score);
-  const level: "low" | "medium" | "high" = score <= 30 ? "low" : score <= 60 ? "medium" : "high";
+  // 3. Recurring burden (weight 20)
+  const burdenScore = Math.max(0, Math.min(100, (recurringBurdenPct - 30) * 2.5));
+  score += burdenScore * 0.2;
+  factors.push({
+    key: "recurring_burden",
+    label: "Recurring Obligations",
+    description: recurringBurdenPct <= 35
+      ? `Fixed costs are ${recurringBurdenPct.toFixed(0)}% of income — healthy range.`
+      : recurringBurdenPct <= 50
+      ? `Fixed costs are ${recurringBurdenPct.toFixed(0)}% of income — watch this.`
+      : `Fixed costs are ${recurringBurdenPct.toFixed(0)}% of income — leaving little flexibility.`,
+    impact: recurringBurdenPct <= 35 ? "positive" : recurringBurdenPct <= 50 ? "neutral" : "negative",
+    weight: 0.2,
+  });
+
+  // 4. Balance safety buffer (weight 15)
+  const bufferScore = Math.max(0, Math.min(100, (1 - balanceSafetyRatio) * 100));
+  score += bufferScore * 0.15;
+  factors.push({
+    key: "balance_buffer",
+    label: "Safety Buffer",
+    description: balanceSafetyRatio >= 1.5
+      ? `Your liquid balance covers ${(balanceSafetyRatio * 1.5).toFixed(1)} months of expenses — well buffered.`
+      : balanceSafetyRatio >= 1
+      ? `Your balance covers about ${balanceSafetyRatio.toFixed(1)} months of typical expenses.`
+      : `Your liquid balance is below your safe-zone threshold.`,
+    impact: balanceSafetyRatio >= 1.5 ? "positive" : balanceSafetyRatio >= 1 ? "neutral" : "negative",
+    weight: 0.15,
+  });
+
+  // 5. Discretionary spike (weight 10)
+  const spikeScore = Math.max(0, Math.min(100, (discretionarySpike - 0.9) * 100));
+  score += spikeScore * 0.1;
+  factors.push({
+    key: "discretionary_spike",
+    label: "Discretionary Spending",
+    description: discretionarySpike <= 1.0
+      ? "Discretionary spending is on track with last month."
+      : discretionarySpike <= 1.2
+      ? `Dining/entertainment up ${Math.round((discretionarySpike - 1) * 100)}% vs last month — minor overage.`
+      : `Discretionary spending is up ${Math.round((discretionarySpike - 1) * 100)}% vs last month — review your habits.`,
+    impact: discretionarySpike <= 1.0 ? "positive" : discretionarySpike <= 1.2 ? "neutral" : "negative",
+    weight: 0.1,
+  });
+
+  score = Math.round(Math.max(0, Math.min(100, score)));
+
+  const level: "low" | "medium" | "high" = score < 30 ? "low" : score < 60 ? "medium" : "high";
+
+  const summary =
+    level === "low"
+      ? "Your finances look healthy. Keep up the great habits!"
+      : level === "medium"
+      ? "A few areas need attention. Review the factors below to stay on track."
+      : "Elevated financial risk detected. Take action on the recommendations below.";
 
   return {
     score,
     level,
     factors,
-    computedAt: new Date().toISOString(),
+    summary,
+    safeZoneBalance: Math.round(safeZoneBalance * 100) / 100,
+    monthlyIncome: Math.round(estimatedMonthlyIncome * 100) / 100,
+    monthlyExpenses: Math.round(currentExpenses * 100) / 100,
+    savingsRate: Math.round(savingsRate * 100) / 100,
+    spendingVelocityRatio: Math.round(spendingVelocityRatio * 100) / 100,
+    recurringBurdenPct: Math.round(recurringBurdenPct * 100) / 100,
   };
 }
 
-export function buildRescueActions(score: RegretScoreResult, monthlyExpenses: number): RescueAction[] {
+export async function buildRescueActions(userId: string, scoreResult: RegretScoreResult): Promise<RescueAction[]> {
   const actions: RescueAction[] = [];
+  const {
+    savingsRate,
+    spendingVelocityRatio,
+    recurringBurdenPct,
+    monthlyIncome,
+    monthlyExpenses,
+  } = scoreResult;
 
-  for (const f of score.factors) {
-    if (f.key === "spending_velocity") {
+  if (savingsRate < 15 && monthlyIncome > 0) {
+    const targetSavings = Math.round(monthlyIncome * 0.15 - Math.max(0, monthlyIncome - monthlyExpenses));
+    actions.push({
+      id: "boost_savings",
+      priority: 1,
+      title: "Automate a Savings Transfer",
+      description: `Set up an automatic transfer of $${Math.max(50, targetSavings).toFixed(0)}/month to savings on payday so the money moves before you can spend it.`,
+      impact: "high",
+      category: "savings",
+      estimatedSaving: Math.max(50, targetSavings),
+      tag: "💰 Savings",
+    });
+  }
+
+  if (recurringBurdenPct > 45) {
+    const obligations = await db
+      .select()
+      .from(recurringObligationsTable)
+      .where(and(eq(recurringObligationsTable.userId, userId), eq(recurringObligationsTable.isActive, true)))
+      .orderBy(desc(recurringObligationsTable.amount));
+    const smallSubs = obligations
+      .filter((o) => parseFloat(o.amount) < 25)
+      .reduce((s, o) => s + parseFloat(o.amount), 0);
+    actions.push({
+      id: "audit_subscriptions",
+      priority: 2,
+      title: "Audit Subscriptions",
+      description: `Your fixed costs are ${recurringBurdenPct.toFixed(0)}% of income. You have $${smallSubs.toFixed(0)}/month in small subscriptions — review each and cancel unused ones.`,
+      impact: "medium",
+      category: "subscriptions",
+      estimatedSaving: Math.round(smallSubs * 0.5),
+      tag: "✂️ Cut Costs",
+    });
+  }
+
+  if (spendingVelocityRatio > 1.15) {
+    const overspend = Math.round((monthlyExpenses * (1 - 1 / spendingVelocityRatio)));
+    actions.push({
+      id: "reduce_velocity",
+      priority: 3,
+      title: "Pause Non-Essential Spending",
+      description: `You're spending ${Math.round((spendingVelocityRatio - 1) * 100)}% more than last month — about $${overspend} in extra spending. Try a 3-day spending pause to reset your baseline.`,
+      impact: "high",
+      category: "spending",
+      estimatedSaving: overspend,
+      tag: "⚡ Quick Win",
+    });
+  }
+
+  if (monthlyExpenses > 0 && monthlyIncome > 0) {
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
+    const diningTxs = await db.select().from(transactionsTable).where(
+      and(
+        eq(transactionsTable.userId, userId),
+        gte(transactionsTable.date, `${currentMonth}-01`),
+        lte(transactionsTable.date, now.toISOString().substring(0, 10))
+      )
+    );
+    const catRows = await db.select().from(categoriesTable);
+    const foodCatIds = catRows.filter((c) => c.name === "Food & Dining").map((c) => c.id);
+    const diningTotal = diningTxs
+      .filter((t) => t.type === "debit" && t.categoryId && foodCatIds.includes(t.categoryId))
+      .reduce((s, t) => s + parseFloat(t.amount), 0);
+    const diningPct = monthlyIncome > 0 ? (diningTotal / monthlyIncome) * 100 : 0;
+    if (diningPct > 15) {
       actions.push({
-        title: "Declare a Spending Pause",
-        description: "Freeze all non-essential purchases for the next 5 days. Use what you have.",
-        estimatedSaving: Math.round(monthlyExpenses * 0.08),
-        difficulty: "easy",
-        category: "habit",
-        icon: "pause-circle",
-      });
-    }
-    if (f.key === "low_savings_rate") {
-      actions.push({
-        title: "Auto-Transfer to Savings",
-        description: "Set up an automatic transfer of 10% of your next paycheck to your savings account the same day it arrives.",
-        estimatedSaving: Math.round(monthlyExpenses * 0.1),
-        difficulty: "easy",
-        category: "savings",
-        icon: "arrow-right-circle",
-      });
-    }
-    if (f.key === "discretionary_ratio") {
-      actions.push({
-        title: "Cut Dining Out by Half",
-        description: "Cook at home for the next 2 weeks. This single change typically saves $150–$300/month.",
-        estimatedSaving: Math.round(monthlyExpenses * 0.12),
-        difficulty: "medium",
+        id: "reduce_dining",
+        priority: 4,
+        title: "Reduce Dining & Food Spend",
+        description: `Food & dining is ${diningPct.toFixed(0)}% of your income this month ($${diningTotal.toFixed(0)}). Meal prepping 3 days a week could save ~$${Math.round(diningTotal * 0.25)}.`,
+        impact: "medium",
         category: "food",
-        icon: "coffee",
-      });
-      actions.push({
-        title: "Pause One Subscription",
-        description: "Review streaming and app subscriptions. Cancel or pause the one you use least.",
-        estimatedSaving: 15,
-        difficulty: "easy",
-        category: "entertainment",
-        icon: "x-circle",
+        estimatedSaving: Math.round(diningTotal * 0.25),
+        tag: "🍽️ Lifestyle",
       });
     }
-    if (f.key === "goal_trajectory") {
+  }
+
+  if (scoreResult.safeZoneBalance > 0 && monthlyIncome > 0) {
+    const liquid = scoreResult.safeZoneBalance;
+    if (liquid < monthlyIncome) {
       actions.push({
-        title: "Redirect Discretionary Budget to Goals",
-        description: "Redirect $100 from entertainment and dining into your goal fund this month.",
-        estimatedSaving: 100,
-        difficulty: "medium",
-        category: "goals",
-        icon: "target",
-      });
-    }
-    if (f.key === "large_transaction") {
-      actions.push({
-        title: "Apply the 48-Hour Rule",
-        description: "For any purchase over $50, wait 48 hours before buying. You'll skip ~40% of them.",
-        estimatedSaving: Math.round(monthlyExpenses * 0.05),
-        difficulty: "easy",
-        category: "habit",
-        icon: "clock",
+        id: "build_buffer",
+        priority: 5,
+        title: "Build Your Safety Buffer",
+        description: `Your liquid balance is below 1.5× your monthly income threshold. Aim to keep at least $${(monthlyIncome * 1.5).toFixed(0)} accessible — start with a small weekly savings habit.`,
+        impact: "medium",
+        category: "savings",
+        tag: "🛡️ Protection",
       });
     }
   }
 
   if (actions.length === 0) {
-    // Safe zone — still offer optimizations
     actions.push({
-      title: "Boost Your Emergency Fund",
-      description: "You're in good shape. Bump savings contributions by 5% to strengthen your buffer.",
-      estimatedSaving: Math.round(monthlyExpenses * 0.05),
-      difficulty: "easy",
-      category: "savings",
-      icon: "shield",
-    });
-    actions.push({
-      title: "Invest the Surplus",
-      description: "Move any month-end surplus over $200 into an index fund or high-yield savings.",
-      estimatedSaving: 0,
-      difficulty: "medium",
-      category: "investing",
-      icon: "trending-up",
+      id: "maintain_habits",
+      priority: 1,
+      title: "Maintain Your Healthy Habits",
+      description: "You're in great financial shape! Stay consistent with your savings and keep monitoring spending velocity each month.",
+      impact: "low",
+      category: "general",
+      tag: "✅ On Track",
     });
   }
 
-  return actions.slice(0, 4);
+  return actions.sort((a, b) => a.priority - b.priority).slice(0, 5);
+}
+
+export interface MoneyStoryContext {
+  userId: string;
+  months: Array<{
+    label: string;
+    income: number;
+    expenses: number;
+    savingsRate: number;
+    topCategories: Record<string, number>;
+    recurringObligationCount: number;
+    topMerchants: Record<string, number>;
+  }>;
+}
+
+export async function buildMoneyStoryContext(userId: string): Promise<MoneyStoryContext> {
+  const months = [];
+
+  for (let i = 2; i >= 0; i--) {
+    const range = dateRange(i);
+    const monthDate = new Date();
+    monthDate.setMonth(monthDate.getMonth() - i);
+    const label = monthDate.toLocaleString("default", { month: "long", year: "numeric" });
+
+    const [allTxs, catRows, obligations] = await Promise.all([
+      db.select().from(transactionsTable).where(
+        and(eq(transactionsTable.userId, userId), gte(transactionsTable.date, range.start), lte(transactionsTable.date, range.end))
+      ),
+      db.select().from(categoriesTable),
+      db.select().from(recurringObligationsTable).where(
+        and(eq(recurringObligationsTable.userId, userId), eq(recurringObligationsTable.isActive, true))
+      ),
+    ]);
+
+    const catMap = new Map(catRows.map((c) => [c.id, c]));
+    const income = allTxs.filter((t) => t.type === "credit").reduce((s, t) => s + parseFloat(t.amount), 0);
+    const expenses = allTxs.filter((t) => t.type === "debit").reduce((s, t) => s + parseFloat(t.amount), 0);
+    const savingsRate = income > 0 ? Math.round(((income - expenses) / income) * 100) : 0;
+
+    const topCategories = allTxs
+      .filter((t) => t.type === "debit" && t.categoryId)
+      .reduce((acc: Record<string, number>, t) => {
+        const cat = catMap.get(t.categoryId!);
+        const key = cat?.name ?? "Uncategorized";
+        acc[key] = (acc[key] ?? 0) + parseFloat(t.amount);
+        return acc;
+      }, {});
+
+    months.push({
+      label,
+      income: Math.round(income * 100) / 100,
+      expenses: Math.round(expenses * 100) / 100,
+      savingsRate,
+      topCategories,
+      recurringObligationCount: obligations.length,
+      topMerchants: allTxs
+        .filter((t) => t.type === "debit" && t.merchantName)
+        .reduce((acc: Record<string, number>, t) => {
+          const key = t.merchantName!;
+          acc[key] = (acc[key] ?? 0) + parseFloat(t.amount);
+          return acc;
+        }, {}),
+    });
+  }
+
+  return { userId, months };
 }

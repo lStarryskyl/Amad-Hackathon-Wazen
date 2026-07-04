@@ -9,9 +9,7 @@ import consentRouter from "./consent";
 import onboardingRouter from "./onboarding";
 import summaryRouter from "./summary";
 import aiRouter from "./ai";
-import regretScoreRouter from "./regretScore";
-import rescuePlansRouter from "./rescuePlans";
-import moneyStoryRouter from "./moneyStory";
+import intelligenceRouter from "./intelligence";
 
 const router: IRouter = Router();
 
@@ -25,8 +23,6 @@ router.use(consentRouter);
 router.use(onboardingRouter);
 router.use(summaryRouter);
 router.use(aiRouter);
-router.use(regretScoreRouter);
-router.use(rescuePlansRouter);
-router.use(moneyStoryRouter);
+router.use(intelligenceRouter);
 
 export default router;

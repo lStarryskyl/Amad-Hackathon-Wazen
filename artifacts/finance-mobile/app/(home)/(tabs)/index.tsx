@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { toFeatherIcon } from "@/utils/iconMapping";
+import RegretMeterWidget from "@/components/RegretMeterWidget";
 
 const { width } = Dimensions.get("window");
 
@@ -94,6 +95,9 @@ export default function DashboardScreen() {
           <Text style={[styles.balanceChange, { color: colors.accent }]}>+2.4% vs last month</Text>
         </View>
       </View>
+
+      {/* Regret Meter Widget */}
+      <RegretMeterWidget />
 
       {/* Accounts Horizontal Scroll */}
       <View style={styles.section}>
