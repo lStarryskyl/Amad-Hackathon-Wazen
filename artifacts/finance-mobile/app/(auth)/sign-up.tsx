@@ -86,11 +86,13 @@ export default function SignUpScreen() {
       >
         {/* ── Brand ── */}
         <View style={styles.brand}>
-          <Image
-            source={require("../../assets/images/logo.png")}
-            style={styles.logoImg}
-            resizeMode="cover"
-          />
+          <View style={styles.logoWrap}>
+            <Image
+              source={require("../../assets/images/logo.png")}
+              style={styles.logoImg}
+              resizeMode="cover"
+            />
+          </View>
           <Text style={[styles.tagline, { color: colors.mutedForeground }]}>
             {isVerifying
               ? "Check your inbox for a code"
@@ -237,7 +239,8 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1, paddingHorizontal: 20 },
 
   brand: { alignItems: "center", marginBottom: 28 },
-  logoImg: { width: 100, height: 100, borderRadius: 22, marginBottom: 14 },
+  logoWrap: { width: 100, height: 100, borderRadius: 22, overflow: "hidden", marginBottom: 14 },
+  logoImg: { width: 100, height: 100 },
   tagline: { fontSize: 14, textAlign: "center" },
 
   formCard: {
