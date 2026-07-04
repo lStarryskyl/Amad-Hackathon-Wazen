@@ -9,6 +9,8 @@ import {
   TextInput,
   Alert,
 } from "react-native";
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import Svg, { Polyline, Polygon, Line, Text as SvgText, G } from "react-native-svg";
@@ -665,6 +667,238 @@ export default function SimulateScreen() {
     setCompareIds([]);
   }, []);
 
+  const handleShareComparison = useCallback(async () => {
+    if (!compareRuns) return;
+    const [runA, runB] = compareRuns;
+    const resA = runA.results!;
+    const resB = runB.results!;
+
+    const balA = resA.finalBalance - resA.startingBalance;
+    const balB = resB.finalBalance - resB.startingBalance;
+    const winnerBalance = balA === balB ? null : balA > balB;
+    const winnerSavingsRate = resA.finalSavingsRate === resB.finalSavingsRate ? null : resA.finalSavingsRate > resB.finalSavingsRate;
+    const winnerTotalSaved = resA.totalSaved === resB.totalSaved ? null : resA.totalSaved > resB.totalSaved;
+    const winnerFinalBalance = resA.finalBalance === resB.finalBalance ? null : resA.finalBalance > resB.finalBalance;
+
+    const aWins = [winnerBalance, winnerSavingsRate, winnerTotalSaved, winnerFinalBalance].filter((w) => w === true).length;
+    const bWins = [winnerBalance, winnerSavingsRate, winnerTotalSaved, winnerFinalBalance].filter((w) => w === false).length;
+    const overallWinnerIsA = aWins > bWins ? true : bWins > aWins ? false : null;
+
+    const signedFmt = (v: number) => {
+      const abs = Math.abs(v);
+      const prefix = v >= 0 ? "+" : "-";
+      if (abs >= 1_000_000) return `${prefix}$${(abs / 1_000_000).toFixed(1)}M`;
+      if (abs >= 1_000) return `${prefix}$${(abs / 1_000).toFixed(1)}k`;
+      return `${prefix}$${Math.round(abs)}`;
+    };
+    const fmt = (v: number) => {
+      const abs = Math.abs(v);
+      if (abs >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+      if (abs >= 1_000) return `$${(Math.abs(v) / 1_000).toFixed(1)}k`;
+      return `$${Math.abs(Math.round(v))}`;
+    };
+    const horizonLabel = (mo: number) =>
+      mo < 12 ? `${mo}mo` : mo === 12 ? "1yr" : `${(mo / 12).toFixed(0)}yr`;
+
+    const winCell = (val: string, isWinner: boolean | null, color: string) =>
+      isWinner === true
+        ? `<td class="win" style="color:${color};border-left-color:${color}20">🏆 ${val}</td>`
+        : `<td>${val}</td>`;
+
+    const metricRow = (label: string, valA: string, valB: string, winner: boolean | null) => `
+      <tr>
+        <td class="metric-label">${label}</td>
+        ${winCell(valA, winner, "#6C63FF")}
+        ${winCell(valB, winner === null ? null : !winner, "#FF6B6B")}
+      </tr>`;
+
+    const winnerName = overallWinnerIsA === null ? null : overallWinnerIsA ? runA.scenarioName : runB.scenarioName;
+    const winnerColor = overallWinnerIsA ? "#6C63FF" : "#FF6B6B";
+    const dateStr = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+
+    // ── Build inline SVG comparison chart ──────────────────────────────────────
+    const dpA = resA.dataPoints ?? [];
+    const dpB = resB.dataPoints ?? [];
+    const chartW = 560;
+    const chartH = 220;
+    const padLeft = 64;
+    const padBottom = 36;
+    const plotW = chartW - padLeft - 12;
+    const plotH = chartH - padBottom;
+
+    const allBalances = [...dpA.map((d: any) => d.balance), ...dpB.map((d: any) => d.balance)];
+    const minV = allBalances.length ? Math.min(...allBalances) : 0;
+    const maxV = allBalances.length ? Math.max(...allBalances) : 1;
+    const range = maxV - minV || 1;
+
+    const toX = (i: number, len: number) => padLeft + (i / Math.max(len - 1, 1)) * plotW;
+    const toY = (v: number) => ((maxV - v) / range) * plotH;
+
+    const fmtAxis = (v: number) => {
+      const abs = Math.abs(v);
+      if (abs >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`;
+      if (abs >= 1_000) return `$${(v / 1_000).toFixed(0)}k`;
+      return `$${Math.round(v)}`;
+    };
+
+    const ptsA = dpA.length >= 2
+      ? dpA.map((d: any, i: number) => `${toX(i, dpA.length).toFixed(1)},${toY(d.balance).toFixed(1)}`).join(" ")
+      : "";
+    const ptsB = dpB.length >= 2
+      ? dpB.map((d: any, i: number) => `${toX(i, dpB.length).toFixed(1)},${toY(d.balance).toFixed(1)}`).join(" ")
+      : "";
+
+    const yGridVals = [minV, minV + range * 0.5, maxV];
+    const yGridLines = yGridVals.map((v) => {
+      const y = toY(v);
+      return `<line x1="${padLeft}" y1="${y.toFixed(1)}" x2="${chartW - 12}" y2="${y.toFixed(1)}" stroke="#e8e8f0" stroke-width="1" stroke-dasharray="4,3"/>
+              <text x="${(padLeft - 6).toFixed(0)}" y="${(y + 4).toFixed(1)}" fill="#aaa" font-size="10" text-anchor="end">${fmtAxis(v)}</text>`;
+    }).join("\n");
+
+    const maxLen = Math.max(dpA.length, dpB.length);
+    const labelIdxs: number[] = [0];
+    const step = Math.max(1, Math.floor((maxLen - 1) / 4));
+    for (let i = step; i < maxLen - 1; i += step) labelIdxs.push(i);
+    if (maxLen > 0) labelIdxs.push(maxLen - 1);
+    const xLabels = [...new Set(labelIdxs)].map((i) => {
+      const srcA = dpA[Math.min(i, dpA.length - 1)];
+      const srcB = dpB[Math.min(i, dpB.length - 1)];
+      const label = (srcA || srcB)?.label ?? "";
+      const x = padLeft + (i / Math.max(maxLen - 1, 1)) * plotW;
+      return `<text x="${x.toFixed(1)}" y="${(chartH - 6).toFixed(1)}" fill="#aaa" font-size="10" text-anchor="middle">${label}</text>`;
+    }).join("\n");
+
+    const chartSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${chartW}" height="${chartH}" viewBox="0 0 ${chartW} ${chartH}">
+  ${yGridLines}
+  ${ptsA ? `<polyline points="${ptsA}" fill="none" stroke="#6C63FF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>` : ""}
+  ${ptsB ? `<polyline points="${ptsB}" fill="none" stroke="#FF6B6B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8,4"/>` : ""}
+  ${xLabels}
+</svg>`;
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Scenario Comparison</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fc; color: #1a1a2e; padding: 32px 24px; }
+  h1 { font-size: 26px; font-weight: 800; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 28px; }
+  .winner-banner { background: ${winnerColor}18; border: 1.5px solid ${winnerColor}50; border-radius: 16px; padding: 20px 24px; margin-bottom: 24px; text-align: center; }
+  .winner-banner .label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: ${winnerColor}; margin-bottom: 6px; }
+  .winner-banner .name { font-size: 22px; font-weight: 900; color: ${winnerColor}; margin-bottom: 4px; }
+  .winner-banner .sub { font-size: 13px; color: #888; }
+  .chart-card { background: #fff; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); overflow: hidden; }
+  .chart-card svg { display: block; width: 100%; height: auto; }
+  .legend { display: flex; gap: 24px; margin-top: 12px; padding-left: 64px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #666; }
+  .legend-line { width: 24px; height: 3px; border-radius: 2px; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 20px; }
+  th { padding: 14px 16px; font-size: 12px; font-weight: 700; letter-spacing: 0.6px; background: #f0f0f7; text-align: center; }
+  th.a { color: #6C63FF; }
+  th.b { color: #FF6B6B; }
+  th.label-col { text-align: left; color: #888; }
+  td { padding: 13px 16px; font-size: 14px; font-weight: 600; text-align: center; border-top: 1px solid #f0f0f0; }
+  td.metric-label { text-align: left; font-weight: 500; color: #666; font-size: 13px; }
+  td.win { font-weight: 800; }
+  .section-title { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; color: #aaa; margin-bottom: 10px; margin-top: 24px; }
+  .footer { font-size: 11px; color: #bbb; text-align: center; margin-top: 28px; }
+</style>
+</head>
+<body>
+  <h1>Scenario Comparison</h1>
+  <p class="subtitle">Generated ${dateStr} · AI Finance</p>
+
+  ${winnerName ? `<div class="winner-banner">
+    <div class="label">🏆 BETTER PATH</div>
+    <div class="name">${winnerName}</div>
+    <div class="sub">Wins ${overallWinnerIsA ? aWins : bWins} of ${aWins + bWins} metrics compared</div>
+  </div>` : ""}
+
+  <p class="section-title">BALANCE TRAJECTORIES</p>
+  <div class="chart-card">
+    ${chartSvg}
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-line" style="background:#6C63FF"></div>
+        <span>${runA.scenarioName}</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-line" style="background:#FF6B6B;border-top:3px dashed #FF6B6B;height:0"></div>
+        <span>${runB.scenarioName}</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-title">METRIC COMPARISON</p>
+  <table>
+    <thead>
+      <tr>
+        <th class="label-col">Metric</th>
+        <th class="a">${runA.scenarioName}</th>
+        <th class="b">${runB.scenarioName}</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${metricRow("Balance change", signedFmt(balA), signedFmt(balB), winnerBalance)}
+      ${metricRow("Final balance", fmt(resA.finalBalance), fmt(resB.finalBalance), winnerFinalBalance)}
+      ${metricRow("Savings rate", `${resA.finalSavingsRate.toFixed(1)}%`, `${resB.finalSavingsRate.toFixed(1)}%`, winnerSavingsRate)}
+      ${metricRow("Total saved", fmt(resA.totalSaved), fmt(resB.totalSaved), winnerTotalSaved)}
+    </tbody>
+  </table>
+
+  <p class="section-title">SCENARIO INPUTS</p>
+  <table>
+    <thead>
+      <tr>
+        <th class="label-col">Input</th>
+        <th class="a">${runA.scenarioName}</th>
+        <th class="b">${runB.scenarioName}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="metric-label">Income change</td>
+        <td>${runA.inputs.incomeChangePercent >= 0 ? "+" : ""}${runA.inputs.incomeChangePercent}%</td>
+        <td>${runB.inputs.incomeChangePercent >= 0 ? "+" : ""}${runB.inputs.incomeChangePercent}%</td>
+      </tr>
+      <tr>
+        <td class="metric-label">Spending change</td>
+        <td>${runA.inputs.spendingChangePercent >= 0 ? "+" : ""}${runA.inputs.spendingChangePercent}%</td>
+        <td>${runB.inputs.spendingChangePercent >= 0 ? "+" : ""}${runB.inputs.spendingChangePercent}%</td>
+      </tr>
+      <tr>
+        <td class="metric-label">Extra savings</td>
+        <td>${runA.inputs.additionalMonthlySaving > 0 ? `+$${runA.inputs.additionalMonthlySaving}/mo` : "—"}</td>
+        <td>${runB.inputs.additionalMonthlySaving > 0 ? `+$${runB.inputs.additionalMonthlySaving}/mo` : "—"}</td>
+      </tr>
+      <tr>
+        <td class="metric-label">Time horizon</td>
+        <td>${horizonLabel(runA.inputs.timeHorizonMonths)}</td>
+        <td>${horizonLabel(runB.inputs.timeHorizonMonths)}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p class="footer">AI Finance · Scenario snapshot</p>
+</body>
+</html>`;
+
+    try {
+      const { uri } = await Print.printToFileAsync({ html, base64: false });
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(uri, { mimeType: "application/pdf", dialogTitle: "Share comparison" });
+      } else {
+        Alert.alert("Sharing unavailable", "Your device does not support sharing files.");
+      }
+    } catch {
+      Alert.alert("Export failed", "Could not generate the comparison PDF. Please try again.");
+    }
+  }, [compareRuns]);
+
   const formatPct = (v: number) => (v >= 0 ? `+${v}%` : `${v}%`);
   const formatDollar = (v: number) => (v === 0 ? "$0" : `$${v.toLocaleString()}`);
 
@@ -947,7 +1181,9 @@ export default function SimulateScreen() {
               <Feather name="arrow-left" size={20} color={colors.text} />
             </TouchableOpacity>
             <Text style={[gs.navTitle, { color: colors.text }]}>Side-by-Side</Text>
-            <View style={gs.navBtn} />
+            <TouchableOpacity onPress={handleShareComparison} style={gs.navBtn}>
+              <Feather name="share" size={20} color={colors.primary} />
+            </TouchableOpacity>
           </View>
 
           {/* Winner banner */}
@@ -1093,14 +1329,24 @@ export default function SimulateScreen() {
         </ScrollView>
 
         <View style={[gs.fixedBottom, { paddingBottom: insets.bottom + 12, backgroundColor: colors.background, borderTopColor: colors.border }]}>
-          <TouchableOpacity
-            style={[gs.runBtn, { backgroundColor: colors.primary }]}
-            onPress={() => { setScreen("list"); setCompareIds([]); }}
-            activeOpacity={0.8}
-          >
-            <Feather name="arrow-left" size={18} color="#fff" />
-            <Text style={gs.runBtnText}>Back to Scenarios</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <TouchableOpacity
+              style={[gs.runBtn, { flex: 1, backgroundColor: colors.cardElevated, borderWidth: 1, borderColor: colors.border }]}
+              onPress={() => { setScreen("list"); setCompareIds([]); }}
+              activeOpacity={0.8}
+            >
+              <Feather name="arrow-left" size={18} color={colors.textSecondary} />
+              <Text style={[gs.runBtnText, { color: colors.textSecondary }]}>Back</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[gs.runBtn, { flex: 2, backgroundColor: colors.primary }]}
+              onPress={handleShareComparison}
+              activeOpacity={0.8}
+            >
+              <Feather name="share" size={18} color="#fff" />
+              <Text style={gs.runBtnText}>Share Comparison</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     );
