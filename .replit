@@ -1,4 +1,4 @@
-modules = ["nodejs-24", "postgresql-16"]
+modules = ["nodejs-24", "python-3.11", "postgresql-16"]
 
 [deployment]
 router = "application"
@@ -24,6 +24,10 @@ args = "compare-flow-tests"
 task = "workflow.run"
 args = "typecheck"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "test:simulations"
+
 [[workflows.workflow]]
 name = "compare-flow-tests"
 author = "agent"
@@ -46,6 +50,17 @@ args = "cd artifacts/finance-mobile && pnpm typecheck"
 [workflows.workflow.metadata]
 isValidation = true
 
+[[workflows.workflow]]
+name = "test:simulations"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/api-server run test:simulations"
+
+[workflows.workflow.metadata]
+isValidation = true
+
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true
@@ -56,3 +71,8 @@ timeoutMs = 20000
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.development]
+SKIP_AI_NARRATIVE = "true"

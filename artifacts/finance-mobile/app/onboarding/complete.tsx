@@ -9,7 +9,8 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
-import { useCompleteOnboarding } from "@workspace/api-client-react";
+import { useCompleteOnboarding, getGetOnboardingStatusQueryKey } from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -22,6 +23,7 @@ export default function OnboardingCompleteScreen() {
   const router = useRouter();
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
   const { mutate: completeOnboarding, isPending } = useCompleteOnboarding();
   
   const scale = useSharedValue(0);
@@ -38,7 +40,8 @@ export default function OnboardingCompleteScreen() {
     completeOnboarding(
       undefined,
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
+          queryClient.setQueryData(getGetOnboardingStatusQueryKey(), data ?? { completed: true, currentStep: 3, totalSteps: 3 });
           router.replace("/(home)/(tabs)");
         },
       }

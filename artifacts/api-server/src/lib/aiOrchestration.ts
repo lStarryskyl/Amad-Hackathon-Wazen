@@ -221,7 +221,7 @@ Respond with just the narrative — no headers, no bullet points.`;
   }
 }
 
-function generateFallbackSimulationNarrative(
+export function generateFallbackSimulationNarrative(
   inputs: import("./simulationEngine").ScenarioInputs,
   results: import("./simulationEngine").SimulationResults
 ): string {

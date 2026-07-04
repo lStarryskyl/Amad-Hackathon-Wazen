@@ -6,7 +6,7 @@ import { requireAuth } from "../middlewares/requireAuth";
 import { requireConsent } from "../middlewares/requireConsent";
 import { getOrCreateUser } from "../lib/userProvisioning";
 import { runSimulation } from "../lib/simulationEngine";
-import { generateSimulationNarrative } from "../lib/aiOrchestration";
+import { generateSimulationNarrative, generateFallbackSimulationNarrative } from "../lib/aiOrchestration";
 import type { ScenarioInputs } from "../lib/simulationEngine";
 
 const router = Router();
@@ -45,7 +45,10 @@ router.post("/simulations", requireAuth, requireConsent, async (req, res): Promi
 
   try {
     const results = await runSimulation(userId, inputs);
-    const narrative = await generateSimulationNarrative(userId, inputs, results);
+    const skipAI = process.env.NODE_ENV !== "production" && process.env.SKIP_AI_NARRATIVE === "true";
+    const narrative = skipAI
+      ? generateFallbackSimulationNarrative(inputs, results)
+      : await generateSimulationNarrative(userId, inputs, results);
 
     const [saved] = await db.insert(simulationRunsTable).values({
       userId,
