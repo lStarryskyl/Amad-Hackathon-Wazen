@@ -3,11 +3,12 @@ import { db } from "@workspace/db";
 import { transactionsTable, categoriesTable } from "@workspace/db";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
+import { requireConsent } from "../middlewares/requireConsent";
 import { getOrCreateUser } from "../lib/userProvisioning";
 
 const router = Router();
 
-router.get("/transactions", requireAuth, async (req, res) => {
+router.get("/transactions", requireAuth, requireConsent, async (req, res) => {
   const userId = (req as any).userId as string;
   await getOrCreateUser(userId);
 

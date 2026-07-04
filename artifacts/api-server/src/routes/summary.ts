@@ -3,15 +3,15 @@ import { db } from "@workspace/db";
 import { accountsTable, transactionsTable, categoriesTable } from "@workspace/db";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
+import { requireConsent } from "../middlewares/requireConsent";
 import { getOrCreateUser } from "../lib/userProvisioning";
 
 const router = Router();
 
-router.get("/summary", requireAuth, async (req, res) => {
+router.get("/summary", requireAuth, requireConsent, async (req, res) => {
   const userId = (req as any).userId as string;
   await getOrCreateUser(userId);
 
-  // Current month range
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
     .toISOString()
@@ -33,7 +33,6 @@ router.get("/summary", requireAuth, async (req, res) => {
   const totalExpenses = monthTxs.filter((t) => t.type === "debit").reduce((s, t) => s + parseFloat(t.amount), 0);
   const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0;
 
-  // Top spending categories this month
   const catTotals = new Map<number, number>();
   monthTxs
     .filter((t) => t.type === "debit" && t.categoryId != null)

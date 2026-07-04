@@ -126,7 +126,11 @@ export default function ProgressScreen() {
           completedGoals.length > 0 ? (
             <View style={styles.completedSection}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>Completed Goals</Text>
-              {completedGoals.map(goal => renderGoal({ item: goal }))}
+              {completedGoals.map(goal => (
+                <React.Fragment key={goal.id}>
+                  {renderGoal({ item: goal })}
+                </React.Fragment>
+              ))}
             </View>
           ) : null
         }

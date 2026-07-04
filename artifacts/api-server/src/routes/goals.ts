@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { goalsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
+import { requireConsent } from "../middlewares/requireConsent";
 import { getOrCreateUser } from "../lib/userProvisioning";
 import type { Goal } from "@workspace/db";
 
@@ -17,14 +18,14 @@ function formatGoal(goal: Goal) {
   };
 }
 
-router.get("/goals", requireAuth, async (req, res) => {
+router.get("/goals", requireAuth, requireConsent, async (req, res) => {
   const userId = (req as any).userId as string;
   await getOrCreateUser(userId);
   const goals = await db.select().from(goalsTable).where(eq(goalsTable.userId, userId));
   res.json(goals.map(formatGoal));
 });
 
-router.post("/goals", requireAuth, async (req, res) => {
+router.post("/goals", requireAuth, requireConsent, async (req, res) => {
   const userId = (req as any).userId as string;
   const { name, targetAmount, currentAmount, targetDate, category } = req.body as {
     name: string;
@@ -49,7 +50,7 @@ router.post("/goals", requireAuth, async (req, res) => {
   res.status(201).json(formatGoal(goal));
 });
 
-router.get("/goals/:id", requireAuth, async (req, res) => {
+router.get("/goals/:id", requireAuth, requireConsent, async (req, res) => {
   const userId = (req as any).userId as string;
   const id = parseInt(req.params.id, 10);
   const [goal] = await db
@@ -60,7 +61,7 @@ router.get("/goals/:id", requireAuth, async (req, res) => {
   res.json(formatGoal(goal));
 });
 
-router.put("/goals/:id", requireAuth, async (req, res) => {
+router.put("/goals/:id", requireAuth, requireConsent, async (req, res) => {
   const userId = (req as any).userId as string;
   const id = parseInt(req.params.id, 10);
   const { name, targetAmount, currentAmount, targetDate, category, status } = req.body as {
@@ -82,7 +83,7 @@ router.put("/goals/:id", requireAuth, async (req, res) => {
   res.json(formatGoal(goal));
 });
 
-router.delete("/goals/:id", requireAuth, async (req, res) => {
+router.delete("/goals/:id", requireAuth, requireConsent, async (req, res) => {
   const userId = (req as any).userId as string;
   const id = parseInt(req.params.id, 10);
   await db.delete(goalsTable).where(and(eq(goalsTable.id, id), eq(goalsTable.userId, userId)));

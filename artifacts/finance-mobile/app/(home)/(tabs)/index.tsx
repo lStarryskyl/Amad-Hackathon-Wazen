@@ -18,6 +18,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { toFeatherIcon } from "@/utils/iconMapping";
 
 const { width } = Dimensions.get("window");
 
@@ -147,7 +148,7 @@ export default function DashboardScreen() {
             <View key={cat.categoryId} style={styles.categoryRow}>
               <View style={styles.categoryInfo}>
                 <View style={[styles.categoryIcon, { backgroundColor: cat.categoryColor + "20" }]}>
-                  <Feather name={cat.categoryIcon as any || "tag"} size={14} color={cat.categoryColor} />
+                  <Feather name={toFeatherIcon(cat.categoryIcon)} size={14} color={cat.categoryColor} />
                 </View>
                 <Text style={[styles.categoryName, { color: colors.text }]}>{cat.categoryName}</Text>
               </View>
@@ -183,7 +184,7 @@ export default function DashboardScreen() {
             <View key={tx.id} style={styles.transactionItem}>
               <View style={styles.txLeft}>
                 <View style={[styles.txIcon, { backgroundColor: tx.categoryColor ? tx.categoryColor + "20" : colors.border }]}>
-                  <Feather name={tx.categoryIcon as any || "shopping-cart"} size={16} color={tx.categoryColor || colors.text} />
+                  <Feather name={toFeatherIcon(tx.categoryIcon)} size={16} color={tx.categoryColor || colors.text} />
                 </View>
                 <View>
                   <Text style={[styles.txMerchant, { color: colors.text }]} numberOfLines={1}>

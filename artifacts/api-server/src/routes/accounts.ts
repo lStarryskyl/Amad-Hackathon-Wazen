@@ -3,11 +3,12 @@ import { db } from "@workspace/db";
 import { accountsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth } from "../middlewares/requireAuth";
+import { requireConsent } from "../middlewares/requireConsent";
 import { getOrCreateUser } from "../lib/userProvisioning";
 
 const router = Router();
 
-router.get("/accounts", requireAuth, async (req, res) => {
+router.get("/accounts", requireAuth, requireConsent, async (req, res) => {
   const userId = (req as any).userId as string;
   await getOrCreateUser(userId);
 
@@ -19,7 +20,7 @@ router.get("/accounts", requireAuth, async (req, res) => {
   res.json(accounts);
 });
 
-router.get("/accounts/:id", requireAuth, async (req, res) => {
+router.get("/accounts/:id", requireAuth, requireConsent, async (req, res) => {
   const userId = (req as any).userId as string;
   const id = parseInt(req.params.id, 10);
 

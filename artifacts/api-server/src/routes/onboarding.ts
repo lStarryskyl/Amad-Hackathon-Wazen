@@ -18,10 +18,15 @@ router.get("/onboarding", requireAuth, async (req, res) => {
 
 router.put("/onboarding", requireAuth, async (req, res) => {
   const userId = (req as any).userId as string;
+
+  // Ensure user row exists before updating — critical for new users
+  await getOrCreateUser(userId);
+
   await db
     .update(usersTable)
     .set({ onboardingCompleted: true, updatedAt: new Date() })
     .where(eq(usersTable.id, userId));
+
   res.json({ completed: true, currentStep: 3, totalSteps: 3 });
 });
 

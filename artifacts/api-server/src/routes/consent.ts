@@ -15,6 +15,10 @@ router.get("/consent", requireAuth, async (req, res) => {
 
 router.post("/consent/accept", requireAuth, async (req, res) => {
   const userId = (req as any).userId as string;
+
+  // Ensure user row exists before updating — critical for new users
+  await getOrCreateUser(userId);
+
   const now = new Date();
 
   await Promise.all([
