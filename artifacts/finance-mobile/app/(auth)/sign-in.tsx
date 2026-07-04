@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -11,15 +11,11 @@ import {
   ScrollView,
   Image,
 } from "react-native";
-import { useSignIn, useSSO } from "@clerk/expo";
+import { useSignIn } from "@clerk/expo";
 import { useRouter, Link } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import * as WebBrowser from "expo-web-browser";
-import * as AuthSession from "expo-auth-session";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-
-WebBrowser.maybeCompleteAuthSession();
 
 const FEATURES = [
   { icon: "activity", label: "AI Finance Pulse" },
@@ -29,7 +25,6 @@ const FEATURES = [
 
 export default function SignInScreen() {
   const { signIn, errors, fetchStatus } = useSignIn();
-  const { startSSOFlow } = useSSO();
   const router = useRouter();
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -57,25 +52,6 @@ export default function SignInScreen() {
       setLoading(false);
     }
   };
-
-  const onGoogleSignInPress = useCallback(async () => {
-    try {
-      const { createdSessionId, setActive } = await startSSOFlow({
-        strategy: "oauth_google",
-        redirectUrl: AuthSession.makeRedirectUri(),
-      });
-      if (createdSessionId && setActive) {
-        await setActive({
-          session: createdSessionId,
-          navigate: ({ decorateUrl }) => {
-            router.replace(decorateUrl("/(home)/(tabs)") as any);
-          },
-        });
-      }
-    } catch (err: any) {
-      console.error(err);
-    }
-  }, [startSSOFlow]);
 
   const errorMessage =
     errors.fields.identifier?.message ||
@@ -137,6 +113,7 @@ export default function SignInScreen() {
                 onChangeText={setEmailAddress}
                 keyboardType="email-address"
                 autoComplete="email"
+                testID="input-email"
               />
             </View>
           </View>
@@ -153,6 +130,7 @@ export default function SignInScreen() {
                 secureTextEntry={!showPass}
                 onChangeText={setPassword}
                 autoComplete="password"
+                testID="input-password"
               />
               <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eyeBtn}>
                 <Feather name={showPass ? "eye-off" : "eye"} size={16} color={colors.mutedForeground} />
@@ -172,27 +150,13 @@ export default function SignInScreen() {
             onPress={onSignInPress}
             disabled={loading || fetchStatus === "fetching"}
             activeOpacity={0.85}
+            testID="button-sign-in"
           >
             {loading || fetchStatus === "fetching" ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
               <Text style={styles.ctaText}>Sign In</Text>
             )}
-          </TouchableOpacity>
-
-          <View style={styles.dividerRow}>
-            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-            <Text style={[styles.dividerLabel, { color: colors.mutedForeground }]}>or</Text>
-            <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-          </View>
-
-          <TouchableOpacity
-            style={[styles.oauthBtn, { backgroundColor: colors.background, borderColor: colors.border }]}
-            onPress={onGoogleSignInPress}
-            activeOpacity={0.85}
-          >
-            <Feather name="chrome" size={18} color={colors.text} />
-            <Text style={[styles.oauthText, { color: colors.text }]}>Continue with Google</Text>
           </TouchableOpacity>
         </View>
 
@@ -270,21 +234,6 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   ctaText: { color: "#fff", fontSize: 15, fontWeight: "700" },
-
-  dividerRow: { flexDirection: "row", alignItems: "center", marginVertical: 16, gap: 10 },
-  dividerLine: { flex: 1, height: 1 },
-  dividerLabel: { fontSize: 13 },
-
-  oauthBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    height: 50,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  oauthText: { fontSize: 15, fontWeight: "600" },
 
   footer: { flexDirection: "row", justifyContent: "center", marginTop: 4 },
   footerText: { fontSize: 14 },

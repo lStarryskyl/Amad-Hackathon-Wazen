@@ -12,9 +12,9 @@ import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { ClerkProvider, ClerkLoaded } from "@clerk/expo";
+import { ClerkProvider, ClerkLoaded, useAuth } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
-import { setBaseUrl } from "@workspace/api-client-react";
+import { setBaseUrl, setAuthTokenGetter } from "@workspace/api-client-react";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
@@ -29,6 +29,21 @@ const proxyUrl = process.env.EXPO_PUBLIC_CLERK_PROXY_URL || undefined;
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
+
+/**
+ * Wires the Clerk session token into every API request so authenticated
+ * endpoints receive a valid Bearer token.  Must be rendered inside ClerkLoaded.
+ */
+function AuthTokenSync() {
+  const { getToken } = useAuth();
+  useEffect(() => {
+    setAuthTokenGetter(() => getToken());
+    return () => {
+      setAuthTokenGetter(null);
+    };
+  }, [getToken]);
+  return null;
+}
 
 function RootLayoutNav() {
   return (
@@ -64,6 +79,7 @@ export default function RootLayout() {
       proxyUrl={proxyUrl}
     >
       <ClerkLoaded>
+        <AuthTokenSync />
         <SafeAreaProvider>
           <ErrorBoundary>
             <QueryClientProvider client={queryClient}>
