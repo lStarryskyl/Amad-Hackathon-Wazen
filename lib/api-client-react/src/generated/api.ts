@@ -29,8 +29,11 @@ import type {
   GetTransactionsParams,
   Goal,
   HealthStatus,
+  MoneyStory,
   NotFoundResponse,
   OnboardingStatus,
+  RegretScore,
+  RescuePlan,
   TransactionList,
   UnauthorizedResponse,
   UpdateGoalRequest,
@@ -1417,4 +1420,305 @@ export function useTestAiService<TData = Awaited<ReturnType<typeof testAiService
 
 
 
+
+export const getGetRegretScoreUrl = () => {
+
+
+
+
+  return `/api/regret-score`
+}
+
+/**
+ * @summary Get current regret risk score
+ */
+export const getRegretScore = async ( options?: RequestInit): Promise<RegretScore> => {
+
+  return customFetch<RegretScore>(getGetRegretScoreUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRegretScoreQueryKey = () => {
+    return [
+    `/api/regret-score`
+    ] as const;
+    }
+
+
+export const getGetRegretScoreQueryOptions = <TData = Awaited<ReturnType<typeof getRegretScore>>, TError = ErrorType<UnauthorizedResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRegretScore>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRegretScoreQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRegretScore>>> = ({ signal }) => getRegretScore({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRegretScore>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRegretScoreQueryResult = NonNullable<Awaited<ReturnType<typeof getRegretScore>>>
+export type GetRegretScoreQueryError = ErrorType<UnauthorizedResponse>
+
+
+/**
+ * @summary Get current regret risk score
+ */
+
+export function useGetRegretScore<TData = Awaited<ReturnType<typeof getRegretScore>>, TError = ErrorType<UnauthorizedResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRegretScore>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRegretScoreQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetRescuePlanUrl = () => {
+
+
+
+
+  return `/api/rescue-plans`
+}
+
+/**
+ * @summary Get rescue plan for current risk level
+ */
+export const getRescuePlan = async ( options?: RequestInit): Promise<RescuePlan> => {
+
+  return customFetch<RescuePlan>(getGetRescuePlanUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRescuePlanQueryKey = () => {
+    return [
+    `/api/rescue-plans`
+    ] as const;
+    }
+
+
+export const getGetRescuePlanQueryOptions = <TData = Awaited<ReturnType<typeof getRescuePlan>>, TError = ErrorType<UnauthorizedResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRescuePlan>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRescuePlanQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRescuePlan>>> = ({ signal }) => getRescuePlan({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRescuePlan>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRescuePlanQueryResult = NonNullable<Awaited<ReturnType<typeof getRescuePlan>>>
+export type GetRescuePlanQueryError = ErrorType<UnauthorizedResponse>
+
+
+/**
+ * @summary Get rescue plan for current risk level
+ */
+
+export function useGetRescuePlan<TData = Awaited<ReturnType<typeof getRescuePlan>>, TError = ErrorType<UnauthorizedResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRescuePlan>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRescuePlanQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetMoneyStoryUrl = () => {
+
+
+
+
+  return `/api/money-story`
+}
+
+/**
+ * @summary Get latest persisted money story
+ */
+export const getMoneyStory = async ( options?: RequestInit): Promise<MoneyStory | null> => {
+
+  return customFetch<MoneyStory | null>(getGetMoneyStoryUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetMoneyStoryQueryKey = () => {
+    return [
+    `/api/money-story`
+    ] as const;
+    }
+
+
+export const getGetMoneyStoryQueryOptions = <TData = Awaited<ReturnType<typeof getMoneyStory>>, TError = ErrorType<UnauthorizedResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMoneyStory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMoneyStoryQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMoneyStory>>> = ({ signal }) => getMoneyStory({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMoneyStory>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetMoneyStoryQueryResult = NonNullable<Awaited<ReturnType<typeof getMoneyStory>>>
+export type GetMoneyStoryQueryError = ErrorType<UnauthorizedResponse>
+
+
+/**
+ * @summary Get latest persisted money story
+ */
+
+export function useGetMoneyStory<TData = Awaited<ReturnType<typeof getMoneyStory>>, TError = ErrorType<UnauthorizedResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getMoneyStory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetMoneyStoryQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGenerateMoneyStoryUrl = () => {
+
+
+
+
+  return `/api/money-story/generate`
+}
+
+/**
+ * @summary Generate a new money story for the current month
+ */
+export const generateMoneyStory = async ( options?: RequestInit): Promise<MoneyStory> => {
+
+  return customFetch<MoneyStory>(getGenerateMoneyStoryUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getGenerateMoneyStoryMutationOptions = <TError = ErrorType<UnauthorizedResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateMoneyStory>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateMoneyStory>>, TError,void, TContext> => {
+
+const mutationKey = ['generateMoneyStory'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateMoneyStory>>, void> = () => {
+
+
+          return  generateMoneyStory(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateMoneyStoryMutationResult = NonNullable<Awaited<ReturnType<typeof generateMoneyStory>>>
+
+    export type GenerateMoneyStoryMutationError = ErrorType<UnauthorizedResponse>
+
+    /**
+ * @summary Generate a new money story for the current month
+ */
+export const useGenerateMoneyStory = <TError = ErrorType<UnauthorizedResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateMoneyStory>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateMoneyStory>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getGenerateMoneyStoryMutationOptions(options));
+    }
 

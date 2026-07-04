@@ -28,6 +28,8 @@ tags:
     description: Dashboard summary
   - name: ai
     description: AI services
+  - name: intelligence
+    description: Financial intelligence — regret score, rescue plans, money stories
 paths:
   /healthz:
     get:
@@ -390,6 +392,71 @@ paths:
                 $ref: "#/components/schemas/AiTestResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /regret-score:
+    get:
+      operationId: getRegretScore
+      tags: [intelligence]
+      summary: Get current regret risk score
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current regret score with contributing factors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegretScore"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /rescue-plans:
+    get:
+      operationId: getRescuePlan
+      tags: [intelligence]
+      summary: Get rescue plan for current risk level
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Rescue plan with prioritized actions and AI narrative
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RescuePlan"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /money-story:
+    get:
+      operationId: getMoneyStory
+      tags: [intelligence]
+      summary: Get latest persisted money story
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Latest money story or null if none generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MoneyStory"
+                nullable: true
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /money-story/generate:
+    post:
+      operationId: generateMoneyStory
+      tags: [intelligence]
+      summary: Generate a new money story for the current month
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Newly generated money story
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MoneyStory"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 components:
   securitySchemes:
     bearerAuth:
@@ -715,6 +782,102 @@ components:
       required:
         - success
         - message
+    RegretFactor:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        description:
+          type: string
+        impact:
+          type: integer
+      required:
+        - key
+        - label
+        - description
+        - impact
+    RegretScore:
+      type: object
+      properties:
+        score:
+          type: integer
+        level:
+          type: string
+          enum: [low, medium, high]
+        factors:
+          type: array
+          items:
+            $ref: "#/components/schemas/RegretFactor"
+        computedAt:
+          type: string
+          format: date-time
+      required:
+        - score
+        - level
+        - factors
+        - computedAt
+    RescueAction:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        estimatedSaving:
+          type: number
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+        category:
+          type: string
+        icon:
+          type: string
+      required:
+        - title
+        - description
+        - estimatedSaving
+        - difficulty
+        - category
+        - icon
+    RescuePlan:
+      type: object
+      properties:
+        riskLevel:
+          type: string
+          enum: [low, medium, high]
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/RescueAction"
+        narrative:
+          type: string
+          nullable: true
+        generatedAt:
+          type: string
+          format: date-time
+      required:
+        - riskLevel
+        - actions
+        - generatedAt
+    MoneyStory:
+      type: object
+      properties:
+        id:
+          type: integer
+        periodLabel:
+          type: string
+        narrative:
+          type: string
+        generatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - periodLabel
+        - narrative
+        - generatedAt
     ApiError:
       type: object
       properties:

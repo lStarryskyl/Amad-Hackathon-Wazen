@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  FlatList,
   RefreshControl,
   ActivityIndicator,
   TouchableOpacity,
@@ -14,7 +13,9 @@ import { useUser } from "@clerk/expo";
 import {
   useGetFinancialSummary,
   useGetAccounts,
+  useGetRegretScore,
 } from "@workspace/api-client-react";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -38,6 +39,9 @@ export default function DashboardScreen() {
     isLoading: accountsLoading,
     refetch: refetchAccounts
   } = useGetAccounts();
+
+  const router = useRouter();
+  const { data: regretScore } = useGetRegretScore();
 
   const onRefresh = React.useCallback(async () => {
     await Promise.all([refetchSummary(), refetchAccounts()]);
@@ -139,6 +143,61 @@ export default function DashboardScreen() {
           Savings Rate: <Text style={{ color: colors.primary, fontWeight: "700" }}>{summary?.savingsRate}%</Text>
         </Text>
       </View>
+
+      {/* Regret Meter Teaser */}
+      {regretScore && (
+        <TouchableOpacity
+          style={[
+            styles.regretTeaser,
+            {
+              backgroundColor:
+                regretScore.level === "low"
+                  ? colors.accent + "12"
+                  : regretScore.level === "medium"
+                  ? "#F59E0B12"
+                  : colors.danger + "12",
+              borderColor:
+                regretScore.level === "low"
+                  ? colors.accent + "40"
+                  : regretScore.level === "medium"
+                  ? "#F59E0B40"
+                  : colors.danger + "40",
+            },
+          ]}
+          onPress={() => router.push("/(home)/(tabs)/insights")}
+          activeOpacity={0.85}
+        >
+          <View style={styles.regretTeaserLeft}>
+            <Text style={{ fontSize: 22 }}>
+              {regretScore.level === "low" ? "🟢" : regretScore.level === "medium" ? "🟡" : "🔴"}
+            </Text>
+            <View>
+              <Text style={[styles.regretTeaserTitle, { color: colors.text }]}>Regret Meter</Text>
+              <Text
+                style={[
+                  styles.regretTeaserLevel,
+                  {
+                    color:
+                      regretScore.level === "low"
+                        ? colors.accent
+                        : regretScore.level === "medium"
+                        ? "#F59E0B"
+                        : colors.danger,
+                  },
+                ]}
+              >
+                {regretScore.level === "low"
+                  ? "Safe Zone"
+                  : regretScore.level === "medium"
+                  ? "Caution"
+                  : "High Risk"}{" "}
+                · {regretScore.score}/100
+              </Text>
+            </View>
+          </View>
+          <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+        </TouchableOpacity>
+      )}
 
       {/* Spending Categories */}
       <View style={styles.section}>
@@ -438,5 +497,29 @@ const styles = StyleSheet.create({
   txAmount: {
     fontSize: 16,
     fontWeight: "700",
+  },
+  regretTeaser: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: 20,
+    marginBottom: 24,
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  regretTeaserLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  regretTeaserTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 2,
+  },
+  regretTeaserLevel: {
+    fontSize: 13,
+    fontWeight: "600",
   },
 });

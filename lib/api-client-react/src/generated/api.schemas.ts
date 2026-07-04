@@ -157,6 +157,70 @@ export interface AiTestResponse {
   model?: string | null;
 }
 
+export interface RegretFactor {
+  key: string;
+  label: string;
+  description: string;
+  impact: number;
+}
+
+export type RegretScoreLevel = typeof RegretScoreLevel[keyof typeof RegretScoreLevel];
+
+
+export const RegretScoreLevel = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
+
+export interface RegretScore {
+  score: number;
+  level: RegretScoreLevel;
+  factors: RegretFactor[];
+  computedAt: string;
+}
+
+export type RescueActionDifficulty = typeof RescueActionDifficulty[keyof typeof RescueActionDifficulty];
+
+
+export const RescueActionDifficulty = {
+  easy: 'easy',
+  medium: 'medium',
+  hard: 'hard',
+} as const;
+
+export interface RescueAction {
+  title: string;
+  description: string;
+  estimatedSaving: number;
+  difficulty: RescueActionDifficulty;
+  category: string;
+  icon: string;
+}
+
+export type RescuePlanRiskLevel = typeof RescuePlanRiskLevel[keyof typeof RescuePlanRiskLevel];
+
+
+export const RescuePlanRiskLevel = {
+  low: 'low',
+  medium: 'medium',
+  high: 'high',
+} as const;
+
+export interface RescuePlan {
+  riskLevel: RescuePlanRiskLevel;
+  actions: RescueAction[];
+  narrative?: string | null;
+  generatedAt: string;
+}
+
+export interface MoneyStory {
+  id: number;
+  periodLabel: string;
+  narrative: string;
+  generatedAt: string;
+}
+
 export interface ApiError {
   error: string;
   message?: string;

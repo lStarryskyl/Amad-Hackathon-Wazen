@@ -321,3 +321,59 @@ export const TestAiServiceResponse = zod.object({
 })
 
 
+/**
+ * @summary Get current regret risk score
+ */
+export const GetRegretScoreResponse = zod.object({
+  "score": zod.number(),
+  "level": zod.enum(['low', 'medium', 'high']),
+  "factors": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "description": zod.string(),
+  "impact": zod.number()
+})),
+  "computedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Get rescue plan for current risk level
+ */
+export const GetRescuePlanResponse = zod.object({
+  "riskLevel": zod.enum(['low', 'medium', 'high']),
+  "actions": zod.array(zod.object({
+  "title": zod.string(),
+  "description": zod.string(),
+  "estimatedSaving": zod.number(),
+  "difficulty": zod.enum(['easy', 'medium', 'hard']),
+  "category": zod.string(),
+  "icon": zod.string()
+})),
+  "narrative": zod.string().nullish(),
+  "generatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Get latest persisted money story
+ */
+export const GetMoneyStoryResponse = zod.object({
+  "id": zod.number(),
+  "periodLabel": zod.string(),
+  "narrative": zod.string(),
+  "generatedAt": zod.coerce.date()
+}).nullable()
+
+
+/**
+ * @summary Generate a new money story for the current month
+ */
+export const GenerateMoneyStoryResponse = zod.object({
+  "id": zod.number(),
+  "periodLabel": zod.string(),
+  "narrative": zod.string(),
+  "generatedAt": zod.coerce.date()
+})
+
+
