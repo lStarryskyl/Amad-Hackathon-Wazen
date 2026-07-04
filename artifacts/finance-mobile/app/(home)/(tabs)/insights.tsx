@@ -11,6 +11,7 @@ import {
   Platform,
   UIManager,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import {
@@ -453,6 +454,7 @@ function RescueActionCard({
 function MoneyStoriesSection() {
   const colors = useColors();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const { data: latest } = useGetLatestMoneyStory({ retry: 0 });
   const { mutate: generate, isPending, data: freshStory } = useGenerateMoneyStory({
     onSuccess: () => {
@@ -505,12 +507,44 @@ function MoneyStoriesSection() {
       )}
 
       {story && (story as any).noData && (
-        <View style={[styles.emptyState, { backgroundColor: colors.cardElevated }]}>
-          <Feather name="book" size={32} color={colors.accent} style={{ marginBottom: 12 }} />
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>No Transactions Yet</Text>
-          <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
-            {story.narrative}
+        <View style={[styles.noDataState, { backgroundColor: colors.cardElevated }]}>
+          <View style={[styles.noDataIconRow]}>
+            <View style={[styles.noDataIconBubble, { backgroundColor: colors.accent + "18" }]}>
+              <Feather name="book-open" size={36} color={colors.accent} />
+            </View>
+          </View>
+          <Text style={[styles.noDataTitle, { color: colors.text }]}>Your Story Hasn't Started Yet</Text>
+          <Text style={[styles.noDataDesc, { color: colors.mutedForeground }]}>
+            Money Stories turns your spending and saving into a personalized financial narrative. Add at least one transaction to get started.
           </Text>
+          <View style={[styles.noDataSteps, { borderColor: colors.border }]}>
+            <View style={styles.noDataStep}>
+              <View style={[styles.noDataStepNum, { backgroundColor: colors.primary + "20" }]}>
+                <Text style={[styles.noDataStepNumText, { color: colors.primary }]}>1</Text>
+              </View>
+              <Text style={[styles.noDataStepText, { color: colors.textSecondary }]}>Add your first transaction on the Home tab</Text>
+            </View>
+            <View style={styles.noDataStep}>
+              <View style={[styles.noDataStepNum, { backgroundColor: colors.primary + "20" }]}>
+                <Text style={[styles.noDataStepNumText, { color: colors.primary }]}>2</Text>
+              </View>
+              <Text style={[styles.noDataStepText, { color: colors.textSecondary }]}>Keep logging for a month to build context</Text>
+            </View>
+            <View style={styles.noDataStep}>
+              <View style={[styles.noDataStepNum, { backgroundColor: colors.accent + "20" }]}>
+                <Text style={[styles.noDataStepNumText, { color: colors.accent }]}>3</Text>
+              </View>
+              <Text style={[styles.noDataStepText, { color: colors.textSecondary }]}>Generate your personalized financial narrative</Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={[styles.noDataCTA, { backgroundColor: colors.primary }]}
+            onPress={() => router.navigate("/(home)/(tabs)/")}
+            activeOpacity={0.85}
+          >
+            <Feather name="plus-circle" size={18} color="#fff" />
+            <Text style={styles.noDataCTAText}>Add Your First Transaction</Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -726,4 +760,45 @@ const styles = StyleSheet.create({
   emptyDesc: { fontSize: 14, lineHeight: 20, textAlign: "center" },
 
   generatedAt: { fontSize: 11, marginTop: 14, textAlign: "right" },
+
+  noDataState: { padding: 24, borderRadius: 20, alignItems: "center" },
+  noDataIconRow: { marginBottom: 16 },
+  noDataIconBubble: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  noDataTitle: { fontSize: 18, fontWeight: "800", marginBottom: 10, textAlign: "center" },
+  noDataDesc: { fontSize: 14, lineHeight: 21, textAlign: "center", marginBottom: 20 },
+  noDataSteps: {
+    width: "100%",
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+    gap: 14,
+    marginBottom: 20,
+  },
+  noDataStep: { flexDirection: "row", alignItems: "center", gap: 12 },
+  noDataStepNum: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  noDataStepNumText: { fontSize: 13, fontWeight: "800" },
+  noDataStepText: { flex: 1, fontSize: 13, lineHeight: 19 },
+  noDataCTA: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 20,
+    width: "100%",
+    justifyContent: "center",
+  },
+  noDataCTAText: { color: "#fff", fontSize: 15, fontWeight: "700" },
 });
