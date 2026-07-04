@@ -348,7 +348,44 @@ function ScenarioCard({
   };
 
   const results = run.results;
-  if (!results) return null;
+
+  if (!results) {
+    const dateLabel = new Date(run.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    return (
+      <View
+        style={[
+          cardStyles.container,
+          { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, opacity: 0.5 },
+        ]}
+      >
+        <View style={cardStyles.header}>
+          <View style={cardStyles.titleRow}>
+            {selectMode ? (
+              <View style={[cardStyles.checkbox, { borderColor: colors.border, backgroundColor: "transparent" }]} />
+            ) : (
+              <View style={[cardStyles.dot, { backgroundColor: colors.mutedForeground }]} />
+            )}
+            <Text style={[cardStyles.title, { color: colors.text }]} numberOfLines={1}>
+              {run.scenarioName}
+            </Text>
+          </View>
+          {!selectMode && (
+            <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Feather name="trash-2" size={14} color={colors.mutedForeground} />
+            </TouchableOpacity>
+          )}
+        </View>
+        <View style={cardStyles.metrics}>
+          <Text style={[cardStyles.metricLabel, { color: colors.mutedForeground }]}>
+            Simulation pending — run to see results
+          </Text>
+        </View>
+        <View>
+          <Text style={[cardStyles.date, { color: colors.mutedForeground }]}>{dateLabel}</Text>
+        </View>
+      </View>
+    );
+  }
 
   const balanceChange = results.finalBalance - results.startingBalance;
   const isPositive = balanceChange >= 0;
@@ -744,12 +781,14 @@ export default function SimulateScreen() {
   }, []);
 
   const handleToggleCompare = useCallback((id: number) => {
+    const run = simulations?.find((r) => r.id === id);
+    if (!run?.results) return;
     setCompareIds((prev) => {
       if (prev.includes(id)) return prev.filter((x) => x !== id);
       if (prev.length >= 2) return prev;
       return [...prev, id];
     });
-  }, []);
+  }, [simulations]);
 
   const handleStartCompare = useCallback(() => {
     if (compareIds.length !== 2 || !simulations) return;
@@ -1017,7 +1056,8 @@ export default function SimulateScreen() {
 
   // ─── List screen ───────────────────────────────────────────────────────────
   if (screen === "list") {
-    const hasEnough = (simulations?.length ?? 0) >= 2;
+    const simsWithResults = simulations?.filter((r) => !!r.results) ?? [];
+    const hasEnough = simsWithResults.length >= 2;
     return (
       <View style={[gs.flex, { backgroundColor: colors.background }]}>
         <ScrollView
@@ -1036,20 +1076,23 @@ export default function SimulateScreen() {
           </View>
 
           {/* Compare mode hint */}
-          {hasEnough && !selectMode && (
-            <View style={[compareHintStyles.banner, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Feather name="columns" size={14} color={COMPARE_COLOR_A} />
-              <Text style={[compareHintStyles.text, { color: colors.mutedForeground }]}>
-                Select two scenarios to compare them side by side
-              </Text>
-              <TouchableOpacity
-                onPress={() => handleToggleCompare(simulations![0].id)}
-                style={[compareHintStyles.btn, { backgroundColor: COMPARE_COLOR_A + "18" }]}
-              >
-                <Text style={{ fontSize: 12, fontWeight: "700", color: COMPARE_COLOR_A }}>Select</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          {hasEnough && !selectMode && (() => {
+            const firstWithResults = simulations?.find((r) => !!r.results);
+            return firstWithResults ? (
+              <View style={[compareHintStyles.banner, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Feather name="columns" size={14} color={COMPARE_COLOR_A} />
+                <Text style={[compareHintStyles.text, { color: colors.mutedForeground }]}>
+                  Select two scenarios to compare them side by side
+                </Text>
+                <TouchableOpacity
+                  onPress={() => handleToggleCompare(firstWithResults.id)}
+                  style={[compareHintStyles.btn, { backgroundColor: COMPARE_COLOR_A + "18" }]}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: "700", color: COMPARE_COLOR_A }}>Select</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null;
+          })()}
 
           {listLoading ? (
             <View style={gs.center}>
