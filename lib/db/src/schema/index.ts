@@ -3,6 +3,7 @@ export * from "./accounts";
 export * from "./categories";
 export * from "./transactions";
 export * from "./goals";
+export * from "./alerts";
 export * from "./consent";
 export * from "./recurring-obligations";
 export * from "./ai-outputs";
