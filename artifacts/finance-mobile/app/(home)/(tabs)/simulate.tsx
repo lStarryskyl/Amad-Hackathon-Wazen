@@ -1063,7 +1063,7 @@ export default function SimulateScreen() {
       <View style={[gs.flex, { backgroundColor: colors.background }]}>
         <ScrollView
           style={gs.flex}
-          contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 20, paddingBottom: insets.bottom + 120 }}
+          contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 20, paddingBottom: 16 }}
         >
           <View style={gs.pageHeader}>
             <View>
@@ -1160,7 +1160,7 @@ export default function SimulateScreen() {
       <View style={[gs.flex, { backgroundColor: colors.background }]}>
         <ScrollView
           style={gs.flex}
-          contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 20, paddingBottom: insets.bottom + 120 }}
+          contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 20, paddingBottom: 16 }}
           keyboardShouldPersistTaps="handled"
         >
           <View style={gs.navRow}>
@@ -1320,7 +1320,7 @@ export default function SimulateScreen() {
       <View style={[gs.flex, { backgroundColor: colors.background }]}>
         <ScrollView
           style={gs.flex}
-          contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 20, paddingBottom: insets.bottom + 100 }}
+          contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 20, paddingBottom: 16 }}
           onLayout={(e) => setChartWidth(e.nativeEvent.layout.width - 40)}
         >
           <View style={gs.navRow}>
@@ -1532,7 +1532,7 @@ export default function SimulateScreen() {
     <View style={[gs.flex, { backgroundColor: colors.background }]}>
       <ScrollView
         style={gs.flex}
-        contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 20, paddingBottom: insets.bottom + 100 }}
+        contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 20, paddingBottom: 16 }}
         onLayout={(e) => setChartWidth(e.nativeEvent.layout.width - 40)}
       >
         <View style={gs.navRow}>
@@ -1655,7 +1655,7 @@ const gs = StyleSheet.create({
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1 },
   chipText: { fontSize: 13, fontWeight: "600" },
-  fixedBottom: { position: "absolute", bottom: 0, left: 0, right: 0, paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1 },
+  fixedBottom: { paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1 },
   runBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 16, borderRadius: 16 },
   runBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
   heroCard: { borderRadius: 20, borderWidth: 1, padding: 24, alignItems: "center", marginBottom: 16 },
