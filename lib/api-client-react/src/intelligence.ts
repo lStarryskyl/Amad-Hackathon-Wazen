@@ -16,18 +16,19 @@ export interface RegretFactor {
 }
 
 export interface RegretScore {
-  id: number;
-  score: number;
-  level: "low" | "medium" | "high";
-  factors: RegretFactor[];
-  summary: string;
-  safeZoneBalance: number;
-  monthlyIncome: number;
-  monthlyExpenses: number;
-  savingsRate: number;
-  spendingVelocityRatio: number;
-  recurringBurdenPct: number;
-  computedAt: string;
+  id?: number;
+  score?: number;
+  level?: "low" | "medium" | "high";
+  factors?: RegretFactor[];
+  summary?: string;
+  safeZoneBalance?: number;
+  monthlyIncome?: number;
+  monthlyExpenses?: number;
+  savingsRate?: number;
+  spendingVelocityRatio?: number;
+  recurringBurdenPct?: number;
+  computedAt?: string;
+  noData?: boolean;
 }
 
 export interface RegretScoreHistoryItem {

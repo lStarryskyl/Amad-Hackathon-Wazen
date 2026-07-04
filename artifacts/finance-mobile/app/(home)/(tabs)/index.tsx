@@ -359,7 +359,7 @@ export default function DashboardScreen() {
         </View>
 
         {/* Regret Meter Teaser */}
-        {regretScore && (
+        {regretScore && !regretScore.noData && (
           <TouchableOpacity
             style={[
               styles.regretTeaser,

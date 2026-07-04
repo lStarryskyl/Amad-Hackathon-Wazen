@@ -26,6 +26,7 @@ export interface RegretScoreResult {
   savingsRate: number;
   spendingVelocityRatio: number;
   recurringBurdenPct: number;
+  noData?: boolean;
 }
 
 export interface RescueAction {
@@ -73,6 +74,22 @@ export async function computeRegretScore(userId: string): Promise<RegretScoreRes
   ]);
 
   const catMap = new Map(catRows.map((c) => [c.id, c]));
+
+  if (currentTxs.length === 0 && prevTxs.length === 0) {
+    return {
+      noData: true,
+      score: 0,
+      level: "low",
+      factors: [],
+      summary: "",
+      safeZoneBalance: 0,
+      monthlyIncome: 0,
+      monthlyExpenses: 0,
+      savingsRate: 0,
+      spendingVelocityRatio: 1,
+      recurringBurdenPct: 0,
+    };
+  }
 
   const totalBalance = accounts.reduce((s, a) => s + parseFloat(a.balance), 0);
   const liquidBalance = accounts

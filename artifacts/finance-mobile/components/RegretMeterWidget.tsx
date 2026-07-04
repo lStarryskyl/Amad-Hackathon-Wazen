@@ -47,9 +47,9 @@ export default function RegretMeterWidget({ onPress }: Props) {
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (score) {
+    if (score && !score.noData) {
       Animated.spring(animatedScore, {
-        toValue: score.score / 100,
+        toValue: (score.score ?? 0) / 100,
         tension: 40,
         friction: 8,
         useNativeDriver: false,
@@ -89,14 +89,35 @@ export default function RegretMeterWidget({ onPress }: Props) {
     return null;
   }
 
-  const color = levelColor(score.level, colors);
+  if (score.noData) {
+    return (
+      <TouchableOpacity
+        style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
+        onPress={handlePress}
+        activeOpacity={0.8}
+      >
+        <View style={styles.header}>
+          <View style={styles.titleRow}>
+            <Feather name="bar-chart-2" size={18} color={colors.mutedForeground} />
+            <Text style={[styles.title, { color: colors.text }]}>Regret Meter</Text>
+          </View>
+        </View>
+        <Text style={[styles.summary, { color: colors.mutedForeground }]}>
+          Add transactions to unlock your Regret Score.
+        </Text>
+      </TouchableOpacity>
+    );
+  }
+
+  const s = score as Required<typeof score>;
+  const color = levelColor(s.level, colors);
   const arcWidth = animatedScore.interpolate({
     inputRange: [0, 1],
     outputRange: ["0%", "100%"],
   });
 
   return (
-    <Animated.View style={{ transform: [{ scale: score.level === "high" ? pulseAnim : new Animated.Value(1) }] }}>
+    <Animated.View style={{ transform: [{ scale: s.level === "high" ? pulseAnim : new Animated.Value(1) }] }}>
       <TouchableOpacity
         style={[styles.container, { backgroundColor: colors.card, borderColor: color + "30" }]}
         onPress={handlePress}
@@ -104,11 +125,11 @@ export default function RegretMeterWidget({ onPress }: Props) {
       >
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <Feather name={levelIcon(score.level)} size={18} color={color} />
+            <Feather name={levelIcon(s.level)} size={18} color={color} />
             <Text style={[styles.title, { color: colors.text }]}>Regret Meter</Text>
           </View>
           <View style={[styles.levelBadge, { backgroundColor: color + "20" }]}>
-            <Text style={[styles.levelText, { color }]}>{levelLabel(score.level)}</Text>
+            <Text style={[styles.levelText, { color }]}>{levelLabel(s.level)}</Text>
           </View>
         </View>
 
@@ -123,7 +144,7 @@ export default function RegretMeterWidget({ onPress }: Props) {
         </View>
 
         <View style={styles.scoreRow}>
-          <Text style={[styles.scoreNum, { color }]}>{score.score}</Text>
+          <Text style={[styles.scoreNum, { color }]}>{s.score}</Text>
           <Text style={[styles.scoreMax, { color: colors.mutedForeground }]}> / 100</Text>
           <View style={{ flex: 1 }} />
           <Text style={[styles.tapHint, { color: colors.primary }]}>
@@ -132,7 +153,7 @@ export default function RegretMeterWidget({ onPress }: Props) {
         </View>
 
         <Text style={[styles.summary, { color: colors.mutedForeground }]} numberOfLines={2}>
-          {score.summary}
+          {s.summary}
         </Text>
       </TouchableOpacity>
     </Animated.View>

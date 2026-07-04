@@ -167,9 +167,9 @@ function RegretMeterSection() {
   const pulseRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
-    if (score) {
+    if (score && !score.noData) {
       Animated.spring(animScore, {
-        toValue: score.score / 100,
+        toValue: (score.score ?? 0) / 100,
         tension: 35,
         friction: 7,
         useNativeDriver: false,
@@ -202,17 +202,52 @@ function RegretMeterSection() {
 
   if (!score) return null;
 
-  const color = levelColor(score.level, colors);
+  if (score.noData) {
+    return (
+      <View style={[styles.card, { backgroundColor: colors.card }]}>
+        <View style={styles.cardHeader}>
+          <View style={styles.row}>
+            <View style={[styles.iconCircle, { backgroundColor: colors.mutedForeground + "20" }]}>
+              <Feather name="bar-chart-2" size={20} color={colors.mutedForeground} />
+            </View>
+            <View>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>Regret Meter</Text>
+              <Text style={[styles.cardSubtitle, { color: colors.mutedForeground }]}>Short-term financial regret risk</Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            onPress={() => refetch()}
+            disabled={isRefetching}
+            style={[styles.refreshBtn, { borderColor: colors.border }]}
+          >
+            {isRefetching
+              ? <ActivityIndicator size="small" color={colors.primary} />
+              : <Feather name="refresh-cw" size={16} color={colors.mutedForeground} />}
+          </TouchableOpacity>
+        </View>
+        <View style={[styles.emptyState, { backgroundColor: colors.cardElevated }]}>
+          <Feather name="inbox" size={32} color={colors.mutedForeground} style={{ marginBottom: 12 }} />
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>No Data Yet</Text>
+          <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
+            Your Regret Meter will appear once you've added at least one month of transactions. Add some transactions to get started.
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  const s = score as Required<typeof score>;
+  const color = levelColor(s.level, colors);
   const arcWidth = animScore.interpolate({ inputRange: [0, 1], outputRange: ["2%", "100%"] });
 
   return (
-    <Animated.View style={{ transform: [{ scale: score.level === "high" ? pulseAnim : new Animated.Value(1) }] }}>
+    <Animated.View style={{ transform: [{ scale: s.level === "high" ? pulseAnim : new Animated.Value(1) }] }}>
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: color + "25", borderWidth: 1 }]}>
         <View style={styles.cardHeader}>
           <View style={styles.row}>
             <View style={[styles.iconCircle, { backgroundColor: color + "20" }]}>
               <Feather
-                name={score.level === "low" ? "check-circle" : score.level === "medium" ? "alert-circle" : "alert-triangle"}
+                name={s.level === "low" ? "check-circle" : s.level === "medium" ? "alert-circle" : "alert-triangle"}
                 size={20}
                 color={color}
               />
@@ -234,10 +269,10 @@ function RegretMeterSection() {
         </View>
 
         <View style={styles.scoreDisplay}>
-          <Text style={[styles.bigScore, { color }]}>{score.score}</Text>
+          <Text style={[styles.bigScore, { color }]}>{s.score}</Text>
           <View style={styles.scoreRight}>
             <View style={[styles.levelBadge, { backgroundColor: color + "20" }]}>
-              <Text style={[styles.levelBadgeText, { color }]}>{levelLabel(score.level)}</Text>
+              <Text style={[styles.levelBadgeText, { color }]}>{levelLabel(s.level)}</Text>
             </View>
             <Text style={[styles.scoreOf, { color: colors.mutedForeground }]}>out of 100</Text>
           </View>
@@ -255,18 +290,18 @@ function RegretMeterSection() {
         </View>
 
         <View style={[styles.summaryBox, { backgroundColor: colors.cardElevated }]}>
-          <Text style={[styles.summaryText, { color: colors.text }]}>{score.summary}</Text>
+          <Text style={[styles.summaryText, { color: colors.text }]}>{s.summary}</Text>
         </View>
 
         <Text style={[styles.factorsTitle, { color: colors.text }]}>Contributing Factors</Text>
-        {score.factors.map((factor: RegretFactor) => (
+        {s.factors.map((factor: RegretFactor) => (
           <FactorRow key={factor.key} factor={factor} colors={colors} />
         ))}
 
         <View style={styles.statsGrid}>
-          <StatPill label="Savings Rate" value={`${score.savingsRate}%`} color={score.savingsRate >= 15 ? colors.accent : colors.warning} colors={colors} />
-          <StatPill label="vs Prior Month" value={`${Math.round(score.spendingVelocityRatio * 100)}%`} color={score.spendingVelocityRatio <= 1.05 ? colors.accent : colors.danger} colors={colors} />
-          <StatPill label="Fixed Costs" value={`${score.recurringBurdenPct}%`} color={score.recurringBurdenPct <= 40 ? colors.accent : colors.warning} colors={colors} />
+          <StatPill label="Savings Rate" value={`${s.savingsRate}%`} color={s.savingsRate >= 15 ? colors.accent : colors.warning} colors={colors} />
+          <StatPill label="vs Prior Month" value={`${Math.round(s.spendingVelocityRatio * 100)}%`} color={s.spendingVelocityRatio <= 1.05 ? colors.accent : colors.danger} colors={colors} />
+          <StatPill label="Fixed Costs" value={`${s.recurringBurdenPct}%`} color={s.recurringBurdenPct <= 40 ? colors.accent : colors.warning} colors={colors} />
         </View>
       </View>
     </Animated.View>

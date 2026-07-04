@@ -22,6 +22,11 @@ router.get("/ai/regret-score", requireAuth, requireConsent, async (req, res): Pr
   try {
     const result = await computeRegretScore(userId);
 
+    if (result.noData) {
+      res.json({ noData: true });
+      return;
+    }
+
     const [saved] = await db.insert(regretScoresTable).values({
       userId,
       score: result.score,

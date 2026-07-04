@@ -34,6 +34,11 @@ router.get("/regret-score", requireAuth, requireConsent, async (req, res): Promi
 
   const result = await computeRegretScore(userId);
 
+  if (result.noData) {
+    res.json({ noData: true });
+    return;
+  }
+
   await db.insert(regretScoresTable).values({
     userId,
     score: result.score,
