@@ -1,0 +1,186 @@
+# Technology Stack and Feature Architecture
+
+## Overview
+
+This document defines the proposed technology stack for the platform and maps each technology to its corresponding functional responsibilities, product features, and repository placement. It is intended for inclusion in the project repository as a formal technical outline.
+
+The platform is designed as an AI-enabled personal finance system centered on four functional objectives:
+- Protect users from short-term financial regret.
+- Provide clear understanding of historical financial behavior.
+- Support day-to-day financial control and decision-making.
+- Enable forward-looking financial simulation and planning.
+
+Its principal capabilities include account aggregation, regret-risk evaluation, adaptive rescue recommendations, historical financial narratives, behavioral insights, spending guardrails, progress-based engagement, structured onboarding and consent management, and future-state simulation through a Digital Twin module.[file:125][file:126]
+
+## Technology Stack
+
+The proposed implementation stack is as follows:
+
+- **Web Frontend:** Vue.js, TypeScript, Tailwind CSS, Alpine-based animation patterns.
+- **Mobile Application:** React Native.
+- **Backend Services:** Django.
+- **Database:** PostgreSQL.
+- **AI Layer:** Hybrid orchestration architecture combining deterministic financial logic, predictive scoring, and LLM-based natural-language generation.
+
+For architectural consistency, Vue.js is positioned as the primary web frontend framework, while Django serves as the backend application layer and API provider.
+
+## Frontend Technology Responsibilities
+
+### Tailwind CSS
+
+Tailwind CSS is responsible for the visual design system and responsive interface layer across the web application. It supports the implementation of dashboards, analytics panels, onboarding journeys, consent interfaces, form components, structured content layouts, and interactive simulation views. It is also suitable for multilingual styling requirements, including Arabic and English interface support.[file:125][file:126]
+
+Within the product, Tailwind CSS is most relevant to the unified dashboard, the Regret Meter interface, rescue recommendation panels, money story views, daily check-in components, progress indicators, and Digital Twin screens.[file:125][file:126]
+
+### TypeScript
+
+TypeScript provides type-safe application logic within the web frontend. It defines structured contracts for financial entities, API responses, simulation objects, consent flows, analytics payloads, and user-state management. Its use is particularly important for maintaining consistency when handling financial and AI-generated data structures.[file:125][file:126]
+
+TypeScript should be applied to transaction models, regret score responses, recommendation payloads, historical insight objects, scenario configurations, simulation outputs, and onboarding state transitions.[file:125][file:126]
+
+### Vue.js
+
+Vue.js serves as the primary framework for the web application. It is responsible for delivering the interactive browser-based experience, including account overviews, analytics dashboards, behavioral insight pages, present-state financial guardrails, and the Digital Twin Lab. It may also support internal tools, demonstration interfaces, or administrative preview views as required.[file:125][file:126]
+
+Vue.js is particularly appropriate for building a modular, reactive, and presentation-ready interface for the core product experience.[file:125][file:126]
+
+### Alpine-based Animations
+
+Alpine-based animation patterns are used to introduce lightweight motion and progressive disclosure throughout the interface. Their role is to improve clarity, adoption, and perceived responsiveness without introducing unnecessary application complexity.[file:125][file:126]
+
+These animation patterns are especially well suited to onboarding progression, trust-first consent walkthroughs, Regret Meter state transitions, rescue-plan reveal interactions, achievement and milestone feedback, and Digital Twin result presentation.[file:125][file:126]
+
+## Mobile Application Responsibilities
+
+### React Native
+
+React Native is designated as the mobile application framework. It is responsible for delivering the user-facing mobile experience, particularly in areas requiring high-frequency engagement, real-time visibility, and action-oriented flows.[file:125][file:126]
+
+The mobile application should support the home dashboard, regret-risk monitoring, alerts and notifications, daily check-ins, rapid rescue-plan actions, goal progression, streak tracking, and mobile access to scenario simulation features.[file:125][file:126]
+
+React Native is therefore positioned as the primary delivery layer for recurring user engagement and daily financial interaction.[file:125][file:126]
+
+## Backend Responsibilities
+
+### Django
+
+Django serves as the primary backend framework and system-of-record application layer. It is responsible for authentication, authorization, user management, consent handling, linked account management, transaction ingestion, analytics orchestration, AI-service coordination, and administrative control surfaces.[file:125][file:126]
+
+Within the product, Django supports user account services, open banking integration or mock data connectors, regret-scoring requests, rescue-plan generation endpoints, money-story generation workflows, goal-tracking services, and Digital Twin simulation job orchestration.[file:125][file:126]
+
+Django is well suited to this role due to its mature ORM, strong administrative tooling, rapid API development capabilities, and suitability for structured data-heavy systems.[file:125][file:126]
+
+## Database Responsibilities
+
+### PostgreSQL
+
+PostgreSQL is the primary relational database for the platform. It stores users, linked accounts, transactions, spending categories, financial goals, alerts, consent records, simulation runs, and persisted AI outputs.[file:125][file:126]
+
+Its role includes maintaining historical financial records, category tagging, regret score histories, rescue-plan records, generated money stories, and Digital Twin scenario inputs and results.[file:125][file:126]
+
+PostgreSQL is appropriate for the platform because it provides reliable relational modeling, consistency for structured financial data, and strong support for traceability and long-term persistence.[file:125][file:126]
+
+## AI Architecture
+
+### Architectural Positioning
+
+The AI layer should be presented as a structured, multi-stage intelligence system rather than a single conversational model. The recommended approach is a hybrid orchestration architecture that combines deterministic financial analysis, predictive scoring, and LLM-based narrative generation.[file:125][file:126]
+
+### AI Layer Components
+
+#### 1. Data Intake and Normalization Layer
+This layer is responsible for ingesting account and transaction data from open banking providers or controlled mock data sources, then normalizing merchant names, payment patterns, recurring obligations, and balance structures for downstream use.[file:125][file:126]
+
+#### 2. Financial Intelligence Layer
+This layer performs deterministic and predictive financial analysis. Its scope includes regret-risk computation, spending-velocity monitoring, safe-zone and guardrail analysis, goal progression tracking, and future-state scenario simulation for the Digital Twin module.[file:125][file:126]
+
+#### 3. AI Narrative Layer
+This layer is responsible for transforming structured financial signals into understandable user-facing outputs. It generates money stories, rescue-plan explanations, financial literacy content, simulation summaries, and behavior-based coaching responses.[file:125][file:126]
+
+#### 4. Orchestration Layer
+This layer coordinates the interaction between the financial logic layer and the language-generation layer. It determines when to execute scoring logic, when to invoke scenario simulation, when to generate narrative output, and how to combine all results into a unified response for web and mobile clients.[file:125][file:126]
+
+### Recommended Repository Description
+
+The following wording is appropriate for the repository documentation:
+
+> The AI system adopts a hybrid architecture that combines deterministic financial analysis, predictive scoring, and LLM-based natural-language generation. Structured financial logic computes indicators such as regret risk, cash-flow pressure, recurring obligations, and scenario outcomes, while the language layer transforms these outputs into personalized rescue recommendations, financial narratives, and forward-looking insights.
+
+## Feature-to-Technology Mapping
+
+| Feature | Web Layer | Mobile Layer | Backend Layer | Database Layer | AI Layer |
+|---|---|---|---|---|---|
+| Progressive onboarding | Vue.js, TypeScript, Tailwind CSS, Alpine-based motion | React Native | Django | PostgreSQL | Optional personalization |
+| Trust-first consent | Vue.js, Tailwind CSS, Alpine-based motion | React Native | Django | PostgreSQL | Minimal or none |
+| Unified account dashboard | Vue.js, TypeScript, Tailwind CSS | React Native | Django | PostgreSQL | Categorization and summarization |
+| Regret Meter | Vue.js, Alpine-based motion | React Native | Django | PostgreSQL | Predictive scoring |
+| Rescue recommendations | Vue.js, TypeScript | React Native | Django | PostgreSQL | Deterministic logic plus LLM explanation |
+| Money Stories | Vue.js, Tailwind CSS | React Native | Django | PostgreSQL | Narrative generation |
+| Behavioral insights | Vue.js, TypeScript | React Native | Django | PostgreSQL | Pattern detection and summarization |
+| Safe zones and guardrails | Vue.js | React Native | Django | PostgreSQL | Financial logic and scoring |
+| Gamified progress | Vue.js, Alpine-based motion | React Native | Django | PostgreSQL | Optional recommendation support |
+| Digital Twin Lab | Vue.js, TypeScript, Tailwind CSS | React Native | Django | PostgreSQL | Scenario simulation and narrative summarization |
+| Notifications and daily check-ins | Web widgets | React Native | Django | PostgreSQL | Personalized content generation |
+
+## Repository Structure
+
+The following repository structure is recommended:
+
+```text
+repo/
+├── README.md
+├── docs/
+│   ├── product-overview.md
+│   ├── tech-stack-and-feature-mapping.md
+│   ├── ai-architecture.md
+│   └── api-overview.md
+├── web/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── layouts/
+│   │   ├── composables/
+│   │   ├── types/
+│   │   └── services/
+│   └── package.json
+├── mobile/
+│   ├── src/
+│   │   ├── screens/
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   └── services/
+│   └── package.json
+├── backend/
+│   ├── apps/
+│   │   ├── users/
+│   │   ├── banking/
+│   │   ├── analytics/
+│   │   ├── ai/
+│   │   └── simulations/
+│   ├── config/
+│   ├── requirements.txt
+│   └── manage.py
+├── database/
+│   ├── schema/
+│   └── seed/
+└── infrastructure/
+    ├── docker/
+    └── env/
+```
+
+## Repository Module Definitions
+
+### Web Application
+The web application is built with Vue.js, TypeScript, Tailwind CSS, and Alpine-based motion patterns. It serves as the primary browser-based environment for onboarding, analytics, historical insights, explainable financial guidance, and future-state simulation.[file:125][file:126]
+
+### Mobile Application
+The mobile application is built with React Native. It serves as the primary channel for recurring daily engagement, alerts, check-ins, rescue-plan interaction, and continuous goal tracking.[file:125][file:126]
+
+### Backend Services
+The backend is implemented with Django. It provides the API layer, business logic, transaction processing, consent management, simulation orchestration, administrative tooling, and AI-service coordination.[file:125][file:126]
+
+### Database
+PostgreSQL functions as the platform’s system-of-record database for transactional, analytical, behavioral, and simulation-related data.[file:125][file:126]
+
+### AI Services
+The AI services layer follows a hybrid orchestration model that combines deterministic financial logic, predictive analysis, and LLM-based output generation for rescue plans, narratives, coaching insights, and simulation summaries.[file:125][file:126]
