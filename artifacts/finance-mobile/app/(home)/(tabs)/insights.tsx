@@ -368,6 +368,12 @@ function RescuePlanSection() {
           {plan.narrative && (
             <View style={[styles.narrativeBox, { backgroundColor: colors.cardElevated, borderLeftColor: colors.primary }]}>
               <Text style={[styles.narrativeText, { color: colors.textSecondary }]}>{plan.narrative}</Text>
+              {plan.aiUnavailable && (
+                <View style={[styles.aiUnavailableBadge, { backgroundColor: colors.border }]}>
+                  <Feather name="cpu" size={11} color={colors.mutedForeground} />
+                  <Text style={[styles.aiUnavailableText, { color: colors.mutedForeground }]}>AI-generated content unavailable</Text>
+                </View>
+              )}
             </View>
           )}
 
@@ -517,6 +523,12 @@ function MoneyStoriesSection() {
           <Text style={[styles.storyNarrative, { color: colors.textSecondary }]}>
             {story.narrative}
           </Text>
+          {story.aiUnavailable && (
+            <View style={[styles.aiUnavailableBadge, { backgroundColor: colors.border }]}>
+              <Feather name="cpu" size={11} color={colors.mutedForeground} />
+              <Text style={[styles.aiUnavailableText, { color: colors.mutedForeground }]}>AI-generated content unavailable</Text>
+            </View>
+          )}
           <Text style={[styles.generatedAt, { color: colors.mutedForeground }]}>
             Story generated {new Date(story.generatedAt).toLocaleDateString()}
           </Text>
@@ -696,6 +708,18 @@ const styles = StyleSheet.create({
   },
   storyPeriodText: { fontSize: 12, fontWeight: "600" },
   storyNarrative: { fontSize: 15, lineHeight: 24 },
+
+  aiUnavailableBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  aiUnavailableText: { fontSize: 11 },
 
   emptyState: { padding: 24, borderRadius: 20, alignItems: "center" },
   emptyTitle: { fontSize: 17, fontWeight: "700", marginBottom: 8 },

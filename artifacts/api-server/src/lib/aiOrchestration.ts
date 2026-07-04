@@ -29,15 +29,21 @@ export async function getOpenAIClient(userId: string): Promise<{ openai: import(
   return { openai: new OpenAI({ apiKey }), source };
 }
 
+export interface NarrativeResult {
+  narrative: string;
+  aiUnavailable: boolean;
+}
+
 export async function generateRescueNarrative(
   userId: string,
   riskLevel: string,
   actions: Array<{ title: string; description: string; tag: string; estimatedSaving?: number }>,
   context: { savingsRate: number; spendingVelocityRatio: number; recurringBurdenPct: number }
-): Promise<string> {
+): Promise<NarrativeResult> {
   const client = await getOpenAIClient(userId);
   if (!client) {
-    return generateFallbackRescueNarrative(riskLevel, actions, context);
+    console.warn("[aiOrchestration] generateRescueNarrative: No OpenAI client available (missing or invalid API key). Serving fallback narrative.", { userId, riskLevel });
+    return { narrative: generateFallbackRescueNarrative(riskLevel, actions, context), aiUnavailable: true };
   }
 
   const actionSummary = actions
@@ -69,9 +75,23 @@ Respond with just the narrative text — no headers, no bullet points.`;
       max_tokens: 150,
       temperature: 0.7,
     });
-    return response.choices[0]?.message?.content?.trim() ?? generateFallbackRescueNarrative(riskLevel, actions, context);
-  } catch {
-    return generateFallbackRescueNarrative(riskLevel, actions, context);
+    const text = response.choices[0]?.message?.content?.trim();
+    if (!text) {
+      console.warn("[aiOrchestration] generateRescueNarrative: OpenAI returned empty content. Serving fallback narrative.", { userId, riskLevel, source: client.source });
+      return { narrative: generateFallbackRescueNarrative(riskLevel, actions, context), aiUnavailable: true };
+    }
+    return { narrative: text, aiUnavailable: false };
+  } catch (err) {
+    const errorCode = (err as any)?.status ?? (err as any)?.code ?? "unknown";
+    const errorMessage = (err as any)?.message ?? String(err);
+    console.error("[aiOrchestration] generateRescueNarrative: OpenAI call failed. Serving fallback narrative.", {
+      userId,
+      riskLevel,
+      source: client.source,
+      errorCode,
+      errorMessage,
+    });
+    return { narrative: generateFallbackRescueNarrative(riskLevel, actions, context), aiUnavailable: true };
   }
 }
 
@@ -94,10 +114,11 @@ export async function generateMoneyStory(
   userId: string,
   periodLabel: string,
   signals: Record<string, unknown>
-): Promise<string> {
+): Promise<NarrativeResult> {
   const client = await getOpenAIClient(userId);
   if (!client) {
-    return generateFallbackMoneyStory(periodLabel, signals);
+    console.warn("[aiOrchestration] generateMoneyStory: No OpenAI client available (missing or invalid API key). Serving fallback narrative.", { userId, periodLabel });
+    return { narrative: generateFallbackMoneyStory(periodLabel, signals), aiUnavailable: true };
   }
 
   const monthlyBreakdowns = signals.monthlyBreakdowns as Array<{
@@ -136,9 +157,23 @@ Make it feel human and insightful — not like a spreadsheet summary. No bullet 
       max_tokens: 300,
       temperature: 0.75,
     });
-    return response.choices[0]?.message?.content?.trim() ?? generateFallbackMoneyStory(periodLabel, signals);
-  } catch {
-    return generateFallbackMoneyStory(periodLabel, signals);
+    const text = response.choices[0]?.message?.content?.trim();
+    if (!text) {
+      console.warn("[aiOrchestration] generateMoneyStory: OpenAI returned empty content. Serving fallback narrative.", { userId, periodLabel, source: client.source });
+      return { narrative: generateFallbackMoneyStory(periodLabel, signals), aiUnavailable: true };
+    }
+    return { narrative: text, aiUnavailable: false };
+  } catch (err) {
+    const errorCode = (err as any)?.status ?? (err as any)?.code ?? "unknown";
+    const errorMessage = (err as any)?.message ?? String(err);
+    console.error("[aiOrchestration] generateMoneyStory: OpenAI call failed. Serving fallback narrative.", {
+      userId,
+      periodLabel,
+      source: client.source,
+      errorCode,
+      errorMessage,
+    });
+    return { narrative: generateFallbackMoneyStory(periodLabel, signals), aiUnavailable: true };
   }
 }
 

@@ -55,6 +55,7 @@ export interface RescuePlan {
   riskLevel: string;
   actions: RescueAction[];
   narrative: string;
+  aiUnavailable?: boolean;
   score: number;
   generatedAt: string;
 }
@@ -63,6 +64,7 @@ export interface MoneyStory {
   id: number;
   periodLabel: string;
   narrative: string;
+  aiUnavailable?: boolean;
   signals?: Record<string, unknown>;
   generatedAt: string;
 }

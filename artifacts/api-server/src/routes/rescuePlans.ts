@@ -30,6 +30,7 @@ router.get("/rescue-plans", requireAuth, requireConsent, async (req, res): Promi
 
   // Try to enrich with AI narrative (best-effort, non-blocking)
   let narrative: string | null = null;
+  let aiUnavailable = false;
   try {
     let apiKey: string | null = null;
     if (user.encryptedOpenAiKey) {
@@ -38,7 +39,10 @@ router.get("/rescue-plans", requireAuth, requireConsent, async (req, res): Promi
       apiKey = process.env.OPENAI_API_KEY;
     }
 
-    if (apiKey) {
+    if (!apiKey) {
+      console.warn("[rescuePlans] GET /rescue-plans: No OpenAI API key available. Serving deterministic fallback.", { userId: (req as any).userId, riskLevel: score.level });
+      aiUnavailable = true;
+    } else {
       const { default: OpenAI } = await import("openai");
       const openai = new OpenAI({ apiKey });
       const prompt = `You are a compassionate financial coach for "Guardia". The user's financial regret risk score is ${score.score}/100 (${score.level} risk). Key factors: ${score.factors.map((f) => f.label).join(", ")}. Write a warm, non-judgmental 2-sentence intro for their rescue plan. Be specific and actionable. No markdown.`;
@@ -49,9 +53,25 @@ router.get("/rescue-plans", requireAuth, requireConsent, async (req, res): Promi
         temperature: 0.7,
       });
       narrative = resp.choices[0]?.message?.content?.trim() ?? null;
+      if (!narrative) {
+        console.warn("[rescuePlans] GET /rescue-plans: OpenAI returned empty content. Serving deterministic fallback.", { userId: (req as any).userId, riskLevel: score.level });
+        aiUnavailable = true;
+      }
     }
-  } catch {
-    // AI failed — use deterministic fallback
+  } catch (err) {
+    const errorCode = (err as any)?.status ?? (err as any)?.code ?? "unknown";
+    const errorMessage = (err as any)?.message ?? String(err);
+    console.error("[rescuePlans] GET /rescue-plans: OpenAI call failed. Serving deterministic fallback.", {
+      userId: (req as any).userId,
+      riskLevel: score.level,
+      errorCode,
+      errorMessage,
+    });
+    aiUnavailable = true;
+  }
+
+  if (aiUnavailable || !narrative) {
+    aiUnavailable = true;
     narrative =
       score.level === "low"
         ? "You're in great financial shape this month. These optimizations can help you build even more momentum."
@@ -64,6 +84,7 @@ router.get("/rescue-plans", requireAuth, requireConsent, async (req, res): Promi
     riskLevel: score.level,
     actions,
     narrative,
+    aiUnavailable,
     generatedAt: new Date().toISOString(),
   };
 

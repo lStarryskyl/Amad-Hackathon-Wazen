@@ -71,29 +71,34 @@ router.post("/ai/rescue-plan", requireAuth, requireConsent, async (req, res): Pr
   try {
     const scoreResult = await computeRegretScore(userId);
     const actions = await buildRescueActions(userId, scoreResult);
-    const narrative = await generateRescueNarrative(userId, scoreResult.level, actions, {
+    const narrativeResult = await generateRescueNarrative(userId, scoreResult.level, actions, {
       savingsRate: scoreResult.savingsRate,
       spendingVelocityRatio: scoreResult.spendingVelocityRatio,
       recurringBurdenPct: scoreResult.recurringBurdenPct,
     });
 
+    if (narrativeResult.aiUnavailable) {
+      console.warn("[intelligence] /ai/rescue-plan: serving fallback narrative due to AI unavailability.", { userId, riskLevel: scoreResult.level });
+    }
+
     const [saved] = await db.insert(rescuePlansTable).values({
       userId,
       riskLevel: scoreResult.level,
       actions: actions as any,
-      narrative,
+      narrative: narrativeResult.narrative,
     }).returning();
 
     res.json({
       id: saved.id,
       riskLevel: saved.riskLevel,
       actions,
-      narrative,
+      narrative: narrativeResult.narrative,
+      aiUnavailable: narrativeResult.aiUnavailable,
       score: scoreResult.score,
       generatedAt: saved.generatedAt,
     });
   } catch (err) {
-    console.error("rescue-plan error", err);
+    console.error("[intelligence] /ai/rescue-plan: unexpected error", { userId, error: (err as any)?.message ?? String(err) });
     res.status(500).json({ error: "InternalError", message: "Failed to generate rescue plan" });
   }
 });
@@ -153,23 +158,28 @@ router.post("/ai/money-story", requireAuth, requireConsent, async (req, res): Pr
       totalBalance: context.months.reduce((s, m) => s + m.income - m.expenses, 0),
       recurringObligationsTotal: latestMonth?.recurringObligationCount ?? 0,
     };
-    const narrative = await generateMoneyStory(userId, periodLabel, signals);
+    const narrativeResult = await generateMoneyStory(userId, periodLabel, signals);
+
+    if (narrativeResult.aiUnavailable) {
+      console.warn("[intelligence] /ai/money-story: serving fallback narrative due to AI unavailability.", { userId, periodLabel });
+    }
 
     const [saved] = await db.insert(moneyStoriesTable).values({
       userId,
       periodLabel,
-      narrative,
+      narrative: narrativeResult.narrative,
     }).returning();
 
     res.json({
       id: saved.id,
       periodLabel: saved.periodLabel,
       narrative: saved.narrative,
+      aiUnavailable: narrativeResult.aiUnavailable,
       signals,
       generatedAt: saved.generatedAt,
     });
   } catch (err) {
-    console.error("money-story error", err);
+    console.error("[intelligence] /ai/money-story: unexpected error", { userId, error: (err as any)?.message ?? String(err) });
     res.status(500).json({ error: "InternalError", message: "Failed to generate money story" });
   }
 });
