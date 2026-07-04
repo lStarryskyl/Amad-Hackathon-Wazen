@@ -9,6 +9,8 @@ export const usersTable = pgTable("users", {
   hasConsented: boolean("has_consented").notNull().default(false),
   consentGivenAt: timestamp("consent_given_at"),
   onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
+  // Encrypted user-provided OpenAI API key (AES-256-GCM, stored as iv:authTag:ciphertext)
+  encryptedOpenAiKey: text("encrypted_openai_key"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

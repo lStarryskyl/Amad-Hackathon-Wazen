@@ -24,6 +24,9 @@ router.put("/profile", requireAuth, async (req, res) => {
   const userId = (req as any).userId as string;
   const { name } = req.body as { name?: string };
 
+  // Ensure user row exists before update (critical for new users)
+  await getOrCreateUser(userId);
+
   await db
     .update(usersTable)
     .set({ name: name ?? null, updatedAt: new Date() })
@@ -34,6 +37,10 @@ router.put("/profile", requireAuth, async (req, res) => {
     .from(usersTable)
     .where(eq(usersTable.id, userId))
     .limit(1);
+
+  if (!user) {
+    return res.status(500).json({ error: "ServerError", message: "Failed to retrieve updated profile." });
+  }
 
   res.json({
     id: user.id,

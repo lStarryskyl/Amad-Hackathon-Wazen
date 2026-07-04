@@ -31,10 +31,10 @@ export default function ConsentScreen() {
   };
 
   const bullets = [
-    "Secure bank connection via Plaid",
-    "Encrypted data storage",
-    "Personalized behavioral analysis",
-    "No data sold to third parties",
+    "Demo financial data used to show features",
+    "Encrypted data storage on secure servers",
+    "Personalized behavioral analysis by AI",
+    "No data sold to third parties — ever",
   ];
 
   return (
