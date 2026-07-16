@@ -1,14 +1,14 @@
 import { Stack } from "expo-router";
-import { useColors } from "@/hooks/useColors";
+import { useBoldColors } from "@/hooks/useBoldColors";
 
 export default function OnboardingLayout() {
-  const colors = useColors();
+  const colors = useBoldColors();
   return (
-    <Stack 
-      screenOptions={{ 
+    <Stack
+      screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: colors.background }
-      }} 
+        contentStyle: { backgroundColor: colors.background },
+      }}
     />
   );
 }

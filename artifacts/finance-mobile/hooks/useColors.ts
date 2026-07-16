@@ -1,5 +1,5 @@
-import { Colors } from "@/constants/colors";
+import { useBoldColors } from "./useBoldColors";
 
 export function useColors() {
-  return Colors;
+  return useBoldColors();
 }

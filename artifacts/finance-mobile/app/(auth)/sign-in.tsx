@@ -1,21 +1,25 @@
 import React from "react";
 import {
   View,
-  Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
   Platform,
   KeyboardAvoidingView,
   ScrollView,
-  Image,
+  ActivityIndicator,
 } from "react-native";
 import { useSignIn } from "@clerk/expo";
 import { useRouter, Link } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useColors } from "@/hooks/useColors";
+import { useBoldColors } from "@/hooks/useBoldColors";
+import {
+  BoldButton,
+  BoldCard,
+  BoldText,
+  BoldInput,
+  BoldBadge,
+} from "@/components/bold";
 
 const FEATURES = [
   { icon: "activity", label: "AI Finance Pulse" },
@@ -26,7 +30,7 @@ const FEATURES = [
 export default function SignInScreen() {
   const { signIn, errors, fetchStatus } = useSignIn();
   const router = useRouter();
-  const colors = useColors();
+  const colors = useBoldColors();
   const insets = useSafeAreaInsets();
 
   const [emailAddress, setEmailAddress] = React.useState("");
@@ -61,52 +65,44 @@ export default function SignInScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={[styles.container, { backgroundColor: colors.background }]}
+      style={{ flex: 1, backgroundColor: colors.background }}
     >
       <ScrollView
-        contentContainerStyle={[
-          styles.scroll,
-          { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 32 },
-        ]}
+        contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top + 24, paddingBottom: insets.bottom + 32, paddingHorizontal: 20 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Brand ── */}
-        <View style={styles.brand}>
-          <View style={styles.logoWrap}>
-            <Image
-              source={require("../../assets/images/logo.png")}
-              style={styles.logoImg}
-              resizeMode="cover"
-            />
-          </View>
-          <Text style={[styles.tagline, { color: colors.mutedForeground }]}>
+        <View style={{ alignItems: "center", marginBottom: 28 }}>
+          <Feather name="activity" size={56} color={colors.primary} style={{ marginBottom: 14 }} />
+          <BoldText variant="heading3" weight="700" color={colors.text}>
+            Wazen
+          </BoldText>
+          <BoldText variant="bodyMD" color={colors.mutedForeground} style={{ marginBottom: 16 }}>
             Your AI-powered financial pulse
-          </Text>
-
-          <View style={styles.featurePills}>
+          </BoldText>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
             {FEATURES.map((f) => (
-              <View
-                key={f.icon}
-                style={[styles.pill, { backgroundColor: colors.card, borderColor: colors.border }]}
-              >
+              <BoldBadge key={f.icon} variant="primary" size="md" style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                 <Feather name={f.icon as any} size={11} color={colors.primary} />
-                <Text style={[styles.pillText, { color: colors.textSecondary }]}>{f.label}</Text>
-              </View>
+                {f.label}
+              </BoldBadge>
             ))}
           </View>
         </View>
 
-        {/* ── Form ── */}
-        <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.formTitle, { color: colors.text }]}>Welcome back</Text>
+        <BoldCard variant="outlined" padding="lg" style={{ marginBottom: 20 }}>
+          <BoldText variant="heading3" weight="700" color={colors.text} style={{ marginBottom: 20 }}>
+            Welcome back
+          </BoldText>
 
-          <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
-            <View style={[styles.inputWrap, { backgroundColor: colors.background, borderColor: colors.border }]}>
-              <Feather name="mail" size={16} color={colors.mutedForeground} style={styles.inputIcon} />
+          <View style={{ marginBottom: 16 }}>
+            <BoldText variant="caption" color={colors.textSecondary} style={{ marginBottom: 6 }}>
+              EMAIL
+            </BoldText>
+            <View style={{ flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 12, height: 50, backgroundColor: colors.background }}>
+              <Feather name="mail" size={16} color={colors.mutedForeground} style={{ marginRight: 8 }} />
               <TextInput
-                style={[styles.input, { color: colors.text }]}
+                style={{ flex: 1, fontSize: 15, color: colors.text }}
                 autoCapitalize="none"
                 value={emailAddress}
                 placeholder="you@example.com"
@@ -114,129 +110,61 @@ export default function SignInScreen() {
                 onChangeText={setEmailAddress}
                 keyboardType="email-address"
                 autoComplete="email"
-                testID="input-email"
               />
             </View>
           </View>
 
-          <View style={styles.field}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>Password</Text>
-            <View style={[styles.inputWrap, { backgroundColor: colors.background, borderColor: colors.border }]}>
-              <Feather name="lock" size={16} color={colors.mutedForeground} style={styles.inputIcon} />
+          <View style={{ marginBottom: 16 }}>
+            <BoldText variant="caption" color={colors.textSecondary} style={{ marginBottom: 6 }}>
+              PASSWORD
+            </BoldText>
+            <View style={{ flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 12, height: 50, backgroundColor: colors.background }}>
+              <Feather name="lock" size={16} color={colors.mutedForeground} style={{ marginRight: 8 }} />
               <TextInput
-                style={[styles.input, { color: colors.text }]}
+                style={{ flex: 1, fontSize: 15, color: colors.text }}
                 value={password}
                 placeholder="••••••••"
                 placeholderTextColor={colors.mutedForeground}
                 secureTextEntry={!showPass}
                 onChangeText={setPassword}
                 autoComplete="password"
-                testID="input-password"
               />
-              <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eyeBtn}>
+              <TouchableOpacity onPress={() => setShowPass(!showPass)} style={{ padding: 4 }}>
                 <Feather name={showPass ? "eye-off" : "eye"} size={16} color={colors.mutedForeground} />
               </TouchableOpacity>
             </View>
           </View>
 
           {errorMessage ? (
-            <View style={[styles.errorBox, { backgroundColor: colors.danger + "18", borderColor: colors.danger + "40" }]}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderColor: colors.danger + "40", borderRadius: 10, padding: 10, backgroundColor: colors.danger + "18", marginBottom: 12 }}>
               <Feather name="alert-circle" size={14} color={colors.danger} />
-              <Text style={[styles.errorText, { color: colors.danger }]}>{errorMessage}</Text>
+              <BoldText variant="bodySM" color={colors.danger} style={{ flex: 1 }}>{errorMessage}</BoldText>
             </View>
           ) : null}
 
-          <TouchableOpacity
-            style={[styles.cta, { backgroundColor: colors.primary, opacity: loading || fetchStatus === "fetching" ? 0.75 : 1 }]}
+          <BoldButton
+            variant="primary"
+            size="lg"
+            fullWidth
             onPress={onSignInPress}
             disabled={loading || fetchStatus === "fetching"}
-            activeOpacity={0.85}
-            testID="button-sign-in"
+            loading={loading || fetchStatus === "fetching"}
           >
-            {loading || fetchStatus === "fetching" ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Text style={styles.ctaText}>Sign In</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+            Sign In
+          </BoldButton>
+        </BoldCard>
 
-        <View style={styles.footer}>
-          <Text style={[styles.footerText, { color: colors.mutedForeground }]}>
+        <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 4 }}>
+          <BoldText variant="bodyMD" color={colors.mutedForeground}>
             No account?{" "}
-          </Text>
+          </BoldText>
           <Link href="/(auth)/sign-up">
-            <Text style={[styles.footerLink, { color: colors.primary }]}>Create one free</Text>
+            <BoldText variant="bodyMD" weight="700" color={colors.primary}>
+              Create one free
+            </BoldText>
           </Link>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scroll: { flexGrow: 1, paddingHorizontal: 20 },
-
-  brand: { alignItems: "center", marginBottom: 28 },
-  logoWrap: { width: 100, height: 100, borderRadius: 22, overflow: "hidden", marginBottom: 14 },
-  logoImg: { width: 100, height: 100 },
-  tagline: { fontSize: 14, textAlign: "center", marginBottom: 16 },
-  featurePills: { flexDirection: "row", flexWrap: "wrap", gap: 6, justifyContent: "center" },
-  pill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  pillText: { fontSize: 11, fontWeight: "500" },
-
-  formCard: {
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 24,
-    marginBottom: 20,
-  },
-  formTitle: { fontSize: 18, fontWeight: "700", marginBottom: 20 },
-
-  field: { marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: "600", marginBottom: 6 },
-  inputWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    height: 50,
-  },
-  inputIcon: { marginRight: 8 },
-  input: { flex: 1, fontSize: 15 },
-  eyeBtn: { padding: 4 },
-
-  errorBox: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 12,
-  },
-  errorText: { fontSize: 13, flex: 1 },
-
-  cta: {
-    height: 50,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  ctaText: { color: "#fff", fontSize: 15, fontWeight: "700" },
-
-  footer: { flexDirection: "row", justifyContent: "center", marginTop: 4 },
-  footerText: { fontSize: 14 },
-  footerLink: { fontSize: 14, fontWeight: "700" },
-});

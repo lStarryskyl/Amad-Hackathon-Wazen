@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -25,14 +25,25 @@ import {
 } from "@workspace/api-client-react";
 import type { RegretFactor, RescueAction, BehavioralPattern } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useColors } from "@/hooks/useColors";
+
+import {
+  BoldButton,
+  BoldCard,
+  BoldText,
+  BoldBadge,
+  BoldProgress,
+  BoldModal,
+  BoldAvatar,
+} from "@/components/bold";
+import { useBoldColors } from "@/hooks/useBoldColors";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-function levelColor(level: string, colors: ReturnType<typeof useColors>) {
-  if (level === "low") return colors.accent;
+function levelColor(level: string, colors: ReturnType<typeof useBoldColors>) {
+  if (level === "low") return colors.success;
   if (level === "medium") return colors.warning;
   return colors.danger;
 }
@@ -43,63 +54,59 @@ function levelLabel(level: string) {
   return "High Risk";
 }
 
-function impactColor(impact: string, colors: ReturnType<typeof useColors>) {
+function impactColor(impact: string, colors: ReturnType<typeof useBoldColors>) {
   if (impact === "high") return colors.danger;
   if (impact === "medium") return colors.warning;
-  return colors.accent;
+  return colors.success;
+}
+
+function severityColor(severity: BehavioralPattern["severity"], colors: ReturnType<typeof useBoldColors>) {
+  if (severity === "positive") return colors.success;
+  if (severity === "warning") return colors.warning;
+  return colors.primary;
 }
 
 // ─── Behavioral Patterns Section ─────────────────────────────────────────────
 
 function BehavioralPatternsSection() {
-  const colors = useColors();
+  const colors = useBoldColors();
   const { data, isLoading, refetch, isRefetching } = useGetPatterns({
     staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 
-  const severityColor = (severity: BehavioralPattern["severity"]) => {
-    if (severity === "positive") return colors.accent;
-    if (severity === "warning") return colors.warning;
-    return colors.primary;
-  };
-
   return (
-    <View style={[styles.card, { backgroundColor: colors.card }]}>
+    <BoldCard variant="elevated" padding="lg" style={styles.card}>
       <View style={styles.cardHeader}>
         <View style={styles.row}>
-          <View style={[styles.iconCircle, { backgroundColor: colors.warning + "20" }]}>
-            <Feather name="activity" size={20} color={colors.warning} />
-          </View>
+          <BoldAvatar size="sm" name="BP" status="online" style={styles.iconCircle} icon={<Feather name="activity" size={20} color={colors.warning} />} />
           <View>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>Behavioral Patterns</Text>
-            <Text style={[styles.cardSubtitle, { color: colors.mutedForeground }]}>Detected from your transaction history</Text>
+            <BoldText variant="heading3" weight="700" color={colors.text}>Behavioral Patterns</BoldText>
+            <BoldText variant="bodySM" color={colors.mutedForeground}>Detected from your transaction history</BoldText>
           </View>
         </View>
-        <TouchableOpacity
-          onPress={() => refetch()}
-          disabled={isRefetching}
-          style={[styles.refreshBtn, { borderColor: colors.border }]}
-        >
-          {isRefetching
-            ? <ActivityIndicator size="small" color={colors.primary} />
-            : <Feather name="refresh-cw" size={16} color={colors.mutedForeground} />}
-        </TouchableOpacity>
+        <BoldButton variant="ghost" size="sm" onPress={() => refetch()} disabled={isRefetching}>
+          {isRefetching ? (
+            <ActivityIndicator size="small" color={colors.primary} />
+          ) : (
+            <Feather name="refresh-cw" size={16} color={colors.mutedForeground} />
+          )}
+        </BoldButton>
       </View>
 
       {isLoading && (
-        <View style={[styles.emptyState, { backgroundColor: colors.cardElevated }]}>
+        <View style={styles.emptyState}>
           <ActivityIndicator color={colors.primary} style={{ marginBottom: 8 }} />
-          <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>Analyzing your spending patterns…</Text>
+          <BoldText variant="bodyMD" color={colors.mutedForeground}>Analyzing your spending patterns…</BoldText>
         </View>
       )}
 
       {!isLoading && (!data?.patterns || data.patterns.length === 0) && (
-        <View style={[styles.emptyState, { backgroundColor: colors.cardElevated }]}>
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>No Patterns Yet</Text>
-          <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
+        <View style={styles.emptyState}>
+          <BoldText variant="heading3" weight="700" color={colors.text}>No Patterns Yet</BoldText>
+          <BoldText variant="bodyMD" color={colors.mutedForeground}>
             Add more transactions to start seeing behavioral patterns.
-          </Text>
+          </BoldText>
         </View>
       )}
 
@@ -110,7 +117,7 @@ function BehavioralPatternsSection() {
           ))}
         </View>
       )}
-    </View>
+    </BoldCard>
   );
 }
 
@@ -120,11 +127,11 @@ function PatternCard({
   colors,
 }: {
   pattern: BehavioralPattern;
-  severityColor: (s: BehavioralPattern["severity"]) => string;
-  colors: ReturnType<typeof useColors>;
+  severityColor: (s: BehavioralPattern["severity"], colors: ReturnType<typeof useBoldColors>) => string;
+  colors: ReturnType<typeof useBoldColors>;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const color = severityColor(pattern.severity);
+  const color = severityColor(pattern.severity, colors);
 
   return (
     <TouchableOpacity
@@ -138,26 +145,27 @@ function PatternCard({
       <View style={styles.patternHeader}>
         <Text style={styles.patternEmoji}>{pattern.icon}</Text>
         <View style={styles.patternMiddle}>
-          <Text style={[styles.patternTitle, { color: colors.text }]}>{pattern.title}</Text>
+          <BoldText variant="bodyMD" weight="700" color={colors.text}>{pattern.title}</BoldText>
           {pattern.dataPoint && (
-            <View style={[styles.dataPill, { backgroundColor: color + "20" }]}>
-              <Text style={[styles.dataPillText, { color }]}>{pattern.dataPoint}</Text>
-            </View>
+            <BoldBadge variant={color === colors.success ? "success" : color === colors.warning ? "warning" : "primary"} size="sm">
+              {pattern.dataPoint}
+            </BoldBadge>
           )}
         </View>
         <Feather name={expanded ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedForeground} />
       </View>
       {expanded && (
-        <Text style={[styles.patternDesc, { color: colors.textSecondary }]}>{pattern.description}</Text>
+        <BoldText variant="bodySM" color={colors.textSecondary} style={styles.patternDesc}>{pattern.description}</BoldText>
       )}
     </TouchableOpacity>
   );
 }
 
-// ─── Regret Score Section ────────────────────────────────────────────────────
+// ─── Regret Score Section ──────────────────────────────────────────────────────
 
 function RegretMeterSection() {
-  const colors = useColors();
+  const colors = useBoldColors();
+  const reducedMotion = useReducedMotion();
   const { data: score, isLoading, refetch, isRefetching } = useGetRegretScore({
     staleTime: 3 * 60 * 1000,
     retry: 1,
@@ -176,7 +184,7 @@ function RegretMeterSection() {
         useNativeDriver: false,
       }).start();
 
-      if (score.level === "high") {
+      if (score.level === "high" && !reducedMotion) {
         pulseRef.current = Animated.loop(
           Animated.sequence([
             Animated.timing(pulseAnim, { toValue: 1.03, duration: 1000, useNativeDriver: true }),
@@ -190,14 +198,14 @@ function RegretMeterSection() {
       }
     }
     return () => { pulseRef.current?.stop(); };
-  }, [score?.score, score?.level]);
+  }, [score?.score, score?.level, reducedMotion]);
 
   if (isLoading) {
     return (
-      <View style={[styles.card, { backgroundColor: colors.card }]}>
+      <BoldCard variant="elevated" padding="lg" style={styles.card}>
         <ActivityIndicator color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>Computing your score…</Text>
-      </View>
+        <BoldText variant="bodySM" color={colors.mutedForeground} style={styles.loadingText}>Computing your score…</BoldText>
+      </BoldCard>
     );
   }
 
@@ -205,35 +213,29 @@ function RegretMeterSection() {
 
   if (score.noData) {
     return (
-      <View style={[styles.card, { backgroundColor: colors.card }]}>
+      <BoldCard variant="elevated" padding="lg" style={styles.card}>
         <View style={styles.cardHeader}>
           <View style={styles.row}>
-            <View style={[styles.iconCircle, { backgroundColor: colors.mutedForeground + "20" }]}>
-              <Feather name="bar-chart-2" size={20} color={colors.mutedForeground} />
-            </View>
+            <BoldAvatar size="sm" name="RS" status="offline" style={styles.iconCircle} icon={<Feather name="bar-chart-2" size={20} color={colors.mutedForeground} />} />
             <View>
-              <Text style={[styles.cardTitle, { color: colors.text }]}>Regret Score</Text>
-              <Text style={[styles.cardSubtitle, { color: colors.mutedForeground }]}>Short-term financial regret risk</Text>
+              <BoldText variant="heading3" weight="700" color={colors.text}>Regret Score</BoldText>
+              <BoldText variant="bodySM" color={colors.mutedForeground}>Short-term financial regret risk</BoldText>
             </View>
           </View>
-          <TouchableOpacity
-            onPress={() => refetch()}
-            disabled={isRefetching}
-            style={[styles.refreshBtn, { borderColor: colors.border }]}
-          >
+          <BoldButton variant="ghost" size="sm" onPress={() => refetch()} disabled={isRefetching}>
             {isRefetching
               ? <ActivityIndicator size="small" color={colors.primary} />
               : <Feather name="refresh-cw" size={16} color={colors.mutedForeground} />}
-          </TouchableOpacity>
+          </BoldButton>
         </View>
-        <View style={[styles.emptyState, { backgroundColor: colors.cardElevated }]}>
+        <View style={styles.emptyState}>
           <Feather name="inbox" size={32} color={colors.mutedForeground} style={{ marginBottom: 12 }} />
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>No Data Yet</Text>
-          <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
+          <BoldText variant="heading3" weight="700" color={colors.text}>No Data Yet</BoldText>
+          <BoldText variant="bodyMD" color={colors.mutedForeground}>
             Your Regret Score will appear once you've added at least one month of transactions. Add some transactions to get started.
-          </Text>
+          </BoldText>
         </View>
-      </View>
+      </BoldCard>
     );
   }
 
@@ -243,75 +245,83 @@ function RegretMeterSection() {
 
   return (
     <Animated.View style={{ transform: [{ scale: s.level === "high" ? pulseAnim : new Animated.Value(1) }] }}>
-      <View style={[styles.card, { backgroundColor: colors.card, borderColor: color + "25", borderWidth: 1 }]}>
+      <BoldCard variant="outlined" padding="lg" style={[styles.card, { borderColor: color + "25", borderWidth: 1 }]}>
         <View style={styles.cardHeader}>
           <View style={styles.row}>
-            <View style={[styles.iconCircle, { backgroundColor: color + "20" }]}>
-              <Feather
-                name={s.level === "low" ? "check-circle" : s.level === "medium" ? "alert-circle" : "alert-triangle"}
-                size={20}
-                color={color}
-              />
-            </View>
+            <BoldAvatar
+              size="sm"
+              name="RS"
+              status={s.level === "low" ? "online" : s.level === "medium" ? "busy" : "offline"}
+              style={styles.iconCircle}
+              icon={
+                <Feather
+                  name={s.level === "low" ? "check-circle" : s.level === "medium" ? "alert-circle" : "alert-triangle"}
+                  size={20}
+                  color={color}
+                />
+              }
+            />
             <View>
-              <Text style={[styles.cardTitle, { color: colors.text }]}>Regret Score</Text>
-              <Text style={[styles.cardSubtitle, { color: colors.mutedForeground }]}>Short-term financial regret risk</Text>
+              <BoldText variant="heading3" weight="700" color={colors.text}>Regret Score</BoldText>
+              <BoldText variant="bodySM" color={colors.mutedForeground}>Short-term financial regret risk</BoldText>
             </View>
           </View>
-          <TouchableOpacity
-            onPress={() => refetch()}
-            disabled={isRefetching}
-            style={[styles.refreshBtn, { borderColor: colors.border }]}
-          >
+          <BoldButton variant="ghost" size="sm" onPress={() => refetch()} disabled={isRefetching}>
             {isRefetching
               ? <ActivityIndicator size="small" color={colors.primary} />
               : <Feather name="refresh-cw" size={16} color={colors.mutedForeground} />}
-          </TouchableOpacity>
+          </BoldButton>
         </View>
 
         <View style={styles.scoreDisplay}>
-          <Text style={[styles.bigScore, { color }]}>{s.score}</Text>
+          <BoldText variant="displayLG" weight="800" color={color} style={styles.bigScore}>{s.score}</BoldText>
           <View style={styles.scoreRight}>
-            <View style={[styles.levelBadge, { backgroundColor: color + "20" }]}>
-              <Text style={[styles.levelBadgeText, { color }]}>{levelLabel(s.level)}</Text>
-            </View>
-            <Text style={[styles.scoreOf, { color: colors.mutedForeground }]}>out of 100</Text>
+            <BoldBadge variant={s.level === "low" ? "success" : s.level === "medium" ? "warning" : "danger"} size="md">
+              <BoldText variant="caption" weight="700" color={color} style={{ textTransform: "uppercase" }}>
+                {levelLabel(s.level)}
+              </BoldText>
+            </BoldBadge>
+            <BoldText variant="bodySM" color={colors.mutedForeground}>out of 100</BoldText>
           </View>
         </View>
 
-        <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
-          <Animated.View style={[styles.progressFill, { backgroundColor: color, width: arcWidth }]} />
-          <View style={[styles.marker, { left: "30%", backgroundColor: colors.accent }]} />
-          <View style={[styles.marker, { left: "60%", backgroundColor: colors.warning }]} />
-        </View>
+        <BoldProgress
+          value={s.score}
+          max={100}
+          variant={s.level === "low" ? "success" : s.level === "medium" ? "warning" : "danger"}
+          size="lg"
+          animated={!reducedMotion}
+          style={styles.progressTrack}
+        />
+
         <View style={styles.markerLabels}>
-          <Text style={[styles.markerLabel, { color: colors.accent }]}>Safe</Text>
-          <Text style={[styles.markerLabel, { color: colors.warning }]}>Caution</Text>
-          <Text style={[styles.markerLabel, { color: colors.danger }]}>Risk</Text>
+          <BoldText variant="caption" weight="600" color={colors.success}>Safe</BoldText>
+          <BoldText variant="caption" weight="600" color={colors.warning}>Caution</BoldText>
+          <BoldText variant="caption" weight="600" color={colors.danger}>Risk</BoldText>
         </View>
 
-        <View style={[styles.summaryBox, { backgroundColor: colors.cardElevated }]}>
-          <Text style={[styles.summaryText, { color: colors.text }]}>{s.summary}</Text>
-        </View>
+        <BoldCard variant="filled" padding="md" style={styles.summaryBox}>
+          <BoldText variant="bodyMD" color={colors.text}>{s.summary}</BoldText>
+        </BoldCard>
 
-        <Text style={[styles.factorsTitle, { color: colors.text }]}>Contributing Factors</Text>
+        <BoldText variant="bodyMD" weight="700" color={colors.text} style={styles.factorsTitle}>Contributing Factors</BoldText>
         {s.factors.map((factor: RegretFactor) => (
           <FactorRow key={factor.key} factor={factor} colors={colors} />
         ))}
 
         <View style={styles.statsGrid}>
-          <StatPill label="Savings Rate" value={`${s.savingsRate}%`} color={s.savingsRate >= 15 ? colors.accent : colors.warning} colors={colors} />
-          <StatPill label="vs Prior Month" value={`${Math.round(s.spendingVelocityRatio * 100)}%`} color={s.spendingVelocityRatio <= 1.05 ? colors.accent : colors.danger} colors={colors} />
-          <StatPill label="Fixed Costs" value={`${s.recurringBurdenPct}%`} color={s.recurringBurdenPct <= 40 ? colors.accent : colors.warning} colors={colors} />
+          <StatPill label="Savings Rate" value={`${s.savingsRate}%`} color={s.savingsRate >= 15 ? colors.success : colors.warning} colors={colors} />
+          <StatPill label="vs Prior Month" value={`${Math.round(s.spendingVelocityRatio * 100)}%`} color={s.spendingVelocityRatio <= 1.05 ? colors.success : colors.danger} colors={colors} />
+          <StatPill label="Fixed Costs" value={`${s.recurringBurdenPct}%`} color={s.recurringBurdenPct <= 40 ? colors.success : colors.warning} colors={colors} />
         </View>
-      </View>
+      </BoldCard>
     </Animated.View>
   );
 }
 
-function FactorRow({ factor, colors }: { factor: RegretFactor; colors: ReturnType<typeof useColors> }) {
+function FactorRow({ factor, colors }: { factor: RegretFactor; colors: ReturnType<typeof useBoldColors> }) {
   const [expanded, setExpanded] = useState(false);
-  const dotColor = factor.impact === "positive" ? colors.accent : factor.impact === "negative" ? colors.danger : colors.warning;
+  const dotColor = factor.impact === "positive" ? colors.success : factor.impact === "negative" ? colors.danger : colors.warning;
 
   return (
     <TouchableOpacity
@@ -324,29 +334,29 @@ function FactorRow({ factor, colors }: { factor: RegretFactor; colors: ReturnTyp
     >
       <View style={styles.factorHeader}>
         <View style={[styles.factorDot, { backgroundColor: dotColor }]} />
-        <Text style={[styles.factorLabel, { color: colors.text }]}>{factor.label}</Text>
+        <BoldText variant="bodyMD" weight="600" color={colors.text}>{factor.label}</BoldText>
         <Feather name={expanded ? "chevron-up" : "chevron-down"} size={14} color={colors.mutedForeground} />
       </View>
       {expanded && (
-        <Text style={[styles.factorDesc, { color: colors.mutedForeground }]}>{factor.description}</Text>
+        <BoldText variant="bodySM" color={colors.mutedForeground} style={styles.factorDesc}>{factor.description}</BoldText>
       )}
     </TouchableOpacity>
   );
 }
 
-function StatPill({ label, value, color, colors }: { label: string; value: string; color: string; colors: ReturnType<typeof useColors> }) {
+function StatPill({ label, value, color, colors }: { label: string; value: string; color: string; colors: ReturnType<typeof useBoldColors> }) {
   return (
-    <View style={[styles.statPill, { backgroundColor: colors.cardElevated }]}>
-      <Text style={[styles.statValue, { color }]}>{value}</Text>
-      <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{label}</Text>
-    </View>
+    <BoldCard variant="filled" padding="md" style={styles.statPill}>
+      <BoldText variant="bodyLG" weight="700" color={color}>{value}</BoldText>
+      <BoldText variant="caption" color={colors.mutedForeground} style={styles.statLabel}>{label}</BoldText>
+    </BoldCard>
   );
 }
 
 // ─── Rescue Plan Section ─────────────────────────────────────────────────────
 
 function RescuePlanSection() {
-  const colors = useColors();
+  const colors = useBoldColors();
   const queryClient = useQueryClient();
   const { data: latest } = useGetLatestRescuePlan({ retry: 0 });
   const { mutate: generate, isPending, data: freshPlan } = useGenerateRescuePlan({
@@ -359,64 +369,56 @@ function RescuePlanSection() {
   const plan = freshPlan ?? latest;
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card }]}>
+    <BoldCard variant="elevated" padding="lg" style={styles.card}>
       <View style={styles.cardHeader}>
         <View style={styles.row}>
-          <View style={[styles.iconCircle, { backgroundColor: colors.primary + "20" }]}>
-            <Feather name="shield" size={20} color={colors.primary} />
-          </View>
+          <BoldAvatar size="sm" name="RP" status="online" style={styles.iconCircle} icon={<Feather name="shield" size={20} color={colors.primary} />} />
           <View>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>Rescue Plan</Text>
-            <Text style={[styles.cardSubtitle, { color: colors.mutedForeground }]}>AI-powered action recommendations</Text>
+            <BoldText variant="heading3" weight="700" color={colors.text}>Rescue Plan</BoldText>
+            <BoldText variant="bodySM" color={colors.mutedForeground}>AI-powered action recommendations</BoldText>
           </View>
         </View>
-        <TouchableOpacity
-          style={[styles.generateBtn, { backgroundColor: colors.primary }]}
-          onPress={() => generate()}
-          disabled={isPending}
-        >
-          {isPending
-            ? <ActivityIndicator size="small" color="#fff" />
-            : <Text style={styles.generateBtnText}>{plan ? "Refresh" : "Generate"}</Text>}
-        </TouchableOpacity>
+        <BoldButton variant="primary" size="md" onPress={() => generate()} disabled={isPending}>
+          {isPending ? <ActivityIndicator size="small" color="#fff" /> : <BoldText variant="button" color="#fff">{plan ? "Refresh" : "Generate"}</BoldText>}
+        </BoldButton>
       </View>
 
       {!plan && !isPending && (
-        <View style={[styles.emptyState, { backgroundColor: colors.cardElevated }]}>
+        <View style={styles.emptyState}>
           <Feather name="zap" size={32} color={colors.primary} style={{ marginBottom: 12 }} />
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>Get Your Rescue Plan</Text>
-          <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
+          <BoldText variant="heading3" weight="700" color={colors.text}>Get Your Rescue Plan</BoldText>
+          <BoldText variant="bodyMD" color={colors.mutedForeground}>
             Tap "Generate" to get AI-powered recommendations based on your current financial signals.
-          </Text>
+          </BoldText>
         </View>
       )}
 
       {isPending && !plan && (
-        <View style={[styles.emptyState, { backgroundColor: colors.cardElevated }]}>
+        <View style={styles.emptyState}>
           <ActivityIndicator color={colors.primary} style={{ marginBottom: 12 }} />
-          <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
+          <BoldText variant="bodyMD" color={colors.mutedForeground}>
             Analyzing your finances and generating personalized actions…
-          </Text>
+          </BoldText>
         </View>
       )}
 
       {plan && (
         <>
           {plan.narrative && (
-            <View style={[styles.narrativeBox, { backgroundColor: colors.cardElevated, borderLeftColor: colors.primary }]}>
-              <Text style={[styles.narrativeText, { color: colors.textSecondary }]}>{plan.narrative}</Text>
+            <BoldCard variant="outlined" padding="md" style={styles.narrativeBox}>
+              <BoldText variant="bodyMD" color={colors.textSecondary} style={styles.narrativeText}>{plan.narrative}</BoldText>
               {plan.aiUnavailable && (
-                <View style={[styles.aiUnavailableBadge, { backgroundColor: colors.border }]}>
+                <View style={styles.aiUnavailableBadge}>
                   <Feather name="cpu" size={11} color={colors.mutedForeground} />
-                  <Text style={[styles.aiUnavailableText, { color: colors.mutedForeground }]}>AI-generated content unavailable</Text>
+                  <BoldText variant="caption" color={colors.mutedForeground}>AI-generated content unavailable</BoldText>
                 </View>
               )}
-            </View>
+            </BoldCard>
           )}
 
-          <Text style={[styles.actionsTitle, { color: colors.text }]}>
+          <BoldText variant="bodyMD" weight="700" color={colors.text} style={styles.actionsTitle}>
             {plan.actions.length} Recommended Action{plan.actions.length !== 1 ? "s" : ""}
-          </Text>
+          </BoldText>
 
           {(plan.actions as RescueAction[]).map((action) => (
             <RescueActionCard
@@ -431,12 +433,12 @@ function RescuePlanSection() {
             />
           ))}
 
-          <Text style={[styles.generatedAt, { color: colors.mutedForeground }]}>
+          <BoldText variant="caption" color={colors.mutedForeground} style={styles.generatedAt}>
             Generated {new Date(plan.generatedAt).toLocaleDateString()}
-          </Text>
+          </BoldText>
         </>
       )}
-    </View>
+    </BoldCard>
   );
 }
 
@@ -447,7 +449,7 @@ function RescueActionCard({
   onToggle,
 }: {
   action: RescueAction;
-  colors: ReturnType<typeof useColors>;
+  colors: ReturnType<typeof useBoldColors>;
   isExpanded: boolean;
   onToggle: () => void;
 }) {
@@ -460,14 +462,12 @@ function RescueActionCard({
     >
       <View style={styles.actionHeader}>
         <View style={styles.actionLeft}>
-          <Text style={[styles.actionTag, { color: colors.mutedForeground }]}>{action.tag}</Text>
-          <Text style={[styles.actionTitle, { color: colors.text }]}>{action.title}</Text>
+          <BoldBadge variant="primary" size="sm">{action.tag}</BoldBadge>
+          <BoldText variant="bodyMD" weight="700" color={colors.text}>{action.title}</BoldText>
         </View>
         <View style={styles.actionRight}>
           {action.estimatedSaving != null && (
-            <Text style={[styles.savingAmount, { color: colors.accent }]}>
-              ~${action.estimatedSaving}/mo
-            </Text>
+            <BoldText variant="bodySM" weight="700" color={colors.success}>~${action.estimatedSaving}/mo</BoldText>
           )}
           <Feather name={isExpanded ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedForeground} />
         </View>
@@ -475,10 +475,10 @@ function RescueActionCard({
 
       {isExpanded && (
         <View style={styles.actionBody}>
-          <Text style={[styles.actionDesc, { color: colors.textSecondary }]}>{action.description}</Text>
-          <View style={[styles.impactChip, { backgroundColor: impact + "20" }]}>
-            <Text style={[styles.impactText, { color: impact }]}>{action.impact.toUpperCase()} IMPACT</Text>
-          </View>
+          <BoldText variant="bodySM" color={colors.textSecondary}>{action.description}</BoldText>
+          <BoldBadge variant={action.impact === "high" ? "danger" : action.impact === "medium" ? "warning" : "success"} size="sm">
+            {action.impact.toUpperCase()} IMPACT
+          </BoldBadge>
         </View>
       )}
     </TouchableOpacity>
@@ -488,7 +488,7 @@ function RescueActionCard({
 // ─── Money Stories Section ───────────────────────────────────────────────────
 
 function MoneyStoriesSection() {
-  const colors = useColors();
+  const colors = useBoldColors();
   const queryClient = useQueryClient();
   const router = useRouter();
   const { data: latest } = useGetLatestMoneyStory({ retry: 0 });
@@ -508,89 +508,78 @@ function MoneyStoriesSection() {
 
   const noDataContent = (
     <View style={[styles.noDataState, { backgroundColor: colors.cardElevated }]}>
-      <View style={[styles.noDataIconRow]}>
+      <View style={styles.noDataIconRow}>
         <View style={[styles.noDataIconBubble, { backgroundColor: colors.accent + "18" }]}>
           <Feather name="book-open" size={36} color={colors.accent} />
         </View>
       </View>
-      <Text style={[styles.noDataTitle, { color: colors.text }]}>Your Story Hasn't Started Yet</Text>
-      <Text style={[styles.noDataDesc, { color: colors.mutedForeground }]}>
+      <BoldText variant="heading2" weight="800" color={colors.text} style={styles.noDataTitle}>Your Story Hasn't Started Yet</BoldText>
+      <BoldText variant="bodyMD" color={colors.mutedForeground} style={styles.noDataDesc}>
         Money Stories turns your spending and saving into a personalized financial narrative. Add at least one transaction to get started.
-      </Text>
+      </BoldText>
       <View style={[styles.noDataSteps, { borderColor: colors.border }]}>
         <View style={styles.noDataStep}>
           <View style={[styles.noDataStepNum, { backgroundColor: colors.primary + "20" }]}>
-            <Text style={[styles.noDataStepNumText, { color: colors.primary }]}>1</Text>
+            <BoldText variant="bodySM" weight="800" color={colors.primary}>1</BoldText>
           </View>
-          <Text style={[styles.noDataStepText, { color: colors.textSecondary }]}>Add your first transaction on the Home tab</Text>
+          <BoldText variant="bodySM" color={colors.textSecondary} style={styles.noDataStepText}>Add your first transaction on the Home tab</BoldText>
         </View>
         <View style={styles.noDataStep}>
           <View style={[styles.noDataStepNum, { backgroundColor: colors.primary + "20" }]}>
-            <Text style={[styles.noDataStepNumText, { color: colors.primary }]}>2</Text>
+            <BoldText variant="bodySM" weight="800" color={colors.primary}>2</BoldText>
           </View>
-          <Text style={[styles.noDataStepText, { color: colors.textSecondary }]}>Keep logging for a month to build context</Text>
+          <BoldText variant="bodySM" color={colors.textSecondary} style={styles.noDataStepText}>Keep logging for a month to build context</BoldText>
         </View>
         <View style={styles.noDataStep}>
           <View style={[styles.noDataStepNum, { backgroundColor: colors.accent + "20" }]}>
-            <Text style={[styles.noDataStepNumText, { color: colors.accent }]}>3</Text>
+            <BoldText variant="bodySM" weight="800" color={colors.accent}>3</BoldText>
           </View>
-          <Text style={[styles.noDataStepText, { color: colors.textSecondary }]}>Generate your personalized financial narrative</Text>
+          <BoldText variant="bodySM" color={colors.textSecondary} style={styles.noDataStepText}>Generate your personalized financial narrative</BoldText>
         </View>
       </View>
-      <TouchableOpacity
-        style={[styles.noDataCTA, { backgroundColor: colors.primary }]}
-        onPress={() => router.navigate("/")}
-        activeOpacity={0.85}
-      >
-        <Feather name="plus-circle" size={18} color="#fff" />
-        <Text style={styles.noDataCTAText}>Add Your First Transaction</Text>
-      </TouchableOpacity>
+      <BoldButton variant="primary" size="lg" fullWidth onPress={() => router.navigate("/")} style={styles.noDataCTA}>
+        <BoldText variant="button" color="#fff">
+          <Feather name="plus-circle" size={18} color="#fff" style={{ marginRight: 8 }} />Add Your First Transaction
+        </BoldText>
+      </BoldButton>
     </View>
   );
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.card }]}>
+    <BoldCard variant="elevated" padding="lg" style={styles.card}>
       <View style={styles.cardHeader}>
         <View style={styles.row}>
-          <View style={[styles.iconCircle, { backgroundColor: colors.accent + "20" }]}>
-            <Feather name="book-open" size={20} color={colors.accent} />
-          </View>
+          <BoldAvatar size="sm" name="MS" status="online" style={styles.iconCircle} icon={<Feather name="book-open" size={20} color={colors.accent} />} />
           <View>
-            <Text style={[styles.cardTitle, { color: colors.text }]}>Money Stories</Text>
-            <Text style={[styles.cardSubtitle, { color: colors.mutedForeground }]}>Your financial life, narrated</Text>
+            <BoldText variant="heading3" weight="700" color={colors.text}>Money Stories</BoldText>
+            <BoldText variant="bodySM" color={colors.mutedForeground}>Your financial life, narrated</BoldText>
           </View>
         </View>
         {!hasNoTransactions && (
-          <TouchableOpacity
-            style={[styles.generateBtn, { backgroundColor: colors.accent }]}
-            onPress={() => generate()}
-            disabled={isPending}
-          >
-            {isPending
-              ? <ActivityIndicator size="small" color="#fff" />
-              : <Text style={styles.generateBtnText}>{story ? "Refresh" : "Generate"}</Text>}
-          </TouchableOpacity>
+          <BoldButton variant="secondary" size="md" onPress={() => generate()} disabled={isPending}>
+            {isPending ? <ActivityIndicator size="small" color="#fff" /> : <BoldText variant="button" color="#fff">{story ? "Refresh" : "Generate"}</BoldText>}
+          </BoldButton>
         )}
       </View>
 
       {hasNoTransactions && noDataContent}
 
       {!hasNoTransactions && !story && !isPending && (
-        <View style={[styles.emptyState, { backgroundColor: colors.cardElevated }]}>
+        <View style={styles.emptyState}>
           <Feather name="book" size={32} color={colors.accent} style={{ marginBottom: 12 }} />
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>Your Financial Story</Text>
-          <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
+          <BoldText variant="heading3" weight="700" color={colors.text}>Your Financial Story</BoldText>
+          <BoldText variant="bodyMD" color={colors.mutedForeground}>
             Turn your last 3 months of transactions into an insightful, personalized narrative. Tap "Generate" to begin.
-          </Text>
+          </BoldText>
         </View>
       )}
 
       {!hasNoTransactions && isPending && !story && (
-        <View style={[styles.emptyState, { backgroundColor: colors.cardElevated }]}>
+        <View style={styles.emptyState}>
           <ActivityIndicator color={colors.accent} style={{ marginBottom: 12 }} />
-          <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
+          <BoldText variant="bodyMD" color={colors.mutedForeground}>
             Reading your transaction history and crafting your story…
-          </Text>
+          </BoldText>
         </View>
       )}
 
@@ -598,32 +587,29 @@ function MoneyStoriesSection() {
 
       {!hasNoTransactions && story && !(story as any).noData && (
         <View>
-          <View style={[styles.storyPeriod, { backgroundColor: colors.accent + "15", borderColor: colors.accent + "30" }]}>
-            <Feather name="calendar" size={14} color={colors.accent} />
-            <Text style={[styles.storyPeriodText, { color: colors.accent }]}>{story.periodLabel}</Text>
-          </View>
-          <Text style={[styles.storyNarrative, { color: colors.textSecondary }]}>
-            {story.narrative}
-          </Text>
+          <BoldBadge variant="secondary" size="sm" style={styles.storyPeriod}>
+            <Feather name="calendar" size={14} color={colors.accent} style={{ marginRight: 6 }} />{story.periodLabel}
+          </BoldBadge>
+          <BoldText variant="bodyLG" color={colors.textSecondary} style={styles.storyNarrative}>{story.narrative}</BoldText>
           {story.aiUnavailable && (
-            <View style={[styles.aiUnavailableBadge, { backgroundColor: colors.border }]}>
+            <View style={styles.aiUnavailableBadge}>
               <Feather name="cpu" size={11} color={colors.mutedForeground} />
-              <Text style={[styles.aiUnavailableText, { color: colors.mutedForeground }]}>AI-generated content unavailable</Text>
+              <BoldText variant="caption" color={colors.mutedForeground}>AI-generated content unavailable</BoldText>
             </View>
           )}
-          <Text style={[styles.generatedAt, { color: colors.mutedForeground }]}>
+          <BoldText variant="caption" color={colors.mutedForeground} style={styles.generatedAt}>
             Story generated {new Date(story.generatedAt).toLocaleDateString()}
-          </Text>
+          </BoldText>
         </View>
       )}
-    </View>
+    </BoldCard>
   );
 }
 
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 
 export default function InsightsScreen() {
-  const colors = useColors();
+  const colors = useBoldColors();
   const insets = useSafeAreaInsets();
 
   return (
@@ -637,10 +623,8 @@ export default function InsightsScreen() {
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.pageHeader}>
-        <Text style={[styles.pageTitle, { color: colors.text }]}>Insights</Text>
-        <Text style={[styles.pageSubtitle, { color: colors.mutedForeground }]}>
-          AI-powered financial intelligence
-        </Text>
+        <BoldText variant="displayMD" weight="800" color={colors.text}>Insights</BoldText>
+        <BoldText variant="bodyMD" color={colors.mutedForeground}>AI-powered financial intelligence</BoldText>
       </View>
 
       <BehavioralPatternsSection />

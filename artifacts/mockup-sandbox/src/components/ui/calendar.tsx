@@ -129,9 +129,9 @@ function Calendar({
           return (
             <div
               data-slot="calendar"
-              ref={rootRef}
+              ref={rootRef as React.Ref<HTMLDivElement> | undefined}
               className={cn(className)}
-              {...props}
+              {...(props as React.HTMLAttributes<HTMLDivElement>)}
             />
           )
         },
@@ -158,7 +158,12 @@ function Calendar({
         DayButton: CalendarDayButton,
         WeekNumber: ({ children, ...props }) => {
           return (
-            <td {...props}>
+            <td
+              {...props}
+              style={{
+                ...(props.style as React.CSSProperties),
+              } as React.CSSProperties & { [key: `--radix-${string}`]: string }
+            }>
               <div className="flex size-[--cell-size] items-center justify-center text-center">
                 {children}
               </div>
@@ -187,7 +192,7 @@ function CalendarDayButton({
 
   return (
     <Button
-      ref={ref}
+      ref={ref as React.Ref<HTMLButtonElement> | undefined}
       variant="ghost"
       size="icon"
       data-day={day.date.toLocaleDateString()}
@@ -205,7 +210,7 @@ function CalendarDayButton({
         defaultClassNames.day,
         className
       )}
-      {...props}
+      {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
     />
   )
 }

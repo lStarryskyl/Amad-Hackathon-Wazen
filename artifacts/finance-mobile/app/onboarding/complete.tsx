@@ -1,34 +1,32 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
+import { View, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useCompleteOnboarding, getGetOnboardingStatusQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
   withSpring,
-  withDelay 
+  withDelay,
 } from "react-native-reanimated";
-import { useColors } from "@/hooks/useColors";
+import { useBoldColors } from "@/hooks/useBoldColors";
+import {
+  BoldButton,
+  BoldText,
+} from "@/components/bold";
 
 export default function OnboardingCompleteScreen() {
   const router = useRouter();
-  const colors = useColors();
+  const colors = useBoldColors();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { mutate: completeOnboarding, isPending } = useCompleteOnboarding();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  
+
   const scale = useSharedValue(0);
-  
+
   useEffect(() => {
     scale.value = withDelay(300, withSpring(1));
   }, []);
@@ -50,10 +48,6 @@ export default function OnboardingCompleteScreen() {
           router.replace("/(home)/(tabs)");
         },
         onError: () => {
-          // Optimistically let the user through anyway — the home layout will
-          // gracefully allow access if the status query errors on next load.
-          // But first, show an error with a retry and a "skip" escape hatch so
-          // the user is never silently stuck here.
           setErrorMessage(
             "We couldn't save your progress. You can try again, or go to the dashboard — your account is ready."
           );
@@ -63,8 +57,6 @@ export default function OnboardingCompleteScreen() {
   };
 
   const handleSkipToDashboard = () => {
-    // Optimistically mark onboarding complete in the cache so the home layout
-    // does not redirect back to onboarding on the next render.
     queryClient.setQueryData(
       getGetOnboardingStatusQueryKey(),
       { completed: true, currentStep: 3, totalSteps: 3 }
@@ -73,154 +65,50 @@ export default function OnboardingCompleteScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.content}>
-        <Animated.View style={[styles.iconContainer, animatedStyle, { backgroundColor: colors.accent + "20" }]}>
-          <Feather name="check" size={48} color={colors.accent} />
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+        <Animated.View
+          style={[
+            { width: 96, height: 96, borderRadius: 48, justifyContent: "center", alignItems: "center", backgroundColor: colors.success + "20", marginBottom: 32 },
+            animatedStyle,
+          ]}
+        >
+          <Feather name="check" size={48} color={colors.success} />
         </Animated.View>
-        
-        <Text style={[styles.title, { color: colors.text }]}>You're all set!</Text>
-        <Text style={[styles.description, { color: colors.textSecondary }]}>
+
+        <BoldText variant="displayMD" weight="700" color={colors.text} style={{ textAlign: "center", marginBottom: 16 }}>
+          You're all set!
+        </BoldText>
+        <BoldText variant="bodyMD" color={colors.textSecondary} style={{ textAlign: "center", lineHeight: 24 }}>
           Your financial data is being analyzed. We'll have personalized insights ready for you.
-        </Text>
+        </BoldText>
 
         {errorMessage ? (
-          <View style={[styles.errorBox, { backgroundColor: colors.danger + "18", borderColor: colors.danger + "40" }]}>
+          <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10, marginTop: 24, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.danger + "40", backgroundColor: colors.danger + "18", alignSelf: "stretch" }}>
             <Feather name="alert-circle" size={18} color={colors.danger} />
-            <Text style={[styles.errorText, { color: colors.danger }]}>{errorMessage}</Text>
+            <BoldText variant="bodySM" color={colors.danger} style={{ flex: 1, lineHeight: 20 }}>{errorMessage}</BoldText>
           </View>
         ) : null}
       </View>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
+      <View style={{ paddingHorizontal: 24, paddingBottom: insets.bottom + 20, gap: 12 }}>
         {errorMessage ? (
           <>
-            <TouchableOpacity
-              style={[styles.button, styles.retryButton, { borderColor: colors.primary }]}
-              onPress={handleFinish}
-              disabled={isPending}
-            >
-              {isPending ? (
-                <ActivityIndicator color={colors.primary} />
-              ) : (
-                <>
-                  <Feather name="refresh-cw" size={18} color={colors.primary} style={styles.retryIcon} />
-                  <Text style={[styles.retryButtonText, { color: colors.primary }]}>Try Again</Text>
-                </>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.skipButton}
-              onPress={handleSkipToDashboard}
-              disabled={isPending}
-            >
-              <Text style={[styles.skipButtonText, { color: colors.textSecondary }]}>Go to Dashboard Anyway</Text>
+            <BoldButton variant="outline" size="xl" fullWidth onPress={handleFinish} disabled={isPending} loading={isPending} leftIcon={<Feather name="refresh-cw" size={18} color={colors.primary} />}>
+              Try Again
+            </BoldButton>
+            <TouchableOpacity style={{ height: 44, justifyContent: "center", alignItems: "center" }} onPress={handleSkipToDashboard} disabled={isPending}>
+              <BoldText variant="bodyMD" weight="500" color={colors.textSecondary}>
+                Go to Dashboard Anyway
+              </BoldText>
             </TouchableOpacity>
           </>
         ) : (
-          <TouchableOpacity
-            style={[
-              styles.button,
-              { backgroundColor: colors.primary },
-              isPending && styles.buttonDisabled,
-            ]}
-            onPress={handleFinish}
-            disabled={isPending}
-          >
-            {isPending ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.buttonText}>Go to Dashboard</Text>
-            )}
-          </TouchableOpacity>
+          <BoldButton variant="primary" size="xl" fullWidth onPress={handleFinish} disabled={isPending} loading={isPending}>
+            Go to Dashboard
+          </BoldButton>
         )}
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 32,
-  },
-  iconContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 32,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  description: {
-    fontSize: 16,
-    lineHeight: 24,
-    textAlign: "center",
-  },
-  errorBox: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    marginTop: 24,
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignSelf: "stretch",
-  },
-  errorText: {
-    flex: 1,
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: "500",
-  },
-  footer: {
-    paddingHorizontal: 24,
-    gap: 12,
-  },
-  button: {
-    height: 56,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    flexDirection: "row",
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  retryButton: {
-    borderWidth: 2,
-    backgroundColor: "transparent",
-  },
-  retryIcon: {
-    marginRight: 8,
-  },
-  retryButtonText: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  skipButton: {
-    height: 44,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  skipButtonText: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-});

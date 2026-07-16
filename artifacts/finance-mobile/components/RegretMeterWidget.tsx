@@ -1,20 +1,29 @@
 import React, { useEffect, useRef } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   Animated,
   ActivityIndicator,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
-import { useColors } from "@/hooks/useColors";
 import { useGetRegretScore } from "@workspace/api-client-react";
 import type { RegretScore } from "@workspace/api-client-react";
 import { useRouter } from "expo-router";
 
-function levelColor(level: string, colors: ReturnType<typeof useColors>) {
-  if (level === "low") return colors.accent;
+import {
+  BoldCard,
+  BoldText,
+  BoldBadge,
+  BoldProgress,
+  BoldButton,
+  BoldAvatar,
+} from "@/components/bold";
+import { useBoldColors } from "@/hooks/useBoldColors";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+
+function levelColor(level: string, colors: ReturnType<typeof useBoldColors>) {
+  if (level === "low") return colors.success;
   if (level === "medium") return colors.warning;
   return colors.danger;
 }
@@ -36,7 +45,8 @@ interface Props {
 }
 
 export default function RegretMeterWidget({ onPress }: Props) {
-  const colors = useColors();
+  const colors = useBoldColors();
+  const reducedMotion = useReducedMotion();
   const router = useRouter();
   const { data: score, isLoading, isError } = useGetRegretScore({
     staleTime: 5 * 60 * 1000,
@@ -55,7 +65,7 @@ export default function RegretMeterWidget({ onPress }: Props) {
         useNativeDriver: false,
       }).start();
 
-      if (score.level === "high") {
+      if (score.level === "high" && !reducedMotion) {
         Animated.loop(
           Animated.sequence([
             Animated.timing(pulseAnim, { toValue: 1.06, duration: 900, useNativeDriver: true }),
@@ -64,7 +74,7 @@ export default function RegretMeterWidget({ onPress }: Props) {
         ).start();
       }
     }
-  }, [score?.score]);
+  }, [score?.score, reducedMotion]);
 
   const handlePress = () => {
     if (onPress) {
@@ -76,12 +86,14 @@ export default function RegretMeterWidget({ onPress }: Props) {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.card }]}>
-        <ActivityIndicator size="small" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
-          Analyzing your finances…
-        </Text>
-      </View>
+      <BoldCard variant="elevated" padding="lg" style={styles.container}>
+        <View style={styles.loadingRow}>
+          <ActivityIndicator size="small" color={colors.primary} />
+          <BoldText variant="bodySM" color={colors.mutedForeground} style={styles.loadingText}>
+            Analyzing your finances…
+          </BoldText>
+        </View>
+      </BoldCard>
     );
   }
 
@@ -91,21 +103,17 @@ export default function RegretMeterWidget({ onPress }: Props) {
 
   if (score.noData) {
     return (
-      <TouchableOpacity
-        style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
-        onPress={handlePress}
-        activeOpacity={0.8}
-      >
+      <BoldCard variant="outlined" padding="lg" style={styles.container} onPress={handlePress}>
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <Feather name="bar-chart-2" size={18} color={colors.mutedForeground} />
-            <Text style={[styles.title, { color: colors.text }]}>Regret Score</Text>
+            <BoldAvatar size="sm" name="RS" status="offline" icon={<Feather name="bar-chart-2" size={18} color={colors.mutedForeground} />} />
+            <BoldText variant="bodyLG" weight="700" color={colors.text}>Regret Score</BoldText>
           </View>
         </View>
-        <Text style={[styles.summary, { color: colors.mutedForeground }]}>
+        <BoldText variant="bodySM" color={colors.mutedForeground}>
           Add transactions to unlock your Regret Score.
-        </Text>
-      </TouchableOpacity>
+        </BoldText>
+      </BoldCard>
     );
   }
 
@@ -117,45 +125,36 @@ export default function RegretMeterWidget({ onPress }: Props) {
   });
 
   return (
-    <Animated.View style={{ transform: [{ scale: s.level === "high" ? pulseAnim : new Animated.Value(1) }] }}>
-      <TouchableOpacity
-        style={[styles.container, { backgroundColor: colors.card, borderColor: color + "30" }]}
-        onPress={handlePress}
-        activeOpacity={0.8}
-      >
+    <Animated.View style={{ transform: [{ scale: s.level === "high" && !reducedMotion ? pulseAnim : 1 }] }}>
+      <BoldCard variant="outlined" padding="lg" style={[styles.container, { borderColor: color + "30" }]} onPress={handlePress}>
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <Feather name={levelIcon(s.level)} size={18} color={color} />
-            <Text style={[styles.title, { color: colors.text }]}>Regret Score</Text>
+            <BoldAvatar size="sm" name="RS" status={s.level === "low" ? "online" : s.level === "medium" ? "busy" : "offline"} icon={<Feather name={levelIcon(s.level)} size={18} color={color} />} />
+            <BoldText variant="bodyLG" weight="700" color={colors.text}>Regret Score</BoldText>
           </View>
-          <View style={[styles.levelBadge, { backgroundColor: color + "20" }]}>
-            <Text style={[styles.levelText, { color }]}>{levelLabel(s.level)}</Text>
-          </View>
+          <BoldBadge variant={s.level === "low" ? "success" : s.level === "medium" ? "warning" : "danger"} size="md">
+            <BoldText variant="caption" weight="700" color={color} style={{ textTransform: "uppercase" }}>
+              {levelLabel(s.level)}
+            </BoldText>
+          </BoldBadge>
         </View>
 
         {/* Score arc bar */}
-        <View style={[styles.arcTrack, { backgroundColor: colors.border }]}>
-          <Animated.View
-            style={[
-              styles.arcFill,
-              { backgroundColor: color, width: arcWidth },
-            ]}
-          />
-        </View>
+        <BoldProgress value={s.score} max={100} variant={s.level === "low" ? "success" : s.level === "medium" ? "warning" : "danger"} size="md" animated={!reducedMotion} style={styles.arcTrack} />
 
         <View style={styles.scoreRow}>
-          <Text style={[styles.scoreNum, { color }]}>{s.score}</Text>
-          <Text style={[styles.scoreMax, { color: colors.mutedForeground }]}> / 100</Text>
+          <BoldText variant="heading2" weight="800" color={color} style={styles.scoreNum}>{s.score}</BoldText>
+          <BoldText variant="bodySM" color={colors.mutedForeground} style={styles.scoreMax}> / 100</BoldText>
           <View style={{ flex: 1 }} />
-          <Text style={[styles.tapHint, { color: colors.primary }]}>
+          <BoldText variant="bodySM" weight="600" color={colors.primary} style={styles.tapHint}>
             View details →
-          </Text>
+          </BoldText>
         </View>
 
-        <Text style={[styles.summary, { color: colors.mutedForeground }]} numberOfLines={2}>
+        <BoldText variant="bodySM" color={colors.mutedForeground} numberOfLines={2} style={styles.summary}>
           {s.summary}
-        </Text>
-      </TouchableOpacity>
+        </BoldText>
+      </BoldCard>
     </Animated.View>
   );
 }
@@ -168,10 +167,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 24,
   },
+  loadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    justifyContent: "center",
+  },
   loadingText: {
-    fontSize: 13,
-    textAlign: "center",
-    marginTop: 8,
+    marginTop: 0,
   },
   header: {
     flexDirection: "row",
@@ -184,49 +187,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  title: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  levelBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  levelText: {
-    fontSize: 12,
-    fontWeight: "700",
-    textTransform: "uppercase",
-  },
   arcTrack: {
     height: 8,
     borderRadius: 4,
-    overflow: "hidden",
     marginBottom: 12,
-  },
-  arcFill: {
-    height: "100%",
-    borderRadius: 4,
   },
   scoreRow: {
     flexDirection: "row",
     alignItems: "baseline",
     marginBottom: 8,
   },
-  scoreNum: {
-    fontSize: 32,
-    fontWeight: "800",
-  },
-  scoreMax: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  tapHint: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
+  scoreNum: {},
+  scoreMax: {},
+  tapHint: {},
   summary: {
-    fontSize: 13,
     lineHeight: 18,
   },
 });

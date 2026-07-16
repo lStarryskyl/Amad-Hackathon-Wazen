@@ -1,117 +1,47 @@
 import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  Dimensions,
-} from "react-native";
+import { View, Dimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useColors } from "@/hooks/useColors";
+import { Feather } from "@expo/vector-icons";
+import { useBoldColors } from "@/hooks/useBoldColors";
+import {
+  BoldButton,
+  BoldText,
+  BoldBadge,
+} from "@/components/bold";
 
 const { width } = Dimensions.get("window");
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const colors = useColors();
+  const colors = useBoldColors();
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.content, { paddingTop: insets.top + 60 }]}>
-        <Image
-          source={require("@/assets/images/icon.png")}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        
-        <Text style={[styles.title, { color: colors.text }]}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={{ flex: 1, alignItems: "center", paddingHorizontal: 32, paddingTop: insets.top + 60 }}>
+        <Feather name="activity" size={120} color={colors.primary} style={{ marginBottom: 40 }} />
+        <BoldText variant="displayMD" weight="800" color={colors.text} style={{ textAlign: "center", marginBottom: 12 }}>
           Your Financial Balance
-        </Text>
-        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
+        </BoldText>
+        <BoldText variant="bodyLG" color={colors.mutedForeground} style={{ textAlign: "center", lineHeight: 26, marginBottom: 40 }}>
           AI-powered insights for smarter money decisions
-        </Text>
+        </BoldText>
 
-        <View style={styles.pillsContainer}>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 12 }}>
           {["Regret Score", "Rescue Plans", "Money Stories", "Digital Twin"].map((pill) => (
-            <View 
-              key={pill} 
-              style={[styles.pill, { backgroundColor: colors.card, borderColor: colors.border }]}
-            >
-              <Text style={[styles.pillText, { color: colors.textSecondary }]}>{pill}</Text>
-            </View>
+            <BoldBadge key={pill} variant="primary" size="lg" style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+              {pill}
+            </BoldBadge>
           ))}
         </View>
       </View>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.primary }]}
-          onPress={() => router.push("/onboarding/consent")}
-        >
-          <Text style={styles.buttonText}>Get Started</Text>
-        </TouchableOpacity>
+      <View style={{ paddingHorizontal: 24, paddingBottom: insets.bottom + 20 }}>
+        <BoldButton variant="primary" size="xl" fullWidth onPress={() => router.push("/onboarding/consent")}>
+          Get Started
+        </BoldButton>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    alignItems: "center",
-    paddingHorizontal: 32,
-  },
-  logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "800",
-    textAlign: "center",
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: 18,
-    textAlign: "center",
-    lineHeight: 26,
-    marginBottom: 40,
-  },
-  pillsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    gap: 12,
-  },
-  pill: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  pillText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  footer: {
-    paddingHorizontal: 24,
-  },
-  button: {
-    height: 56,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 18,
-    fontWeight: "700",
-  },
-});

@@ -1,8 +1,6 @@
 import React, { useState, useCallback } from "react";
 import {
   View,
-  Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
@@ -23,7 +21,15 @@ import {
   getSimulationsQueryKey,
 } from "@workspace/api-client-react";
 import type { SimulationRun, ScenarioInputs, MonthDataPoint } from "@workspace/api-client-react";
-import { useColors } from "@/hooks/useColors";
+import { useBoldColors } from "@/hooks/useBoldColors";
+import {
+  BoldButton,
+  BoldCard,
+  BoldText,
+  BoldBadge,
+  BoldModal,
+  BoldInput,
+} from "@/components/bold";
 import {
   checkCompareEligibility,
   hasEnoughChartData,
@@ -31,6 +37,9 @@ import {
 } from "@/utils/compare-flow";
 
 type Screen = "list" | "builder" | "results" | "compare";
+
+const COMPARE_COLOR_A = "#6C63FF";
+const COMPARE_COLOR_B = "#FF6B6B";
 
 // ─── Mini sparkline ───────────────────────────────────────────────────────────
 
@@ -64,7 +73,7 @@ function MiniSparkline({ dataPoints, color }: { dataPoints: MonthDataPoint[]; co
 // ─── Balance trajectory chart (single) ───────────────────────────────────────
 
 function BalanceChart({ dataPoints, width }: { dataPoints: MonthDataPoint[]; width: number }) {
-  const colors = useColors();
+  const colors = useBoldColors();
   const H = 180;
   const padLeft = 58;
   const padBottom = 28;
@@ -88,8 +97,8 @@ function BalanceChart({ dataPoints, width }: { dataPoints: MonthDataPoint[]; wid
     ` ${toX(dataPoints.length - 1).toFixed(1)},${ch}`;
 
   const isPositive = balances[balances.length - 1] >= balances[0];
-  const lineColor = isPositive ? colors.accent : colors.danger;
-  const fillColor = isPositive ? colors.accent + "28" : colors.danger + "28";
+  const lineColor = isPositive ? colors.success : colors.danger;
+  const fillColor = isPositive ? colors.success + "28" : colors.danger + "28";
 
   const fmt = (v: number) => {
     const abs = Math.abs(v);
@@ -138,9 +147,6 @@ function BalanceChart({ dataPoints, width }: { dataPoints: MonthDataPoint[]; wid
 
 // ─── Dual comparison chart ────────────────────────────────────────────────────
 
-const COMPARE_COLOR_A = "#6C63FF";
-const COMPARE_COLOR_B = "#FF6B6B";
-
 function CompareChart({
   dataPointsA,
   dataPointsB,
@@ -154,7 +160,7 @@ function CompareChart({
   labelB: string;
   width: number;
 }) {
-  const colors = useColors();
+  const colors = useBoldColors();
   const H = 200;
   const padLeft = 58;
   const padBottom = 32;
@@ -163,10 +169,7 @@ function CompareChart({
 
   if (width < 10) return null;
 
-  const allBalances = [
-    ...dataPointsA.map((d) => d.balance),
-    ...dataPointsB.map((d) => d.balance),
-  ];
+  const allBalances = [...dataPointsA.map((d) => d.balance), ...dataPointsB.map((d) => d.balance)];
   const minV = Math.min(...allBalances);
   const maxV = Math.max(...allBalances);
   const range = maxV - minV || 1;
@@ -233,15 +236,14 @@ function CompareChart({
           );
         })}
       </Svg>
-      {/* Legend */}
       <View style={{ flexDirection: "row", gap: 20, marginTop: 8, paddingLeft: padLeft }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <View style={{ width: 20, height: 3, backgroundColor: COMPARE_COLOR_A, borderRadius: 2 }} />
-          <Text style={{ fontSize: 11, color: colors.mutedForeground }} numberOfLines={1}>{labelA}</Text>
+          <BoldText variant="caption" color={colors.mutedForeground} numberOfLines={1}>{labelA}</BoldText>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-          <View style={{ width: 20, height: 3, backgroundColor: COMPARE_COLOR_B, borderRadius: 2, borderStyle: "dashed" }} />
-          <Text style={{ fontSize: 11, color: colors.mutedForeground }} numberOfLines={1}>{labelB}</Text>
+          <View style={{ width: 20, height: 3, backgroundColor: COMPARE_COLOR_B, borderRadius: 2 }} />
+          <BoldText variant="caption" color={colors.mutedForeground} numberOfLines={1}>{labelB}</BoldText>
         </View>
       </View>
     </View>
@@ -269,7 +271,7 @@ function SliderRow({
   onChange: (v: number) => void;
   color: string;
 }) {
-  const colors = useColors();
+  const colors = useBoldColors();
   const steps = Math.round((max - min) / step);
   const currentStep = Math.round((value - min) / step);
   const pct = steps > 0 ? Math.max(0, Math.min(1, currentStep / steps)) : 0;
@@ -278,36 +280,25 @@ function SliderRow({
   const increment = () => onChange(Math.min(max, Math.round((value + step) * 100) / 100));
 
   return (
-    <View style={sliderStyles.row}>
-      <View style={sliderStyles.labelRow}>
-        <Text style={[sliderStyles.label, { color: colors.textSecondary }]}>{label}</Text>
-        <Text style={[sliderStyles.value, { color }]}>{format(value)}</Text>
+    <View style={{ marginBottom: 20 }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
+        <BoldText variant="bodyMD" weight="500" color={colors.textSecondary}>{label}</BoldText>
+        <BoldText variant="bodyMD" weight="700" color={color}>{format(value)}</BoldText>
       </View>
-      <View style={sliderStyles.controls}>
-        <TouchableOpacity onPress={decrement} style={[sliderStyles.btn, { backgroundColor: colors.cardElevated }]}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <TouchableOpacity onPress={decrement} style={{ width: 32, height: 32, borderRadius: 8, justifyContent: "center", alignItems: "center", backgroundColor: colors.cardElevated }}>
           <Feather name="minus" size={14} color={colors.mutedForeground} />
         </TouchableOpacity>
-        <View style={[sliderStyles.track, { backgroundColor: colors.border }]}>
-          <View style={[sliderStyles.fill, { width: `${Math.round(pct * 100)}%`, backgroundColor: color }]} />
+        <View style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: colors.border, overflow: "hidden" }}>
+          <View style={{ height: "100%", borderRadius: 3, minWidth: 4, width: `${Math.round(pct * 100)}%`, backgroundColor: color }} />
         </View>
-        <TouchableOpacity onPress={increment} style={[sliderStyles.btn, { backgroundColor: colors.cardElevated }]}>
+        <TouchableOpacity onPress={increment} style={{ width: 32, height: 32, borderRadius: 8, justifyContent: "center", alignItems: "center", backgroundColor: colors.cardElevated }}>
           <Feather name="plus" size={14} color={colors.mutedForeground} />
         </TouchableOpacity>
       </View>
     </View>
   );
 }
-
-const sliderStyles = StyleSheet.create({
-  row: { marginBottom: 20 },
-  labelRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
-  label: { fontSize: 14, fontWeight: "500" },
-  value: { fontSize: 14, fontWeight: "700" },
-  controls: { flexDirection: "row", alignItems: "center", gap: 8 },
-  btn: { width: 32, height: 32, borderRadius: 8, justifyContent: "center", alignItems: "center" },
-  track: { flex: 1, height: 6, borderRadius: 3, overflow: "hidden" },
-  fill: { height: "100%", borderRadius: 3, minWidth: 4 },
-});
 
 // ─── Scenario card ────────────────────────────────────────────────────────────
 
@@ -326,7 +317,7 @@ function ScenarioCard({
   selected: boolean;
   onToggleSelect: () => void;
 }) {
-  const colors = useColors();
+  const colors = useBoldColors();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(run.scenarioName);
@@ -357,22 +348,13 @@ function ScenarioCard({
   if (!results) {
     const dateLabel = new Date(run.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
     return (
-      <View
-        style={[
-          cardStyles.container,
-          { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, opacity: 0.5 },
-        ]}
-      >
-        <View style={cardStyles.header}>
-          <View style={cardStyles.titleRow}>
-            {selectMode ? (
-              <View style={[cardStyles.checkbox, { borderColor: colors.border, backgroundColor: "transparent" }]} />
-            ) : (
-              <View style={[cardStyles.dot, { backgroundColor: colors.mutedForeground }]} />
-            )}
-            <Text style={[cardStyles.title, { color: colors.text }]} numberOfLines={1}>
+      <BoldCard variant="outlined" padding="md" style={{ opacity: 0.5, marginBottom: 12 }}>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.mutedForeground }} />
+            <BoldText variant="bodyMD" weight="700" color={colors.text} numberOfLines={1} style={{ flex: 1 }}>
               {run.scenarioName}
-            </Text>
+            </BoldText>
           </View>
           {!selectMode && (
             <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -380,21 +362,17 @@ function ScenarioCard({
             </TouchableOpacity>
           )}
         </View>
-        <View style={cardStyles.metrics}>
-          <Text style={[cardStyles.metricLabel, { color: colors.mutedForeground }]}>
-            Simulation pending — run to see results
-          </Text>
-        </View>
-        <View>
-          <Text style={[cardStyles.date, { color: colors.mutedForeground }]}>{dateLabel}</Text>
-        </View>
-      </View>
+        <BoldText variant="bodySM" color={colors.mutedForeground} style={{ marginBottom: 8 }}>
+          Simulation pending — run to see results
+        </BoldText>
+        <BoldText variant="caption" color={colors.mutedForeground}>{dateLabel}</BoldText>
+      </BoldCard>
     );
   }
 
   const balanceChange = results.finalBalance - results.startingBalance;
   const isPositive = balanceChange >= 0;
-  const changeColor = isPositive ? colors.accent : colors.danger;
+  const changeColor = isPositive ? colors.success : colors.danger;
 
   const fmtK = (v: number) => {
     const abs = Math.abs(v);
@@ -416,81 +394,103 @@ function ScenarioCard({
 
   if (isEditing) {
     return (
-      <View style={[cardStyles.container, { backgroundColor: colors.card, borderColor: colors.primary, borderWidth: 2 }]}>
+      <BoldCard variant="outlined" padding="md" style={{ borderColor: colors.primary, borderWidth: 2, marginBottom: 12 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <View style={[cardStyles.dot, { backgroundColor: changeColor }]} />
-          <Text style={{ fontSize: 11, fontWeight: "700", letterSpacing: 0.6, color: colors.primary, flex: 1 }}>EDITING SCENARIO</Text>
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: changeColor }} />
+          <BoldText variant="caption" weight="700" color={colors.primary} style={{ flex: 1, letterSpacing: 0.6 }}>
+            EDITING SCENARIO
+          </BoldText>
           <TouchableOpacity onPress={handleCancelEdit} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Feather name="x" size={16} color={colors.mutedForeground} />
           </TouchableOpacity>
         </View>
 
-        <Text style={{ fontSize: 11, color: colors.mutedForeground, marginBottom: 6, fontWeight: "600" }}>NAME</Text>
+        <BoldText variant="caption" color={colors.mutedForeground} style={{ marginBottom: 6 }}>NAME</BoldText>
         <TextInput
           value={editName}
           onChangeText={setEditName}
           placeholder="Scenario name"
           placeholderTextColor={colors.mutedForeground}
-          style={[gs.nameInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.cardElevated, marginBottom: 14 }]}
+          style={{
+            borderWidth: 1,
+            borderRadius: 10,
+            paddingHorizontal: 14,
+            paddingVertical: 12,
+            fontSize: 16,
+            fontWeight: "600",
+            color: colors.text,
+            borderColor: colors.border,
+            backgroundColor: colors.cardElevated,
+            marginBottom: 14,
+          }}
           maxLength={60}
           autoFocus
         />
 
-        <Text style={{ fontSize: 11, color: colors.mutedForeground, marginBottom: 6, fontWeight: "600" }}>NOTE (optional)</Text>
+        <BoldText variant="caption" color={colors.mutedForeground} style={{ marginBottom: 6 }}>NOTE (optional)</BoldText>
         <TextInput
           value={editNote}
           onChangeText={setEditNote}
           placeholder="e.g. aggressive savings plan, worst-case scenario…"
           placeholderTextColor={colors.mutedForeground}
-          style={[gs.nameInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.cardElevated, marginBottom: 16, fontSize: 14 }]}
+          style={{
+            borderWidth: 1,
+            borderRadius: 10,
+            paddingHorizontal: 14,
+            paddingVertical: 12,
+            fontSize: 14,
+            fontWeight: "600",
+            color: colors.text,
+            borderColor: colors.border,
+            backgroundColor: colors.cardElevated,
+            marginBottom: 16,
+          }}
           maxLength={120}
           multiline
         />
 
         <View style={{ flexDirection: "row", gap: 10 }}>
-          <TouchableOpacity
-            style={[cardStyles.editBtn, { backgroundColor: colors.cardElevated, borderWidth: 1, borderColor: colors.border, flex: 1 }]}
-            onPress={handleCancelEdit}
-            activeOpacity={0.8}
-          >
-            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.textSecondary }}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[cardStyles.editBtn, { backgroundColor: colors.primary, flex: 2, opacity: isSaving ? 0.7 : 1 }]}
-            onPress={handleSave}
-            disabled={isSaving}
-            activeOpacity={0.8}
-          >
-            {isSaving
-              ? <ActivityIndicator size="small" color="#fff" />
-              : <Feather name="check" size={15} color="#fff" />}
-            <Text style={{ fontSize: 14, fontWeight: "700", color: "#fff" }}>{isSaving ? "Saving…" : "Save"}</Text>
-          </TouchableOpacity>
+          <BoldButton variant="outline" size="md" style={{ flex: 1 }} onPress={handleCancelEdit}>
+            Cancel
+          </BoldButton>
+          <BoldButton variant="primary" size="md" style={{ flex: 2 }} onPress={handleSave} loading={isSaving} disabled={isSaving}>
+            {isSaving ? "Saving…" : "Save"}
+          </BoldButton>
         </View>
-      </View>
+      </BoldCard>
     );
   }
 
   return (
     <TouchableOpacity
-      style={[
-        cardStyles.container,
-        { backgroundColor: colors.card, borderColor, borderWidth: selected ? 2 : 1 },
-      ]}
+      style={{
+        borderRadius: 16,
+        borderWidth: selected ? 2 : 1,
+        borderColor,
+        backgroundColor: colors.card,
+        padding: 16,
+        marginBottom: 12,
+      }}
       onPress={selectMode ? onToggleSelect : onOpen}
       activeOpacity={0.75}
     >
-      <View style={cardStyles.header}>
-        <View style={cardStyles.titleRow}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
           {selectMode ? (
-            <View style={[
-              cardStyles.checkbox,
-              { borderColor: selected ? COMPARE_COLOR_A : colors.border, backgroundColor: selected ? COMPARE_COLOR_A : "transparent" },
-            ]}>
+            <View style={{
+              width: 20,
+              height: 20,
+              borderRadius: 6,
+              borderWidth: 2,
+              borderColor: selected ? COMPARE_COLOR_A : colors.border,
+              backgroundColor: selected ? COMPARE_COLOR_A : "transparent",
+              justifyContent: "center",
+              alignItems: "center",
+            }}>
               {selected && <Feather name="check" size={11} color="#fff" />}
             </View>
           ) : (
-            <View style={[cardStyles.dot, { backgroundColor: changeColor }]} />
+            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: changeColor }} />
           )}
           <TouchableOpacity
             style={{ flex: 1 }}
@@ -498,17 +498,17 @@ function ScenarioCard({
             activeOpacity={0.7}
             hitSlop={{ top: 4, bottom: 4, left: 0, right: 0 }}
           >
-            <Text style={[cardStyles.title, { color: colors.text }]} numberOfLines={1}>
+            <BoldText variant="bodyMD" weight="700" color={colors.text} numberOfLines={1}>
               {run.scenarioName}
-            </Text>
+            </BoldText>
             {currentNote ? (
-              <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 1 }} numberOfLines={1}>
+              <BoldText variant="bodySM" color={colors.mutedForeground} style={{ marginTop: 1 }} numberOfLines={1}>
                 {currentNote}
-              </Text>
+              </BoldText>
             ) : !selectMode ? (
-              <Text style={{ fontSize: 11, color: colors.primary + "80", marginTop: 1 }}>
+              <BoldText variant="caption" color={colors.primary + "80"} style={{ marginTop: 1 }}>
                 Tap to rename / add note
-              </Text>
+              </BoldText>
             ) : null}
           </TouchableOpacity>
           {!selectMode && (
@@ -524,22 +524,22 @@ function ScenarioCard({
         )}
       </View>
 
-      <View style={cardStyles.metrics}>
-        <View style={cardStyles.metric}>
-          <Text style={[cardStyles.metricLabel, { color: colors.mutedForeground }]}>Balance change</Text>
-          <Text style={[cardStyles.metricValue, { color: changeColor }]}>
+      <View style={{ flexDirection: "row", gap: 16, marginBottom: 12 }}>
+        <View style={{ flex: 1 }}>
+          <BoldText variant="caption" color={colors.mutedForeground}>Balance change</BoldText>
+          <BoldText variant="bodyMD" weight="700" color={changeColor}>
             {isPositive ? "+" : "-"}{fmtK(balanceChange)}
-          </Text>
+          </BoldText>
         </View>
-        <View style={cardStyles.metric}>
-          <Text style={[cardStyles.metricLabel, { color: colors.mutedForeground }]}>Savings rate</Text>
-          <Text style={[cardStyles.metricValue, { color: results.finalSavingsRate >= 10 ? colors.accent : colors.warning }]}>
+        <View style={{ flex: 1 }}>
+          <BoldText variant="caption" color={colors.mutedForeground}>Savings rate</BoldText>
+          <BoldText variant="bodyMD" weight="700" color={results.finalSavingsRate >= 10 ? colors.success : colors.warning}>
             {results.finalSavingsRate.toFixed(1)}%
-          </Text>
+          </BoldText>
         </View>
-        <View style={cardStyles.metric}>
-          <Text style={[cardStyles.metricLabel, { color: colors.mutedForeground }]}>Horizon</Text>
-          <Text style={[cardStyles.metricValue, { color: colors.textSecondary }]}>{horizonLabel}</Text>
+        <View style={{ flex: 1 }}>
+          <BoldText variant="caption" color={colors.mutedForeground}>Horizon</BoldText>
+          <BoldText variant="bodyMD" weight="700" color={colors.textSecondary}>{horizonLabel}</BoldText>
         </View>
       </View>
 
@@ -549,70 +549,44 @@ function ScenarioCard({
         </View>
       )}
 
-      <Text style={[cardStyles.date, { color: colors.mutedForeground }]}>{dateLabel}</Text>
+      <BoldText variant="caption" color={colors.mutedForeground}>{dateLabel}</BoldText>
     </TouchableOpacity>
   );
 }
 
-const cardStyles = StyleSheet.create({
-  container: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 12 },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  titleRow: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  checkbox: { width: 20, height: 20, borderRadius: 6, borderWidth: 2, justifyContent: "center", alignItems: "center" },
-  title: { fontSize: 16, fontWeight: "700" },
-  metrics: { flexDirection: "row", gap: 16, marginBottom: 12 },
-  metric: { flex: 1 },
-  metricLabel: { fontSize: 11, marginBottom: 2 },
-  metricValue: { fontSize: 15, fontWeight: "700" },
-  date: { fontSize: 11 },
-  editBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 12, borderRadius: 10 },
-});
-
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
-function EmptyState({ onNew, colors }: { onNew: () => void; colors: ReturnType<typeof useColors> }) {
+function EmptyState({ onNew, colors }: { onNew: () => void; colors: ReturnType<typeof useBoldColors> }) {
   const examples = [
     "What if I save $200/month?",
     "What if I cut spending 20%?",
     "What if I take on a $500/mo loan?",
   ];
   return (
-    <View style={emptyStyles.container}>
-      <View style={[emptyStyles.icon, { backgroundColor: colors.primary + "20" }]}>
+    <View style={{ alignItems: "center", paddingTop: 60, paddingBottom: 40 }}>
+      <View style={{ width: 80, height: 80, borderRadius: 40, justifyContent: "center", alignItems: "center", backgroundColor: colors.primary + "20", marginBottom: 20 }}>
         <Feather name="layers" size={36} color={colors.primary} />
       </View>
-      <Text style={[emptyStyles.title, { color: colors.text }]}>No simulations yet</Text>
-      <Text style={[emptyStyles.desc, { color: colors.mutedForeground }]}>
+      <BoldText variant="heading1" weight="700" color={colors.text} style={{ marginBottom: 10 }}>
+        No simulations yet
+      </BoldText>
+      <BoldText variant="bodyMD" color={colors.mutedForeground} style={{ textAlign: "center", lineHeight: 22, marginBottom: 28, maxWidth: 280 }}>
         Run your first scenario to see how financial decisions play out over time.
-      </Text>
-      <View style={emptyStyles.chips}>
+      </BoldText>
+      <View style={{ gap: 8, marginBottom: 32, alignSelf: "stretch" }}>
         {examples.map((ex) => (
-          <View key={ex} style={[emptyStyles.chip, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View key={ex} style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 10, borderWidth: 1, borderColor: colors.border, padding: 12, backgroundColor: colors.card }}>
             <Feather name="zap" size={11} color={colors.primary} />
-            <Text style={[emptyStyles.chipText, { color: colors.mutedForeground }]}>{ex}</Text>
+            <BoldText variant="bodySM" color={colors.mutedForeground}>{ex}</BoldText>
           </View>
         ))}
       </View>
-      <TouchableOpacity style={[emptyStyles.btn, { backgroundColor: colors.primary }]} onPress={onNew} activeOpacity={0.8}>
-        <Feather name="plus" size={16} color="#fff" />
-        <Text style={emptyStyles.btnText}>Create First Scenario</Text>
-      </TouchableOpacity>
+      <BoldButton variant="primary" size="lg" onPress={onNew} leftIcon={<Feather name="plus" size={16} color="#fff" />}>
+        Create First Scenario
+      </BoldButton>
     </View>
   );
 }
-
-const emptyStyles = StyleSheet.create({
-  container: { alignItems: "center", paddingTop: 60, paddingBottom: 40 },
-  icon: { width: 80, height: 80, borderRadius: 40, justifyContent: "center", alignItems: "center", marginBottom: 20 },
-  title: { fontSize: 22, fontWeight: "700", marginBottom: 10 },
-  desc: { fontSize: 15, textAlign: "center", lineHeight: 22, marginBottom: 28, maxWidth: 280 },
-  chips: { gap: 8, marginBottom: 32, alignSelf: "stretch" },
-  chip: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 10, borderWidth: 1, padding: 12 },
-  chipText: { fontSize: 13 },
-  btn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14 },
-  btnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-});
 
 // ─── Small metric card ────────────────────────────────────────────────────────
 
@@ -627,40 +601,34 @@ function MetricCard({
   value: string;
   icon: string;
   color: string;
-  colors: ReturnType<typeof useColors>;
+  colors: ReturnType<typeof useBoldColors>;
 }) {
   return (
-    <View style={[metricStyles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+    <BoldCard variant="outlined" padding="md" style={{ flex: 1, minWidth: "45%" }}>
       <Feather name={icon as any} size={14} color={color} style={{ marginBottom: 6 }} />
-      <Text style={[metricStyles.value, { color }]}>{value}</Text>
-      <Text style={[metricStyles.label, { color: colors.mutedForeground }]}>{label}</Text>
-    </View>
+      <BoldText variant="bodyLG" weight="800" color={color} style={{ marginBottom: 2 }}>{value}</BoldText>
+      <BoldText variant="caption" color={colors.mutedForeground}>{label}</BoldText>
+    </BoldCard>
   );
 }
 
-const metricStyles = StyleSheet.create({
-  card: { flex: 1, borderRadius: 12, borderWidth: 1, padding: 12, minWidth: "45%" },
-  value: { fontSize: 18, fontWeight: "800", marginBottom: 2 },
-  label: { fontSize: 11 },
-});
-
 // ─── Goal timeline row ────────────────────────────────────────────────────────
 
-function GoalTimelineRow({ goal, colors }: { goal: any; colors: ReturnType<typeof useColors> }) {
+function GoalTimelineRow({ goal, colors }: { goal: any; colors: ReturnType<typeof useBoldColors> }) {
   const pct = Math.min(100, (goal.currentAmount / goal.targetAmount) * 100);
   const willFinish = goal.monthsToComplete !== null;
   return (
     <View style={{ marginBottom: 14 }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
-        <Text style={{ fontSize: 13, fontWeight: "600", color: colors.text, flex: 1 }} numberOfLines={1}>
+        <BoldText variant="bodySM" weight="600" color={colors.text} style={{ flex: 1 }} numberOfLines={1}>
           {goal.goalName}
-        </Text>
-        <Text style={{ fontSize: 12, fontWeight: "500", color: willFinish ? colors.accent : colors.mutedForeground, marginLeft: 8 }}>
+        </BoldText>
+        <BoldText variant="bodySM" weight="500" color={willFinish ? colors.success : colors.mutedForeground} style={{ marginLeft: 8 }}>
           {willFinish ? `✓ ${goal.completionLabel}` : "Beyond horizon"}
-        </Text>
+        </BoldText>
       </View>
       <View style={{ height: 4, borderRadius: 2, backgroundColor: colors.border, overflow: "hidden" }}>
-        <View style={{ height: "100%", borderRadius: 2, minWidth: 4, width: `${pct}%`, backgroundColor: willFinish ? colors.accent : colors.mutedForeground }} />
+        <View style={{ height: "100%", borderRadius: 2, minWidth: 4, width: `${pct}%`, backgroundColor: willFinish ? colors.success : colors.mutedForeground }} />
       </View>
     </View>
   );
@@ -668,11 +636,11 @@ function GoalTimelineRow({ goal, colors }: { goal: any; colors: ReturnType<typeo
 
 // ─── Input summary row ────────────────────────────────────────────────────────
 
-function InputSummaryRow({ label, value, colors }: { label: string; value: string; colors: ReturnType<typeof useColors> }) {
+function InputSummaryRow({ label, value, colors }: { label: string; value: string; colors: ReturnType<typeof useBoldColors> }) {
   return (
     <View style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 6 }}>
-      <Text style={{ fontSize: 13, color: colors.mutedForeground }}>{label}</Text>
-      <Text style={{ fontSize: 13, fontWeight: "600", color: colors.textSecondary }}>{value}</Text>
+      <BoldText variant="bodySM" color={colors.mutedForeground}>{label}</BoldText>
+      <BoldText variant="bodySM" weight="600" color={colors.textSecondary}>{value}</BoldText>
     </View>
   );
 }
@@ -690,36 +658,28 @@ function DiffRow({
   valueA: string;
   valueB: string;
   winnerIsA: boolean | null;
-  colors: ReturnType<typeof useColors>;
+  colors: ReturnType<typeof useBoldColors>;
 }) {
   return (
-    <View style={diffStyles.row}>
-      <Text style={[diffStyles.label, { color: colors.mutedForeground }]}>{label}</Text>
-      <View style={diffStyles.values}>
-        <View style={[diffStyles.cell, winnerIsA === true && { backgroundColor: COMPARE_COLOR_A + "20", borderRadius: 8 }]}>
+    <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+      <BoldText variant="bodySM" color={colors.mutedForeground} style={{ flex: 1 }}>{label}</BoldText>
+      <View style={{ flexDirection: "row", gap: 8 }}>
+        <View style={{ width: 90, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", paddingHorizontal: 8, paddingVertical: 4, backgroundColor: winnerIsA === true ? COMPARE_COLOR_A + "20" : "transparent", borderRadius: 8 }}>
           {winnerIsA === true && <Feather name="award" size={10} color={COMPARE_COLOR_A} style={{ marginRight: 3 }} />}
-          <Text style={[diffStyles.val, { color: winnerIsA === true ? COMPARE_COLOR_A : colors.textSecondary, fontWeight: winnerIsA === true ? "800" : "600" }]}>
+          <BoldText variant="bodySM" weight={winnerIsA === true ? "800" : "600"} color={winnerIsA === true ? COMPARE_COLOR_A : colors.textSecondary}>
             {valueA}
-          </Text>
+          </BoldText>
         </View>
-        <View style={[diffStyles.cell, winnerIsA === false && { backgroundColor: COMPARE_COLOR_B + "20", borderRadius: 8 }]}>
+        <View style={{ width: 90, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", paddingHorizontal: 8, paddingVertical: 4, backgroundColor: winnerIsA === false ? COMPARE_COLOR_B + "20" : "transparent", borderRadius: 8 }}>
           {winnerIsA === false && <Feather name="award" size={10} color={COMPARE_COLOR_B} style={{ marginRight: 3 }} />}
-          <Text style={[diffStyles.val, { color: winnerIsA === false ? COMPARE_COLOR_B : colors.textSecondary, fontWeight: winnerIsA === false ? "800" : "600" }]}>
+          <BoldText variant="bodySM" weight={winnerIsA === false ? "800" : "600"} color={winnerIsA === false ? COMPARE_COLOR_B : colors.textSecondary}>
             {valueB}
-          </Text>
+          </BoldText>
         </View>
       </View>
     </View>
   );
 }
-
-const diffStyles = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "center", paddingVertical: 10, borderBottomWidth: 1 },
-  label: { fontSize: 13, flex: 1 },
-  values: { flexDirection: "row", gap: 8 },
-  cell: { width: 90, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", paddingHorizontal: 8, paddingVertical: 4 },
-  val: { fontSize: 14 },
-});
 
 // ─── Default inputs ───────────────────────────────────────────────────────────
 
@@ -735,7 +695,7 @@ const DEFAULT_INPUTS: Omit<ScenarioInputs, "scenarioName"> = {
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function SimulateScreen() {
-  const colors = useColors();
+  const colors = useBoldColors();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
 
@@ -745,7 +705,6 @@ export default function SimulateScreen() {
   const [inputs, setInputs] = useState<Omit<ScenarioInputs, "scenarioName">>(DEFAULT_INPUTS);
   const [chartWidth, setChartWidth] = useState(0);
 
-  // Compare selection state
   const [compareIds, setCompareIds] = useState<number[]>([]);
   const [compareRuns, setCompareRuns] = useState<[SimulationRun, SimulationRun] | null>(null);
 
@@ -862,7 +821,6 @@ export default function SimulateScreen() {
     const winnerColor = overallWinnerIsA ? "#6C63FF" : "#FF6B6B";
     const dateStr = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
-    // ── Build inline SVG comparison chart ──────────────────────────────────────
     const dpA = resA.dataPoints ?? [];
     const dpB = resB.dataPoints ?? [];
     const chartW = 560;
@@ -1060,45 +1018,44 @@ export default function SimulateScreen() {
     const simsWithResults = simulations?.filter((r) => !!r.results) ?? [];
     const hasEnough = simsWithResults.length >= 2;
     return (
-      <View style={[gs.flex, { backgroundColor: colors.background }]}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
         <ScrollView
-          style={gs.flex}
+          style={{ flex: 1 }}
           contentContainerStyle={{ paddingTop: insets.top + 20, paddingHorizontal: 20, paddingBottom: 16 }}
         >
-          <View style={gs.pageHeader}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
             <View>
-              <Text style={[gs.pageTitle, { color: colors.text }]}>Digital Twin Lab</Text>
-              <Text style={[gs.pageSubtitle, { color: colors.mutedForeground }]}>Run what-if simulations on your finances</Text>
+              <BoldText variant="displayMD" weight="800" color={colors.text} style={{ marginBottom: 4 }}>
+                Digital Twin Lab
+              </BoldText>
+              <BoldText variant="bodyMD" color={colors.mutedForeground}>
+                Run what-if simulations on your finances
+              </BoldText>
             </View>
-            <TouchableOpacity style={[gs.newBtn, { backgroundColor: colors.primary }]} onPress={openBuilder} activeOpacity={0.8}>
-              <Feather name="plus" size={16} color="#fff" />
-              <Text style={gs.newBtnText}>New</Text>
-            </TouchableOpacity>
+            <BoldButton variant="primary" size="md" onPress={openBuilder} leftIcon={<Feather name="plus" size={16} color="#fff" />}>
+              New
+            </BoldButton>
           </View>
 
-          {/* Compare mode hint */}
           {hasEnough && !selectMode && (() => {
             const firstWithResults = simulations?.find((r) => !!r.results);
             return firstWithResults ? (
-              <View style={[compareHintStyles.banner, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <BoldCard variant="outlined" padding="md" style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 }}>
                 <Feather name="columns" size={14} color={COMPARE_COLOR_A} />
-                <Text style={[compareHintStyles.text, { color: colors.mutedForeground }]}>
+                <BoldText variant="bodySM" color={colors.mutedForeground} style={{ flex: 1, lineHeight: 18 }}>
                   Select two scenarios to compare them side by side
-                </Text>
-                <TouchableOpacity
-                  onPress={() => handleToggleCompare(firstWithResults.id)}
-                  style={[compareHintStyles.btn, { backgroundColor: COMPARE_COLOR_A + "18" }]}
-                >
-                  <Text style={{ fontSize: 12, fontWeight: "700", color: COMPARE_COLOR_A }}>Select</Text>
-                </TouchableOpacity>
-              </View>
+                </BoldText>
+                <BoldButton variant="ghost" size="sm" onPress={() => handleToggleCompare(firstWithResults.id)}>
+                  Select
+                </BoldButton>
+              </BoldCard>
             ) : null;
           })()}
 
           {listLoading ? (
-            <View style={gs.center}>
+            <View style={{ alignItems: "center", paddingVertical: 60 }}>
               <ActivityIndicator color={colors.primary} size="large" />
-              <Text style={[{ marginTop: 12, fontSize: 14 }, { color: colors.mutedForeground }]}>Loading scenarios…</Text>
+              <BoldText variant="bodyMD" color={colors.mutedForeground} style={{ marginTop: 12 }}>Loading scenarios…</BoldText>
             </View>
           ) : !simulations || simulations.length === 0 ? (
             <EmptyState onNew={openBuilder} colors={colors} />
@@ -1117,37 +1074,29 @@ export default function SimulateScreen() {
           )}
         </ScrollView>
 
-        {/* Bottom bar: compare controls or normal */}
         {selectMode ? (
-          <View style={[gs.fixedBottom, { paddingBottom: insets.bottom + 12, backgroundColor: colors.background, borderTopColor: colors.border }]}>
+          <View style={{ paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, paddingBottom: insets.bottom + 12, backgroundColor: colors.background }}>
             <View style={{ flexDirection: "row", gap: 12 }}>
-              <TouchableOpacity
-                style={[gs.runBtn, { flex: 1, backgroundColor: colors.cardElevated, borderWidth: 1, borderColor: colors.border }]}
-                onPress={handleCancelCompare}
-                activeOpacity={0.8}
-              >
-                <Feather name="x" size={16} color={colors.textSecondary} />
-                <Text style={[gs.runBtnText, { color: colors.textSecondary }]}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[gs.runBtn, { flex: 2, backgroundColor: compareIds.length === 2 ? COMPARE_COLOR_A : colors.border }]}
+              <BoldButton variant="outline" size="lg" style={{ flex: 1 }} onPress={handleCancelCompare}>
+                Cancel
+              </BoldButton>
+              <BoldButton
+                variant="primary"
+                size="lg"
+                style={{ flex: 2 }}
                 onPress={handleStartCompare}
                 disabled={compareIds.length !== 2}
-                activeOpacity={0.8}
+                leftIcon={<Feather name="columns" size={16} color="#fff" />}
               >
-                <Feather name="columns" size={16} color="#fff" />
-                <Text style={gs.runBtnText}>
-                  {compareIds.length === 2 ? "Compare These Two" : `Select ${2 - compareIds.length} more`}
-                </Text>
-              </TouchableOpacity>
+                {compareIds.length === 2 ? "Compare These Two" : `Select ${2 - compareIds.length} more`}
+              </BoldButton>
             </View>
           </View>
         ) : (
-          <View style={[gs.fixedBottom, { paddingBottom: insets.bottom + 12, backgroundColor: colors.background, borderTopColor: colors.border }]}>
-            <TouchableOpacity style={[gs.runBtn, { backgroundColor: colors.primary }]} onPress={openBuilder} activeOpacity={0.8}>
-              <Feather name="plus" size={18} color="#fff" />
-              <Text style={gs.runBtnText}>New Scenario</Text>
-            </TouchableOpacity>
+          <View style={{ paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, paddingBottom: insets.bottom + 12, backgroundColor: colors.background }}>
+            <BoldButton variant="primary" size="lg" fullWidth onPress={openBuilder} leftIcon={<Feather name="plus" size={18} color="#fff" />}>
+              New Scenario
+            </BoldButton>
           </View>
         )}
       </View>
@@ -1157,56 +1106,71 @@ export default function SimulateScreen() {
   // ─── Builder screen ────────────────────────────────────────────────────────
   if (screen === "builder") {
     return (
-      <View style={[gs.flex, { backgroundColor: colors.background }]}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
         <ScrollView
-          style={gs.flex}
+          style={{ flex: 1 }}
           contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 20, paddingBottom: 16 }}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={gs.navRow}>
-            <TouchableOpacity onPress={() => setScreen("list")} style={gs.navBtn}>
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+            <TouchableOpacity onPress={() => setScreen("list")} style={{ width: 36, height: 36, justifyContent: "center", alignItems: "center" }}>
               <Feather name="arrow-left" size={20} color={colors.text} />
             </TouchableOpacity>
-            <Text style={[gs.navTitle, { color: colors.text }]}>Scenario Builder</Text>
-            <View style={gs.navBtn} />
+            <BoldText variant="heading3" weight="700" color={colors.text} style={{ flex: 1, textAlign: "center" }}>
+              Scenario Builder
+            </BoldText>
+            <View style={{ width: 36 }} />
           </View>
 
-          {/* Name */}
-          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[gs.sectionLabel, { color: colors.mutedForeground }]}>SCENARIO NAME</Text>
+          <BoldCard variant="outlined" padding="md" style={{ marginBottom: 16 }}>
+            <BoldText variant="caption" color={colors.mutedForeground} style={{ marginBottom: 14 }}>
+              SCENARIO NAME
+            </BoldText>
             <TextInput
               value={scenarioName}
               onChangeText={setScenarioName}
               placeholder="e.g. Cut dining by 30%"
               placeholderTextColor={colors.mutedForeground}
-              style={[gs.nameInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.cardElevated }]}
+              style={{
+                borderWidth: 1,
+                borderRadius: 10,
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+                fontSize: 16,
+                fontWeight: "600",
+                color: colors.text,
+                borderColor: colors.border,
+                backgroundColor: colors.cardElevated,
+              }}
               maxLength={60}
             />
-          </View>
+          </BoldCard>
 
-          {/* Income */}
-          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[gs.sectionLabel, { color: colors.mutedForeground }]}>INCOME</Text>
+          <BoldCard variant="outlined" padding="md" style={{ marginBottom: 16 }}>
+            <BoldText variant="caption" color={colors.mutedForeground} style={{ marginBottom: 14 }}>
+              INCOME
+            </BoldText>
             <SliderRow
               label="Income change"
               value={inputs.incomeChangePercent}
               min={-50} max={100} step={5}
               format={formatPct}
               onChange={(v) => setInputs((p) => ({ ...p, incomeChangePercent: v }))}
-              color={inputs.incomeChangePercent >= 0 ? colors.accent : colors.danger}
+              color={inputs.incomeChangePercent >= 0 ? colors.success : colors.danger}
             />
-          </View>
+          </BoldCard>
 
-          {/* Spending */}
-          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[gs.sectionLabel, { color: colors.mutedForeground }]}>SPENDING</Text>
+          <BoldCard variant="outlined" padding="md" style={{ marginBottom: 16 }}>
+            <BoldText variant="caption" color={colors.mutedForeground} style={{ marginBottom: 14 }}>
+              SPENDING
+            </BoldText>
             <SliderRow
               label="Spending change"
               value={inputs.spendingChangePercent}
               min={-60} max={60} step={5}
               format={formatPct}
               onChange={(v) => setInputs((p) => ({ ...p, spendingChangePercent: v }))}
-              color={inputs.spendingChangePercent <= 0 ? colors.accent : colors.danger}
+              color={inputs.spendingChangePercent <= 0 ? colors.success : colors.danger}
             />
             <SliderRow
               label="New monthly obligation"
@@ -1224,25 +1188,27 @@ export default function SimulateScreen() {
               onChange={(v) => setInputs((p) => ({ ...p, oneTimeExpense: v }))}
               color={inputs.oneTimeExpense === 0 ? colors.mutedForeground : colors.warning}
             />
-          </View>
+          </BoldCard>
 
-          {/* Savings */}
-          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[gs.sectionLabel, { color: colors.mutedForeground }]}>SAVINGS</Text>
+          <BoldCard variant="outlined" padding="md" style={{ marginBottom: 16 }}>
+            <BoldText variant="caption" color={colors.mutedForeground} style={{ marginBottom: 14 }}>
+              SAVINGS
+            </BoldText>
             <SliderRow
               label="Extra monthly savings"
               value={inputs.additionalMonthlySaving}
               min={0} max={2000} step={50}
               format={formatDollar}
               onChange={(v) => setInputs((p) => ({ ...p, additionalMonthlySaving: v }))}
-              color={inputs.additionalMonthlySaving === 0 ? colors.mutedForeground : colors.accent}
+              color={inputs.additionalMonthlySaving === 0 ? colors.mutedForeground : colors.success}
             />
-          </View>
+          </BoldCard>
 
-          {/* Time horizon */}
-          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[gs.sectionLabel, { color: colors.mutedForeground }]}>TIME HORIZON</Text>
-            <View style={gs.chipRow}>
+          <BoldCard variant="outlined" padding="md" style={{ marginBottom: 16 }}>
+            <BoldText variant="caption" color={colors.mutedForeground} style={{ marginBottom: 14 }}>
+              TIME HORIZON
+            </BoldText>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
               {([3, 6, 12, 24, 36, 60] as const).map((mo) => {
                 const label = mo < 12 ? `${mo}mo` : mo === 12 ? "1yr" : mo === 24 ? "2yr" : mo === 36 ? "3yr" : "5yr";
                 const active = inputs.timeHorizonMonths === mo;
@@ -1250,26 +1216,37 @@ export default function SimulateScreen() {
                   <TouchableOpacity
                     key={mo}
                     onPress={() => setInputs((p) => ({ ...p, timeHorizonMonths: mo }))}
-                    style={[gs.chip, { backgroundColor: active ? colors.primary : colors.cardElevated, borderColor: active ? colors.primary : colors.border }]}
+                    style={{
+                      paddingHorizontal: 14,
+                      paddingVertical: 8,
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      backgroundColor: active ? colors.primary : colors.cardElevated,
+                      borderColor: active ? colors.primary : colors.border,
+                    }}
                   >
-                    <Text style={[gs.chipText, { color: active ? "#fff" : colors.mutedForeground }]}>{label}</Text>
+                    <BoldText variant="bodySM" weight="600" color={active ? "#fff" : colors.mutedForeground}>
+                      {label}
+                    </BoldText>
                   </TouchableOpacity>
                 );
               })}
             </View>
-          </View>
+          </BoldCard>
         </ScrollView>
 
-        <View style={[gs.fixedBottom, { paddingBottom: insets.bottom + 12, backgroundColor: colors.background, borderTopColor: colors.border }]}>
-          <TouchableOpacity
-            style={[gs.runBtn, { backgroundColor: colors.primary, opacity: isRunning ? 0.7 : 1 }]}
+        <View style={{ paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, paddingBottom: insets.bottom + 12, backgroundColor: colors.background }}>
+          <BoldButton
+            variant="primary"
+            size="lg"
+            fullWidth
             onPress={handleRun}
             disabled={isRunning}
-            activeOpacity={0.8}
+            loading={isRunning}
+            leftIcon={isRunning ? undefined : <Feather name="play" size={18} color="#fff" />}
           >
-            {isRunning ? <ActivityIndicator color="#fff" size="small" /> : <Feather name="play" size={18} color="#fff" />}
-            <Text style={gs.runBtnText}>{isRunning ? "Simulating…" : "Run Simulation"}</Text>
-          </TouchableOpacity>
+            {isRunning ? "Simulating…" : "Run Simulation"}
+          </BoldButton>
         </View>
       </View>
     );
@@ -1284,7 +1261,6 @@ export default function SimulateScreen() {
     const balA = resA.finalBalance - resA.startingBalance;
     const balB = resB.finalBalance - resB.startingBalance;
 
-    // Determine winner per metric using utility
     const {
       winnerBalance,
       winnerSavingsRate,
@@ -1316,78 +1292,88 @@ export default function SimulateScreen() {
         ? "1yr"
         : `${(runB.inputs.timeHorizonMonths / 12).toFixed(0)}yr`;
 
+    const winnerColor = overallWinnerIsA === null ? colors.primary : overallWinnerIsA ? COMPARE_COLOR_A : COMPARE_COLOR_B;
+
     return (
-      <View style={[gs.flex, { backgroundColor: colors.background }]}>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
         <ScrollView
-          style={gs.flex}
+          style={{ flex: 1 }}
           contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 20, paddingBottom: 16 }}
           onLayout={(e) => setChartWidth(e.nativeEvent.layout.width - 40)}
         >
-          <View style={gs.navRow}>
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
             <TouchableOpacity
               onPress={() => { setScreen("list"); setCompareIds([]); }}
-              style={gs.navBtn}
+              style={{ width: 36, height: 36, justifyContent: "center", alignItems: "center" }}
             >
               <Feather name="arrow-left" size={20} color={colors.text} />
             </TouchableOpacity>
-            <Text style={[gs.navTitle, { color: colors.text }]}>Side-by-Side</Text>
-            <TouchableOpacity onPress={handleShareComparison} style={gs.navBtn}>
+            <BoldText variant="heading3" weight="700" color={colors.text} style={{ flex: 1, textAlign: "center" }}>
+              Side-by-Side
+            </BoldText>
+            <TouchableOpacity onPress={handleShareComparison} style={{ width: 36, height: 36, justifyContent: "center", alignItems: "center" }}>
               <Feather name="share" size={20} color={colors.primary} />
             </TouchableOpacity>
           </View>
 
-          {/* Winner banner */}
           {overallWinnerIsA !== null && (
-            <View style={[
-              gs.heroCard,
-              { backgroundColor: (overallWinnerIsA ? COMPARE_COLOR_A : COMPARE_COLOR_B) + "18", borderColor: (overallWinnerIsA ? COMPARE_COLOR_A : COMPARE_COLOR_B) + "50", marginBottom: 16 }
-            ]}>
+            <BoldCard
+              variant="outlined"
+              padding="lg"
+              style={{
+                alignItems: "center",
+                marginBottom: 16,
+                backgroundColor: winnerColor + "18",
+                borderColor: winnerColor + "50",
+              }}
+            >
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                <Feather name="award" size={18} color={overallWinnerIsA ? COMPARE_COLOR_A : COMPARE_COLOR_B} />
-                <Text style={{ fontSize: 13, fontWeight: "700", color: overallWinnerIsA ? COMPARE_COLOR_A : COMPARE_COLOR_B }}>
-                  BETTER PATH
-                </Text>
+                <Feather name="award" size={18} color={winnerColor} />
+                <BoldText variant="caption" weight="700" color={winnerColor}>BETTER PATH</BoldText>
               </View>
-              <Text style={[gs.heroValue, { color: overallWinnerIsA ? COMPARE_COLOR_A : COMPARE_COLOR_B, fontSize: 22, marginBottom: 2 }]}>
+              <BoldText variant="heading1" weight="900" color={winnerColor} style={{ marginBottom: 2 }}>
                 {overallWinnerIsA ? runA.scenarioName : runB.scenarioName}
-              </Text>
-              <Text style={[gs.heroSub, { color: colors.mutedForeground }]}>
+              </BoldText>
+              <BoldText variant="bodySM" color={colors.mutedForeground}>
                 Wins {overallWinnerIsA ? aWins : bWins} of {aWins + bWins} metrics compared
-              </Text>
-            </View>
+              </BoldText>
+            </BoldCard>
           )}
 
-          {/* Column headers */}
-          <View style={[compareColStyles.headerRow, { borderColor: colors.border }]}>
-            <View style={compareColStyles.labelCol} />
-            <View style={[compareColStyles.col, { borderLeftColor: colors.border }]}>
-              <View style={[compareColStyles.colorDot, { backgroundColor: COMPARE_COLOR_A }]} />
-              <Text style={[compareColStyles.colTitle, { color: COMPARE_COLOR_A }]} numberOfLines={2}>{runA.scenarioName}</Text>
-              <Text style={[compareColStyles.colSub, { color: colors.mutedForeground }]}>{horizonA}</Text>
+          <View style={{ flexDirection: "row", marginBottom: 16, borderRadius: 16, overflow: "hidden", borderWidth: 1, borderColor: colors.border }}>
+            <View style={{ flex: 1 }} />
+            <View style={{ flex: 2, borderLeftWidth: 1, borderLeftColor: colors.border, padding: 12, alignItems: "center" }}>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: COMPARE_COLOR_A, marginBottom: 6 }} />
+              <BoldText variant="bodySM" weight="700" color={COMPARE_COLOR_A} style={{ textAlign: "center", marginBottom: 2 }} numberOfLines={2}>
+                {runA.scenarioName}
+              </BoldText>
+              <BoldText variant="caption" color={colors.mutedForeground}>{horizonA}</BoldText>
               {runA.inputs.note ? (
-                <Text style={[compareColStyles.colNote, { color: colors.mutedForeground, backgroundColor: COMPARE_COLOR_A + "14" }]} numberOfLines={2}>
+                <BoldText variant="caption" color={colors.mutedForeground} style={{ marginTop: 6, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: COMPARE_COLOR_A + "14", lineHeight: 16 }} numberOfLines={2}>
                   {runA.inputs.note}
-                </Text>
+                </BoldText>
               ) : null}
             </View>
-            <View style={[compareColStyles.col, { borderLeftColor: colors.border }]}>
-              <View style={[compareColStyles.colorDot, { backgroundColor: COMPARE_COLOR_B }]} />
-              <Text style={[compareColStyles.colTitle, { color: COMPARE_COLOR_B }]} numberOfLines={2}>{runB.scenarioName}</Text>
-              <Text style={[compareColStyles.colSub, { color: colors.mutedForeground }]}>{horizonB}</Text>
+            <View style={{ flex: 2, borderLeftWidth: 1, borderLeftColor: colors.border, padding: 12, alignItems: "center" }}>
+              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: COMPARE_COLOR_B, marginBottom: 6 }} />
+              <BoldText variant="bodySM" weight="700" color={COMPARE_COLOR_B} style={{ textAlign: "center", marginBottom: 2 }} numberOfLines={2}>
+                {runB.scenarioName}
+              </BoldText>
+              <BoldText variant="caption" color={colors.mutedForeground}>{horizonB}</BoldText>
               {runB.inputs.note ? (
-                <Text style={[compareColStyles.colNote, { color: colors.mutedForeground, backgroundColor: COMPARE_COLOR_B + "14" }]} numberOfLines={2}>
+                <BoldText variant="caption" color={colors.mutedForeground} style={{ marginTop: 6, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: COMPARE_COLOR_B + "14", lineHeight: 16 }} numberOfLines={2}>
                   {runB.inputs.note}
-                </Text>
+                </BoldText>
               ) : null}
             </View>
           </View>
 
-          {/* Chart */}
-          <View
-            style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}
+          <BoldCard variant="outlined" padding="md" style={{ marginBottom: 16 }}
             onLayout={(e) => setChartWidth(e.nativeEvent.layout.width - 32)}
           >
-            <Text style={[gs.sectionLabel, { color: colors.mutedForeground, marginBottom: 16 }]}>BALANCE TRAJECTORIES</Text>
+            <BoldText variant="caption" color={colors.mutedForeground} style={{ marginBottom: 16 }}>
+              BALANCE TRAJECTORIES
+            </BoldText>
             {(() => {
               const dpA = resA.dataPoints ?? [];
               const dpB = resB.dataPoints ?? [];
@@ -1396,12 +1382,12 @@ export default function SimulateScreen() {
                 return (
                   <View style={{ alignItems: "center", paddingVertical: 28 }}>
                     <Feather name="bar-chart-2" size={28} color={colors.mutedForeground} style={{ marginBottom: 10 }} />
-                    <Text style={{ fontSize: 14, fontWeight: "600", color: colors.textSecondary, marginBottom: 4 }}>
+                    <BoldText variant="bodyMD" weight="600" color={colors.textSecondary} style={{ marginBottom: 4 }}>
                       Not enough data to chart
-                    </Text>
-                    <Text style={{ fontSize: 12, color: colors.mutedForeground, textAlign: "center", maxWidth: 240 }}>
+                    </BoldText>
+                    <BoldText variant="bodySM" color={colors.mutedForeground} style={{ textAlign: "center", maxWidth: 240 }}>
                       One or both scenarios don't have enough data points to draw a trajectory.
-                    </Text>
+                    </BoldText>
                   </View>
                 );
               }
@@ -1415,97 +1401,41 @@ export default function SimulateScreen() {
                 />
               ) : null;
             })()}
-          </View>
+          </BoldCard>
 
-          {/* Diff table */}
-          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[gs.sectionLabel, { color: colors.mutedForeground, marginBottom: 4 }]}>METRIC COMPARISON</Text>
-            <View style={{ borderTopWidth: 1, borderColor: colors.border }}>
-              <DiffRow
-                label="Balance change"
-                valueA={signedFmtK(balA)}
-                valueB={signedFmtK(balB)}
-                winnerIsA={winnerBalance}
-                colors={colors}
-              />
-              <DiffRow
-                label="Final balance"
-                valueA={fmtK(resA.finalBalance)}
-                valueB={fmtK(resB.finalBalance)}
-                winnerIsA={winnerFinalBalance}
-                colors={colors}
-              />
-              <DiffRow
-                label="Savings rate"
-                valueA={`${resA.finalSavingsRate.toFixed(1)}%`}
-                valueB={`${resB.finalSavingsRate.toFixed(1)}%`}
-                winnerIsA={winnerSavingsRate}
-                colors={colors}
-              />
-              <DiffRow
-                label="Total saved"
-                valueA={fmtK(resA.totalSaved)}
-                valueB={fmtK(resB.totalSaved)}
-                winnerIsA={winnerTotalSaved}
-                colors={colors}
-              />
+          <BoldCard variant="outlined" padding="md" style={{ marginBottom: 16 }}>
+            <BoldText variant="caption" color={colors.mutedForeground} style={{ marginBottom: 4 }}>
+              METRIC COMPARISON
+            </BoldText>
+            <View style={{ borderTopWidth: 1, borderTopColor: colors.border }}>
+              <DiffRow label="Balance change" valueA={signedFmtK(balA)} valueB={signedFmtK(balB)} winnerIsA={winnerBalance} colors={colors} />
+              <DiffRow label="Final balance" valueA={fmtK(resA.finalBalance)} valueB={fmtK(resB.finalBalance)} winnerIsA={winnerFinalBalance} colors={colors} />
+              <DiffRow label="Savings rate" valueA={`${resA.finalSavingsRate.toFixed(1)}%`} valueB={`${resB.finalSavingsRate.toFixed(1)}%`} winnerIsA={winnerSavingsRate} colors={colors} />
+              <DiffRow label="Total saved" valueA={fmtK(resA.totalSaved)} valueB={fmtK(resB.totalSaved)} winnerIsA={winnerTotalSaved} colors={colors} />
             </View>
-          </View>
+          </BoldCard>
 
-          {/* Inputs comparison */}
-          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[gs.sectionLabel, { color: colors.mutedForeground, marginBottom: 4 }]}>SCENARIO INPUTS</Text>
-            <View style={{ borderTopWidth: 1, borderColor: colors.border }}>
-              <DiffRow
-                label="Income change"
-                valueA={`${runA.inputs.incomeChangePercent >= 0 ? "+" : ""}${runA.inputs.incomeChangePercent}%`}
-                valueB={`${runB.inputs.incomeChangePercent >= 0 ? "+" : ""}${runB.inputs.incomeChangePercent}%`}
-                winnerIsA={null}
-                colors={colors}
-              />
-              <DiffRow
-                label="Spending change"
-                valueA={`${runA.inputs.spendingChangePercent >= 0 ? "+" : ""}${runA.inputs.spendingChangePercent}%`}
-                valueB={`${runB.inputs.spendingChangePercent >= 0 ? "+" : ""}${runB.inputs.spendingChangePercent}%`}
-                winnerIsA={null}
-                colors={colors}
-              />
-              <DiffRow
-                label="Extra savings"
-                valueA={runA.inputs.additionalMonthlySaving > 0 ? `+$${runA.inputs.additionalMonthlySaving}/mo` : "—"}
-                valueB={runB.inputs.additionalMonthlySaving > 0 ? `+$${runB.inputs.additionalMonthlySaving}/mo` : "—"}
-                winnerIsA={null}
-                colors={colors}
-              />
-              <DiffRow
-                label="Time horizon"
-                valueA={horizonA}
-                valueB={horizonB}
-                winnerIsA={null}
-                colors={colors}
-              />
+          <BoldCard variant="outlined" padding="md" style={{ marginBottom: 16 }}>
+            <BoldText variant="caption" color={colors.mutedForeground} style={{ marginBottom: 4 }}>
+              SCENARIO INPUTS
+            </BoldText>
+            <View style={{ borderTopWidth: 1, borderTopColor: colors.border }}>
+              <DiffRow label="Income change" valueA={`${runA.inputs.incomeChangePercent >= 0 ? "+" : ""}${runA.inputs.incomeChangePercent}%`} valueB={`${runB.inputs.incomeChangePercent >= 0 ? "+" : ""}${runB.inputs.incomeChangePercent}%`} winnerIsA={null} colors={colors} />
+              <DiffRow label="Spending change" valueA={`${runA.inputs.spendingChangePercent >= 0 ? "+" : ""}${runA.inputs.spendingChangePercent}%`} valueB={`${runB.inputs.spendingChangePercent >= 0 ? "+" : ""}${runB.inputs.spendingChangePercent}%`} winnerIsA={null} colors={colors} />
+              <DiffRow label="Extra savings" valueA={runA.inputs.additionalMonthlySaving > 0 ? `+$${runA.inputs.additionalMonthlySaving}/mo` : "—"} valueB={runB.inputs.additionalMonthlySaving > 0 ? `+$${runB.inputs.additionalMonthlySaving}/mo` : "—"} winnerIsA={null} colors={colors} />
+              <DiffRow label="Time horizon" valueA={horizonA} valueB={horizonB} winnerIsA={null} colors={colors} />
             </View>
-          </View>
+          </BoldCard>
         </ScrollView>
 
-        <View style={[gs.fixedBottom, { paddingBottom: insets.bottom + 12, backgroundColor: colors.background, borderTopColor: colors.border }]}>
+        <View style={{ paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, paddingBottom: insets.bottom + 12, backgroundColor: colors.background }}>
           <View style={{ flexDirection: "row", gap: 12 }}>
-            <TouchableOpacity
-              style={[gs.runBtn, { flex: 1, backgroundColor: colors.cardElevated, borderWidth: 1, borderColor: colors.border }]}
-              onPress={() => { setScreen("list"); setCompareIds([]); }}
-              activeOpacity={0.8}
-            >
-              <Feather name="arrow-left" size={18} color={colors.textSecondary} />
-              <Text style={[gs.runBtnText, { color: colors.textSecondary }]}>Back</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[gs.runBtn, { flex: 2, backgroundColor: colors.primary }]}
-              onPress={handleShareComparison}
-              activeOpacity={0.8}
-            >
-              <Feather name="share" size={18} color="#fff" />
-              <Text style={gs.runBtnText}>Share Comparison</Text>
-            </TouchableOpacity>
+            <BoldButton variant="outline" size="lg" style={{ flex: 1 }} onPress={() => { setScreen("list"); setCompareIds([]); }} leftIcon={<Feather name="arrow-left" size={18} color={colors.textSecondary} />}>
+              Back
+            </BoldButton>
+            <BoldButton variant="primary" size="lg" style={{ flex: 2 }} onPress={handleShareComparison} leftIcon={<Feather name="share" size={18} color="#fff" />}>
+              Share Comparison
+            </BoldButton>
           </View>
         </View>
       </View>
@@ -1519,7 +1449,7 @@ export default function SimulateScreen() {
   const results = run.results;
   const balanceChange = results.finalBalance - results.startingBalance;
   const isPositive = balanceChange >= 0;
-  const changeColor = isPositive ? colors.accent : colors.danger;
+  const changeColor = isPositive ? colors.success : colors.danger;
 
   const horizonText =
     run.inputs.timeHorizonMonths < 12
@@ -1529,138 +1459,104 @@ export default function SimulateScreen() {
       : `${(run.inputs.timeHorizonMonths / 12).toFixed(0)} years`;
 
   return (
-    <View style={[gs.flex, { backgroundColor: colors.background }]}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScrollView
-        style={gs.flex}
+        style={{ flex: 1 }}
         contentContainerStyle={{ paddingTop: insets.top + 16, paddingHorizontal: 20, paddingBottom: 16 }}
         onLayout={(e) => setChartWidth(e.nativeEvent.layout.width - 40)}
       >
-        <View style={gs.navRow}>
-          <TouchableOpacity onPress={() => setScreen("list")} style={gs.navBtn}>
+        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+          <TouchableOpacity onPress={() => setScreen("list")} style={{ width: 36, height: 36, justifyContent: "center", alignItems: "center" }}>
             <Feather name="arrow-left" size={20} color={colors.text} />
           </TouchableOpacity>
-          <Text style={[gs.navTitle, { color: colors.text }]} numberOfLines={1}>{run.scenarioName}</Text>
-          <TouchableOpacity onPress={openBuilder} style={gs.navBtn}>
+          <BoldText variant="heading3" weight="700" color={colors.text} style={{ flex: 1, textAlign: "center" }} numberOfLines={1}>
+            {run.scenarioName}
+          </BoldText>
+          <TouchableOpacity onPress={openBuilder} style={{ width: 36, height: 36, justifyContent: "center", alignItems: "center" }}>
             <Feather name="plus" size={20} color={colors.primary} />
           </TouchableOpacity>
         </View>
 
-        {/* Hero */}
-        <View style={[gs.heroCard, { backgroundColor: isPositive ? colors.accent + "18" : colors.danger + "18", borderColor: changeColor + "50" }]}>
-          <Text style={[gs.heroLabel, { color: colors.mutedForeground }]}>Balance after {horizonText}</Text>
-          <Text style={[gs.heroValue, { color: changeColor }]}>
+        <BoldCard
+          variant="outlined"
+          padding="lg"
+          style={{
+            alignItems: "center",
+            marginBottom: 16,
+            backgroundColor: isPositive ? colors.success + "18" : colors.danger + "18",
+            borderColor: changeColor + "50",
+          }}
+        >
+          <BoldText variant="bodySM" color={colors.mutedForeground} style={{ marginBottom: 8 }}>
+            Balance after {horizonText}
+          </BoldText>
+          <BoldText variant="displayXL" weight="900" color={changeColor} style={{ marginBottom: 4 }}>
             {isPositive ? "+" : "-"}{fmtK(Math.abs(balanceChange))}
-          </Text>
-          <Text style={[gs.heroSub, { color: colors.mutedForeground }]}>
+          </BoldText>
+          <BoldText variant="bodyMD" color={colors.mutedForeground}>
             {fmtK(results.startingBalance)} → {fmtK(results.finalBalance)}
-          </Text>
-        </View>
+          </BoldText>
+        </BoldCard>
 
-        {/* Chart */}
-        <View
-          style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}
+        <BoldCard variant="outlined" padding="md" style={{ marginBottom: 16 }}
           onLayout={(e) => setChartWidth(e.nativeEvent.layout.width - 32)}
         >
-          <Text style={[gs.sectionLabel, { color: colors.mutedForeground, marginBottom: 16 }]}>BALANCE TRAJECTORY</Text>
+          <BoldText variant="caption" color={colors.mutedForeground} style={{ marginBottom: 16 }}>
+            BALANCE TRAJECTORY
+          </BoldText>
           {chartWidth > 10 && results.dataPoints && results.dataPoints.length > 1 && (
             <BalanceChart dataPoints={results.dataPoints} width={chartWidth} />
           )}
-        </View>
+        </BoldCard>
 
-        {/* Metrics */}
-        <View style={gs.metricsGrid}>
-          <MetricCard label="Savings Rate" value={`${results.finalSavingsRate.toFixed(1)}%`} icon="trending-up" color={results.finalSavingsRate >= 15 ? colors.accent : results.finalSavingsRate >= 0 ? colors.warning : colors.danger} colors={colors} />
-          <MetricCard label="Avg Monthly Saved" value={fmtK(results.avgMonthlySavings)} icon="dollar-sign" color={results.avgMonthlySavings >= 0 ? colors.accent : colors.danger} colors={colors} />
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 16 }}>
+          <MetricCard label="Savings Rate" value={`${results.finalSavingsRate.toFixed(1)}%`} icon="trending-up" color={results.finalSavingsRate >= 15 ? colors.success : results.finalSavingsRate >= 0 ? colors.warning : colors.danger} colors={colors} />
+          <MetricCard label="Avg Monthly Saved" value={fmtK(results.avgMonthlySavings)} icon="dollar-sign" color={results.avgMonthlySavings >= 0 ? colors.success : colors.danger} colors={colors} />
           <MetricCard label="Total Saved" value={fmtK(results.totalSaved)} icon="archive" color={colors.primary} colors={colors} />
           <MetricCard label="Monthly Income" value={fmtK(results.projectedMonthlyIncome)} icon="activity" color={colors.textSecondary} colors={colors} />
         </View>
 
-        {/* AI narrative */}
         {run.narrative && (
-          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <BoldCard variant="outlined" padding="md" style={{ marginBottom: 16 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
               <Feather name="cpu" size={14} color={colors.primary} />
-              <Text style={{ fontSize: 11, fontWeight: "700", letterSpacing: 0.8, color: colors.primary }}>AI ANALYSIS</Text>
+              <BoldText variant="caption" weight="700" color={colors.primary}>AI ANALYSIS</BoldText>
             </View>
-            <Text style={{ fontSize: 15, lineHeight: 24, color: colors.textSecondary }}>{run.narrative}</Text>
-          </View>
+            <BoldText variant="bodyMD" color={colors.textSecondary} style={{ lineHeight: 24 }}>
+              {run.narrative}
+            </BoldText>
+          </BoldCard>
         )}
 
-        {/* Goal timelines */}
         {results.goalTimelines && results.goalTimelines.length > 0 && (
-          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[gs.sectionLabel, { color: colors.mutedForeground }]}>GOAL TIMELINES</Text>
+          <BoldCard variant="outlined" padding="md" style={{ marginBottom: 16 }}>
+            <BoldText variant="caption" color={colors.mutedForeground} style={{ marginBottom: 14 }}>
+              GOAL TIMELINES
+            </BoldText>
             {results.goalTimelines.map((g) => (
               <GoalTimelineRow key={g.goalId} goal={g} colors={colors} />
             ))}
-          </View>
+          </BoldCard>
         )}
 
-        {/* Inputs summary */}
-        <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[gs.sectionLabel, { color: colors.mutedForeground }]}>SCENARIO INPUTS</Text>
+        <BoldCard variant="outlined" padding="md" style={{ marginBottom: 16 }}>
+          <BoldText variant="caption" color={colors.mutedForeground} style={{ marginBottom: 14 }}>
+            SCENARIO INPUTS
+          </BoldText>
           <InputSummaryRow label="Income change" value={`${run.inputs.incomeChangePercent >= 0 ? "+" : ""}${run.inputs.incomeChangePercent}%`} colors={colors} />
           <InputSummaryRow label="Spending change" value={`${run.inputs.spendingChangePercent >= 0 ? "+" : ""}${run.inputs.spendingChangePercent}%`} colors={colors} />
           {run.inputs.additionalMonthlySaving > 0 && <InputSummaryRow label="Extra savings" value={`+$${run.inputs.additionalMonthlySaving.toLocaleString()}/mo`} colors={colors} />}
           {run.inputs.newMonthlyObligation > 0 && <InputSummaryRow label="New obligation" value={`$${run.inputs.newMonthlyObligation.toLocaleString()}/mo`} colors={colors} />}
           {run.inputs.oneTimeExpense > 0 && <InputSummaryRow label="One-time expense" value={`$${run.inputs.oneTimeExpense.toLocaleString()}`} colors={colors} />}
           <InputSummaryRow label="Time horizon" value={horizonText} colors={colors} />
-        </View>
+        </BoldCard>
       </ScrollView>
 
-      <View style={[gs.fixedBottom, { paddingBottom: insets.bottom + 12, backgroundColor: colors.background, borderTopColor: colors.border }]}>
-        <TouchableOpacity style={[gs.runBtn, { backgroundColor: colors.primary }]} onPress={openBuilder} activeOpacity={0.8}>
-          <Feather name="plus" size={18} color="#fff" />
-          <Text style={gs.runBtnText}>New Scenario</Text>
-        </TouchableOpacity>
+      <View style={{ paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, paddingBottom: insets.bottom + 12, backgroundColor: colors.background }}>
+        <BoldButton variant="primary" size="lg" fullWidth onPress={openBuilder} leftIcon={<Feather name="plus" size={18} color="#fff" />}>
+          New Scenario
+        </BoldButton>
       </View>
     </View>
   );
 }
-
-// ─── Compare column header styles ─────────────────────────────────────────────
-
-const compareColStyles = StyleSheet.create({
-  headerRow: { flexDirection: "row", marginBottom: 16, borderRadius: 16, overflow: "hidden", borderWidth: 1 },
-  labelCol: { flex: 1 },
-  col: { flex: 2, borderLeftWidth: 1, padding: 12, alignItems: "center" },
-  colorDot: { width: 10, height: 10, borderRadius: 5, marginBottom: 6 },
-  colTitle: { fontSize: 13, fontWeight: "700", textAlign: "center", marginBottom: 2 },
-  colSub: { fontSize: 11, textAlign: "center" },
-  colNote: { fontSize: 11, textAlign: "center", marginTop: 6, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, lineHeight: 16 },
-});
-
-const compareHintStyles = StyleSheet.create({
-  banner: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 16 },
-  text: { flex: 1, fontSize: 12, lineHeight: 18 },
-  btn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
-});
-
-// ─── Global styles ────────────────────────────────────────────────────────────
-
-const gs = StyleSheet.create({
-  flex: { flex: 1 },
-  center: { alignItems: "center", paddingVertical: 60 },
-  pageHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 },
-  pageTitle: { fontSize: 28, fontWeight: "800", marginBottom: 4 },
-  pageSubtitle: { fontSize: 14 },
-  newBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12 },
-  newBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
-  navRow: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
-  navBtn: { width: 36, height: 36, justifyContent: "center", alignItems: "center" },
-  navTitle: { fontSize: 18, fontWeight: "700", flex: 1, textAlign: "center", marginHorizontal: 4 },
-  section: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 16 },
-  sectionLabel: { fontSize: 11, fontWeight: "700", letterSpacing: 0.8, marginBottom: 14 },
-  nameInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, fontWeight: "600" },
-  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1 },
-  chipText: { fontSize: 13, fontWeight: "600" },
-  fixedBottom: { paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1 },
-  runBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 16, borderRadius: 16 },
-  runBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  heroCard: { borderRadius: 20, borderWidth: 1, padding: 24, alignItems: "center", marginBottom: 16 },
-  heroLabel: { fontSize: 13, marginBottom: 8, fontWeight: "500" },
-  heroValue: { fontSize: 44, fontWeight: "900", marginBottom: 4 },
-  heroSub: { fontSize: 14 },
-  metricsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 16 },
-});
