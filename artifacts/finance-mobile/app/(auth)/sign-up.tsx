@@ -26,17 +26,24 @@ export default function SignUpScreen() {
   const [emailAddress, setEmailAddress] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [code, setCode] = React.useState("");
+  const [formError, setFormError] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [showPass, setShowPass] = React.useState(false);
 
   const onSignUpPress = async () => {
     setLoading(true);
+    setFormError("");
     try {
       const { error } = await signUp.password({ emailAddress, password });
       if (error) { console.error(JSON.stringify(error, null, 2)); return; }
-      await signUp.verifications.sendEmailCode();
+      const { error: sendError } = await signUp.verifications.sendEmailCode();
+      if (sendError) {
+        console.error(JSON.stringify(sendError, null, 2));
+        setFormError("We couldn't send the verification code. Please try again.");
+      }
     } catch (err: any) {
       console.error(err);
+      setFormError("Something went wrong creating your account. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -44,17 +51,22 @@ export default function SignUpScreen() {
 
   const onPressVerify = async () => {
     setLoading(true);
+    setFormError("");
     try {
-      await signUp.verifications.verifyEmailCode({ code });
+      const { error } = await signUp.verifications.verifyEmailCode({ code });
+      if (error) { console.error(JSON.stringify(error, null, 2)); return; }
       if (signUp.status === "complete") {
         await signUp.finalize({
           navigate: ({ decorateUrl }) => {
             router.replace(decorateUrl("/onboarding") as any);
           },
         });
+      } else {
+        setFormError("Verification didn't complete. Please check the code and try again.");
       }
     } catch (err: any) {
       console.error(err);
+      setFormError("Verification failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -66,6 +78,7 @@ export default function SignUpScreen() {
     signUp.missingFields.length === 0;
 
   const errorMessage =
+    formError ||
     errors.fields.emailAddress?.message ||
     errors.fields.password?.message ||
     errors.fields.code?.message ||

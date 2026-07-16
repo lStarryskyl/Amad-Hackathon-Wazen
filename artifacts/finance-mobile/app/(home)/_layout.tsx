@@ -35,7 +35,7 @@ function HomeLayoutInner() {
 }
 
 export default function HomeLayout() {
-  const { isSignedIn, getToken } = useAuth();
+  const { isSignedIn, isLoaded, getToken } = useAuth();
 
   // Set token getter synchronously so it's available on first API call
   // setAuthTokenGetter is idempotent — safe to call on every render
@@ -46,6 +46,10 @@ export default function HomeLayout() {
   }, [getToken]);
 
   usePushNotifications();
+
+  // Don't kick users out while Clerk is still resolving the session —
+  // navigating here right after sign-in finalize races auth-state propagation.
+  if (!isLoaded) return <LoadingScreen />;
 
   if (!isSignedIn) return <Redirect href="/(auth)/sign-in" />;
 

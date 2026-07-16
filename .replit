@@ -35,4 +35,4 @@ timeoutMs = 180000
 
 [userenv.shared]
 AI_BASE_URL = "https://integrate.api.nvidia.com/v1"
-AI_MODEL = "z-ai/glm-5.2"
+AI_MODEL = "meta/llama-3.1-70b-instruct"

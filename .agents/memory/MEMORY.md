@@ -5,3 +5,5 @@
 - [Clerk v3 auth wiring](clerk-v3-auth.md) — useSSO crashes on web/Expo Go; use email/password only. setAuthTokenGetter must live in root _layout AuthTokenSync, not just (home) layout.
 - [Guardia branding & reset](guardia-branding.md) — Logo/icon assets, app.json config, dev reset endpoint, APK setup (eas.json); landing page at root /.
 - [Playwright iteration limit](playwright-iteration-limit.md) — Playwright test runner has a hard 10-action budget (per-click, not per-step); mobile onboarding+simulation exceeds it; use server integration tests instead.
+- [Clerk device verification](clerk-device-verification.md) — new-device sign-ins demand an email_code second factor even with MFA off; handle needs_second_factor or UI stalls silently; +clerk_test emails use 424242.
+- [NVIDIA model latency](nvidia-model-latency.md) — some NVIDIA models hang forever (glm-5.2: 0 bytes in 270s); curl-test latency before wiring; llama-3.1-70b ~5s; avoid thinking models with small max_tokens.

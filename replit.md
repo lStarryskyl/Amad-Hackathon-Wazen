@@ -32,9 +32,10 @@ Two workflows are configured:
 | Env var | Value |
 |---|---|
 | `AI_BASE_URL` | `https://integrate.api.nvidia.com/v1` |
-| `AI_MODEL` | `z-ai/glm-5.2` |
+| `AI_MODEL` | `meta/llama-3.1-70b-instruct` |
 
 These are set as shared env vars. Change `AI_MODEL` to switch models without touching code.
+(`z-ai/glm-5.2` was tried July 2026 but NVIDIA's endpoint for it hung indefinitely — zero bytes returned even for tiny prompts. llama-3.1-70b answers in ~5s. Avoid reasoning/"thinking" models: several AI calls use small `max_tokens` budgets that thinking tokens exhaust.)
 
 ## Database
 
