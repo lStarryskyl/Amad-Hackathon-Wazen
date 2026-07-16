@@ -20,8 +20,7 @@
         "simulator": true
       },
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "7751ea17-2aae-4f58-b6dd-807e5e48e80a-00-3prje0vdgj7ph.picard.replit.dev",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_cHJpbWUtdGFycG9uLTEyLmNsZXJrLmFjY291bnRzLmRldiQ"
+        "EXPO_PUBLIC_DOMAIN": "7751ea17-2aae-4f58-b6dd-807e5e48e80a-00-3prje0vdgj7ph.picard.replit.dev"
       }
     },
     "production": {
