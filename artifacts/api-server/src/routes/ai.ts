@@ -15,6 +15,8 @@ router.get("/ai/key/status", requireAuth, async (req, res): Promise<void> => {
   res.json({
     hasUserKey: !!user.encryptedOpenAiKey,
     hasServerKey: !!process.env.AI_API_KEY,
+    configuredModel: process.env.AI_MODEL ?? "gpt-4o-mini",
+    configuredEndpoint: process.env.AI_BASE_URL ?? "https://api.openai.com/v1",
   });
 });
 
@@ -23,8 +25,8 @@ router.post("/ai/key", requireAuth, async (req, res): Promise<void> => {
   const userId = (req as any).userId as string;
   const { apiKey } = req.body as { apiKey?: string };
 
-  if (!apiKey || typeof apiKey !== "string" || !apiKey.startsWith("sk-")) {
-    res.status(400).json({ error: "BadRequest", message: "A valid AI API key (starting with sk-) is required." });
+  if (!apiKey || typeof apiKey !== "string" || apiKey.trim().length === 0) {
+    res.status(400).json({ error: "BadRequest", message: "A valid AI API key is required." });
     return;
   }
 
@@ -72,21 +74,17 @@ router.get("/ai/test", requireAuth, async (req, res): Promise<void> => {
     keySource = "server";
   }
 
-  if (!apiKey) {
-    res.json({
-      success: false,
-      message: "No AI API key configured. Submit your key via POST /api/ai/key or set AI_API_KEY in environment.",
-      model: null,
-      keySource: null,
-    });
-    return;
-  }
+  const baseURL = process.env.AI_BASE_URL;
+  const model = process.env.AI_MODEL ?? "gpt-4o-mini";
 
   try {
     const { default: OpenAI } = await import("openai");
-    const client = new OpenAI({ apiKey });
+    const client = new OpenAI({
+      apiKey: apiKey ?? "",
+      baseURL,
+    });
     const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model,
       messages: [{ role: "user", content: "Reply with only the single word: connected" }],
       max_tokens: 10,
     });

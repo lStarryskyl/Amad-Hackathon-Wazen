@@ -58,10 +58,19 @@ DATABASE_URL=postgresql://user:pass@localhost:5432/wazen
 CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
 AI_API_KEY=sk-...
+AI_BASE_URL=https://api.openai.com/v1
+AI_MODEL=gpt-4o-mini
 PORT=8080
 EXPO_PUBLIC_DOMAIN=https://your-api-domain.com
 EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 ```
+
+**AI Configuration (optional, with defaults):**
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AI_BASE_URL` | `https://api.openai.com/v1` | OpenAI-compatible API base URL (e.g., `https://opencode.ai/zen/v1`, `https://api.groq.com/openai/v1`) |
+| `AI_MODEL` | `gpt-4o-mini` | Model identifier to use |
+| `AI_API_KEY` | (required for OpenAI) | API key — optional for some providers |
 
 **EXPO_PUBLIC_* are baked at build time** — for local dev, point to ngrok/Cloudflare tunnel.
 
@@ -87,13 +96,15 @@ docker compose exec api pnpm --filter @workspace/db run push
 
 ```bash
 # API unit tests (run after build)
-pnpm --filter @workspace/api-server run test:fallback
-pnpm --filter @workspace/api-server run test:engagement
-pnpm --filter @workspace/api-server run test:simulations
+pnpm --filter @workspace/api-server run test:fallback    # Pure logic, no DB
+pnpm --filter @workspace/api-server run test:engagement  # Requires DB + server
+pnpm --filter @workspace/api-server run test:simulations # Requires DB + server
 
 # Mobile tests
 pnpm --filter @workspace/finance-mobile run test
 ```
+
+**Integration tests require `DATABASE_URL` set** — they spin up a test server against real DB.
 
 ---
 
@@ -117,6 +128,7 @@ pnpm --filter @workspace/finance-mobile run test
 - **Regret Score terminology**: use "Regret Score" everywhere (not "Regret Meter" or "Regret Score™")
 - **Bundle IDs**: iOS `com.wazen.finance`, Android `com.wazen.finance`, scheme `wazen://`
 - **pnpm catalog** versions in `pnpm-workspace.yaml` — update there, not per-package
+- **AI model-agnostic**: uses `AI_BASE_URL` + `AI_MODEL` env vars; works with any OpenAI-compatible provider (OpenAI, Groq, Opencode, Together, etc.)
 
 ---
 
@@ -134,7 +146,8 @@ pnpm --filter @workspace/finance-mobile run test
 |--------|-------|
 | DB schema | `libs/db/src/schema/*.ts` |
 | API routes | `artifacts/api-server/src/routes/*.ts` |
-| AI prompts | `artifacts/api-server/src/routes/rescuePlans.ts`, `intelligence.ts` |
+| AI prompts | `artifacts/api-server/src/routes/intelligence.ts` |
+| AI orchestration | `artifacts/api-server/src/lib/aiOrchestration.ts` |
 | Mobile screens | `artifacts/finance-mobile/app/(home)/(tabs)/*.tsx` |
 | Landing copy | `artifacts/wazen-landing/src/pages/Home.tsx` |
 | Shared types | `lib/api-zod/src/generated/types/*.ts` (generated) |

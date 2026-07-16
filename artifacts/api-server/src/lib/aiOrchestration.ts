@@ -4,7 +4,23 @@ import { eq } from "drizzle-orm";
 import { decryptApiKey } from "./encryption.js";
 import { generateFallbackRescueNarrative, generateFallbackMoneyStory } from "./fallbackNarratives.js";
 
-export async function getAIClient(userId: string): Promise<{ client: import("openai").default; source: "user" | "server" } | null> {
+interface AIClientConfig {
+  apiKey: string;
+  baseURL?: string;
+  model: string;
+}
+
+function getServerAIConfig(): AIClientConfig | null {
+  const apiKey = process.env.AI_API_KEY;
+  if (!apiKey) return null;
+  return {
+    apiKey,
+    baseURL: process.env.AI_BASE_URL,
+    model: process.env.AI_MODEL ?? "gpt-4o-mini",
+  };
+}
+
+export async function getAIClient(userId: string): Promise<{ client: import("openai").default; config: AIClientConfig; source: "user" | "server" } | null> {
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
 
   let apiKey: string | null = null;
@@ -19,15 +35,30 @@ export async function getAIClient(userId: string): Promise<{ client: import("ope
     }
   }
 
-  if (!apiKey && process.env.AI_API_KEY) {
-    apiKey = process.env.AI_API_KEY;
-    source = "server";
+  if (!apiKey) {
+    const serverConfig = getServerAIConfig();
+    if (serverConfig) {
+      apiKey = serverConfig.apiKey;
+      source = "server";
+    }
   }
 
   if (!apiKey || !source) return null;
 
+  const serverConfig = getServerAIConfig();
+  const config: AIClientConfig = {
+    apiKey,
+    baseURL: serverConfig?.baseURL,
+    model: serverConfig?.model ?? "gpt-4o-mini",
+  };
+
   const { default: OpenAI } = await import("openai");
-  return { client: new OpenAI({ apiKey }), source };
+  const client = new OpenAI({
+    apiKey: config.apiKey,
+    baseURL: config.baseURL,
+  });
+
+  return { client, config, source };
 }
 
 export interface NarrativeResult {
@@ -71,7 +102,7 @@ Respond with just the narrative text — no headers, no bullet points.`;
 
   try {
     const response = await aiClient.client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: aiClient.config.model,
       messages: [{ role: "user", content: prompt }],
       max_tokens: 150,
       temperature: 0.7,
@@ -132,7 +163,7 @@ Make it feel human and insightful — not like a spreadsheet summary. No bullet 
 
   try {
     const response = await aiClient.client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: aiClient.config.model,
       messages: [{ role: "user", content: prompt }],
       max_tokens: 300,
       temperature: 0.75,
@@ -198,7 +229,7 @@ Respond with just the narrative — no headers, no bullet points.`;
 
   try {
     const response = await aiClient.client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: aiClient.config.model,
       messages: [{ role: "user", content: prompt }],
       max_tokens: 160,
       temperature: 0.65,
