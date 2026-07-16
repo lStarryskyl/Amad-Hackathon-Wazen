@@ -1,4 +1,5 @@
 - [AI Finance App Architecture](ai-finance-arch.md) — Expo SDK 54 + Express API + PostgreSQL + Clerk auth; key wiring decisions for prod
+- [Theme system — Slate + Teal](theme-system.md) — Light-first palette, ThemeContext + AsyncStorage toggle, useColors() hook wiring, palette tokens.
 - [lib/db composite build](lib-db-composite-build.md) — lib/db uses tsc composite mode; schema changes require a manual `tsc` rebuild before api-server typechecks.
 - [Intelligence layer pattern](intelligence-layer.md) — Regret score, rescue plan, and money story endpoints live in intelligence.ts; client hooks in lib/api-client-react/src/intelligence.ts (not generated — extend manually).
 - [Digital Twin Lab](digital-twin-lab.md) — Simulation engine, routes, AI narrative, and mobile UI pattern for the what-if scenario feature.

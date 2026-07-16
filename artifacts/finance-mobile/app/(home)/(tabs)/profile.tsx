@@ -14,12 +14,14 @@ import { useUser, useAuth } from "@clerk/expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function ProfileScreen() {
   const { user } = useUser();
   const { signOut, getToken } = useAuth();
   const colors = useColors();
+  const { isDark, toggleTheme } = useTheme();
   const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const [resetting, setResetting] = useState(false);
@@ -156,7 +158,13 @@ export default function ProfileScreen() {
             type="switch"
             value={true}
           />
-          <SettingItem icon="moon" title="Theme" value="Dark" type="text" />
+          <SettingItem
+            icon="moon"
+            title="Dark Mode"
+            type="switch"
+            value={isDark}
+            onPress={toggleTheme}
+          />
         </View>
       </View>
 

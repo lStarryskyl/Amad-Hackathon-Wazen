@@ -17,6 +17,7 @@ import { tokenCache } from "@clerk/expo/token-cache";
 import { setBaseUrl, setAuthTokenGetter } from "@workspace/api-client-react";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 // Set API base URL BEFORE any component renders
 const domain = process.env.EXPO_PUBLIC_DOMAIN;
@@ -84,9 +85,11 @@ export default function RootLayout() {
           <ErrorBoundary>
             <QueryClientProvider client={queryClient}>
               <GestureHandlerRootView style={{ flex: 1 }}>
-                <KeyboardProvider>
-                  <RootLayoutNav />
-                </KeyboardProvider>
+                <ThemeProvider>
+                  <KeyboardProvider>
+                    <RootLayoutNav />
+                  </KeyboardProvider>
+                </ThemeProvider>
               </GestureHandlerRootView>
             </QueryClientProvider>
           </ErrorBoundary>
