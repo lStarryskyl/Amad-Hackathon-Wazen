@@ -7,7 +7,7 @@ Wazen is a mobile-first personal finance app that uses AI to score spending deci
 | Package | Path | Description |
 |---|---|---|
 | `@workspace/api-server` | `artifacts/api-server/` | Express 5 REST API (TypeScript, port 8080) |
-| `@workspace/wazen-landing` | `artifacts/wazen-landing/` | Marketing landing page (Vite + React + Tailwind, port 5000) |
+| `@workspace/wazen-landing` | `artifacts/wazen-landing/` | Marketing landing page (Vite + React + Tailwind) |
 | `@workspace/finance-mobile` | `artifacts/finance-mobile/` | Expo / React Native mobile app |
 | `@workspace/db` | `lib/db/` | PostgreSQL schema + Drizzle ORM |
 | `@workspace/api-client-react` | `lib/api-client-react/` | React Query hooks (generated from OpenAPI spec) |
@@ -16,8 +16,8 @@ Wazen is a mobile-first personal finance app that uses AI to score spending deci
 
 Two workflows are configured:
 
-- **Start application** — Landing page on port 5000 (webview)
-- **Start Backend** — API server on port 8080 (console)
+- **artifacts/wazen-landing: web** — Landing page (webview)
+- **artifacts/api-server: API Server** — API server on port 8080 (console)
 
 ## Required Secrets
 
@@ -25,7 +25,16 @@ Two workflows are configured:
 |---|---|
 | `CLERK_SECRET_KEY` | Clerk backend secret (`sk_test_...`) |
 | `CLERK_PUBLISHABLE_KEY` | Clerk publishable key (`pk_test_...`) |
-| `AI_API_KEY` | OpenAI-compatible API key (optional — app works without it via fallback) |
+| `AI_API_KEY` | NVIDIA API key (`nvapi-...`) — app works without it via deterministic fallback |
+
+## AI Provider (NVIDIA)
+
+| Env var | Value |
+|---|---|
+| `AI_BASE_URL` | `https://integrate.api.nvidia.com/v1` |
+| `AI_MODEL` | `z-ai/glm-5.2` |
+
+These are set as shared env vars. Change `AI_MODEL` to switch models without touching code.
 
 ## Database
 
