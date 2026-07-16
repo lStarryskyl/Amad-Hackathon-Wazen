@@ -88,14 +88,15 @@ Number of transactions: ${monthTxs.length}
 
     if (apiKey) {
       const { default: OpenAI } = await import("openai");
-      const client = new OpenAI({ apiKey });
+      const baseURL = process.env.AI_BASE_URL;
+      const client = new OpenAI({ apiKey, ...(baseURL && { baseURL }) });
       const resp = await client.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: process.env.AI_MODEL ?? "gpt-4o-mini",
         messages: [
           {
             role: "system",
             content:
-              'You are a warm, insightful financial storyteller for "Guardia". Turn the user\'s financial data into a compelling, personal narrative (3–4 paragraphs, ~200 words). Use "you" language. Be specific with numbers. Show patterns, highlight what went well, and gently note opportunities. No bullet points. No markdown. Conversational and encouraging.',
+              'You are a warm, insightful financial storyteller for "Wazen". Turn the user\'s financial data into a compelling, personal narrative (3–4 paragraphs, ~200 words). Use "you" language. Be specific with numbers. Show patterns, highlight what went well, and gently note opportunities. No bullet points. No markdown. Conversational and encouraging.',
           },
           {
             role: "user",

@@ -44,10 +44,11 @@ router.get("/rescue-plans", requireAuth, requireConsent, async (req, res): Promi
       aiUnavailable = true;
     } else {
       const { default: OpenAI } = await import("openai");
-      const client = new OpenAI({ apiKey });
+      const baseURL = process.env.AI_BASE_URL;
+      const client = new OpenAI({ apiKey, ...(baseURL && { baseURL }) });
       const prompt = `You are a compassionate financial coach for "Wazen". The user's financial regret risk score is ${score.score}/100 (${score.level} risk). Key factors: ${score.factors.map((f) => f.label).join(", ")}. Write a warm, non-judgmental 2-sentence intro for their rescue plan. Be specific and actionable. No markdown.`;
       const resp = await client.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: process.env.AI_MODEL ?? "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 100,
         temperature: 0.7,

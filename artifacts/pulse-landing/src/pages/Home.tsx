@@ -218,11 +218,6 @@ export default function Home() {
       >
         <div className="max-w-7xl mx-auto px-6 h-18 flex items-center justify-between" style={{ height: 72 }}>
           <div className="flex items-center gap-3">
-            <img
-              src={logo}
-              alt="Wazen"
-              className="w-10 h-10 rounded-xl object-cover"
-            />
             <span className="font-bold text-lg tracking-tight text-white">Wazen</span>
           </div>
           <motion.button

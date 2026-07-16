@@ -84,9 +84,10 @@ router.get("/ai/test", requireAuth, async (req, res): Promise<void> => {
 
   try {
     const { default: OpenAI } = await import("openai");
-    const client = new OpenAI({ apiKey });
+    const baseURL = process.env.AI_BASE_URL;
+    const client = new OpenAI({ apiKey, ...(baseURL && { baseURL }) });
     const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: process.env.AI_MODEL ?? "gpt-4o-mini",
       messages: [{ role: "user", content: "Reply with only the single word: connected" }],
       max_tokens: 10,
     });

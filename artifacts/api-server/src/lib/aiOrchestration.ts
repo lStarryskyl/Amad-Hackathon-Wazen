@@ -27,7 +27,12 @@ export async function getAIClient(userId: string): Promise<{ client: import("ope
   if (!apiKey || !source) return null;
 
   const { default: OpenAI } = await import("openai");
-  return { client: new OpenAI({ apiKey }), source };
+  const baseURL = process.env.AI_BASE_URL;
+  return { client: new OpenAI({ apiKey, ...(baseURL && { baseURL }) }), source };
+}
+
+export function getAIModel(): string {
+  return process.env.AI_MODEL ?? "gpt-4o-mini";
 }
 
 export interface NarrativeResult {
@@ -71,7 +76,7 @@ Respond with just the narrative text — no headers, no bullet points.`;
 
   try {
     const response = await aiClient.client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: getAIModel(),
       messages: [{ role: "user", content: prompt }],
       max_tokens: 150,
       temperature: 0.7,
@@ -132,7 +137,7 @@ Make it feel human and insightful — not like a spreadsheet summary. No bullet 
 
   try {
     const response = await aiClient.client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: getAIModel(),
       messages: [{ role: "user", content: prompt }],
       max_tokens: 300,
       temperature: 0.75,
@@ -198,7 +203,7 @@ Respond with just the narrative — no headers, no bullet points.`;
 
   try {
     const response = await aiClient.client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: getAIModel(),
       messages: [{ role: "user", content: prompt }],
       max_tokens: 160,
       temperature: 0.65,

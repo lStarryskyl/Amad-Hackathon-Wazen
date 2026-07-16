@@ -285,7 +285,7 @@ router.post("/checkin", requireAuth, requireConsent, async (req, res): Promise<v
     if (aiClient) {
       const prompt = `Write a 1-sentence personalized daily financial check-in message for someone with a ${scoreResult.level} financial risk level and ${scoreResult.savingsRate}% savings rate. Be warm, brief, and actionable. No bullet points.`;
       const resp = await aiClient.client.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: process.env.AI_MODEL ?? "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],
         max_tokens: 60,
         temperature: 0.7,
