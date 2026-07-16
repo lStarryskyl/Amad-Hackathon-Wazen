@@ -376,13 +376,13 @@ export default function DashboardScreen() {
                   regretScore.level === "low"
                     ? colors.accent + "12"
                     : regretScore.level === "medium"
-                    ? "#F59E0B12"
+                    ? colors.warning + "12"
                     : colors.danger + "12",
                 borderColor:
                   regretScore.level === "low"
                     ? colors.accent + "40"
                     : regretScore.level === "medium"
-                    ? "#F59E0B40"
+                    ? colors.warning + "40"
                     : colors.danger + "40",
               },
             ]}
@@ -403,7 +403,7 @@ export default function DashboardScreen() {
                         regretScore.level === "low"
                           ? colors.accent
                           : regretScore.level === "medium"
-                          ? "#F59E0B"
+                          ? colors.warning
                           : colors.danger,
                     },
                   ]}

@@ -8,8 +8,8 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 function LoadingScreen() {
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0A0E1A" }}>
-      <ActivityIndicator size="large" color="#3B82F6" />
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0D1117" }}>
+      <ActivityIndicator size="large" color="#2563EB" />
     </View>
   );
 }

@@ -1,39 +1,47 @@
 /**
  * Semantic design tokens for the mobile app.
  *
- * These tokens mirror the naming conventions used in web artifacts (index.css)
- * so that multi-artifact projects share a cohesive visual identity.
+ * Corporate palette — navy/slate primaries, controlled blue accent,
+ * clean whites. Replaces the consumer amber/orange scheme with a
+ * trust-signal institutional design language (Bloomberg / Fidelity tone).
  *
- * Replace the placeholder values below with values that match the project's
- * brand. If a sibling web artifact exists, read its index.css and convert the
- * HSL values to hex so both artifacts use the same palette.
- *
- * To add dark mode, add a `dark` key with the same token names.
+ * To add light mode, add a `light` key with the same token names.
  * The useColors() hook will automatically pick it up.
  */
 
 export const Colors = {
-  background: "#0A0E1A",
-  card: "#111827",
-  cardElevated: "#1F2937",
-  primary: "#F59E0B",
-  primaryLight: "#FCD34D",
-  accent: "#10B981",
-  accentLight: "#34D399",
-  danger: "#EF4444",
-  dangerLight: "#FCA5A5",
-  warning: "#F59E0B",
-  text: "#F9FAFB",
-  textSecondary: "#D1D5DB",
-  mutedForeground: "#9CA3AF",
-  border: "#1F2937",
-  borderLight: "#374151",
-  surface: "#111827",
-  surfaceElevated: "#1F2937",
+  // ── Backgrounds ──────────────────────────────────────────────────────────
+  background: "#0D1117",       // Deep professional dark
+  card: "#161B22",             // Primary surface elevation
+  cardElevated: "#1C2128",     // Secondary surface elevation
+
+  // ── Brand / Actions ───────────────────────────────────────────────────────
+  primary: "#2563EB",          // Corporate blue — primary CTA & highlights
+  primaryLight: "#3B82F6",     // Lighter blue for hover states
+
+  // ── Semantic Status ───────────────────────────────────────────────────────
+  accent: "#10B981",           // Emerald green — positive / success
+  accentLight: "#34D399",      // Lighter success
+  danger: "#F85149",           // Corporate red — errors / risk
+  dangerLight: "#FCA5A5",      // Light danger
+  warning: "#D29922",          // Muted amber — caution (not primary)
+
+  // ── Typography ────────────────────────────────────────────────────────────
+  text: "#E6EDF3",             // Cool white — primary body copy
+  textSecondary: "#8B949E",    // Grey-blue — secondary labels
+  mutedForeground: "#6E7681",  // Subdued text / placeholders
+
+  // ── Borders & Dividers ────────────────────────────────────────────────────
+  border: "#30363D",           // Standard separator
+  borderLight: "#3D444D",      // Lighter separator
+
+  // ── Aliases ───────────────────────────────────────────────────────────────
+  surface: "#161B22",
+  surfaceElevated: "#1C2128",
 };
 
 export default {
   light: Colors,
   dark: Colors,
-  radius: 8,
+  radius: 6,
 };

@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/images/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0A0E1A"
+      "backgroundColor": "#0D1117"
     },
     "ios": {
       "supportsTablet": false,
@@ -21,7 +21,7 @@
       "package": "com.wazen.finance",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#0A0E1A"
+        "backgroundColor": "#0D1117"
       }
     },
     "web": {
@@ -34,7 +34,7 @@
       [
         "expo-notifications",
         {
-          "color": "#F59E0B"
+          "color": "#2563EB"
         }
       ]
     ],
