@@ -14,10 +14,12 @@ Wazen is a mobile-first personal finance app that uses AI to score spending deci
 
 ## Running on Replit
 
-Two workflows are configured:
+Four workflows are configured:
 
-- **artifacts/wazen-landing: web** — Landing page (webview)
+- **artifacts/wazen-landing: web** — Landing page on port 20646 (webview)
 - **artifacts/api-server: API Server** — API server on port 8080 (console)
+- **artifacts/finance-mobile: expo** — Expo dev server; scan the QR code with Expo Go on your phone
+- **artifacts/mockup-sandbox: Component Preview Server** — Canvas component preview server (start as needed)
 
 ## Required Secrets
 
@@ -65,7 +67,7 @@ pnpm run typecheck
 
 - The app is self-hostable: all it needs is PostgreSQL + Clerk + (optionally) an OpenAI-compatible key.
 - AI features (rescue plans, money stories, regret scores) fall back to deterministic rules-based output when `AI_API_KEY` is not set.
-- The mobile app (Expo) runs separately via `pnpm --filter @workspace/finance-mobile run dev` and requires a tunnel (ngrok / Cloudflare) for the API URL.
+- The mobile app (Expo) runs via the `artifacts/finance-mobile: expo` workflow. The dev script automatically sets `EXPO_PUBLIC_DOMAIN` and `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` from runtime env vars — no separate `.env` needed. Scan the QR code in the workflow console with Expo Go.
 
 ## User Preferences
 
