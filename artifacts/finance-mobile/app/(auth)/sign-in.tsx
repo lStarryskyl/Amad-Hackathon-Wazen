@@ -18,7 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
 const FEATURES = [
-  { icon: "activity", label: "AI Finance Pulse" },
+  { icon: "activity", label: "AI Financial Balance" },
   { icon: "trending-up", label: "Smart Money Insights" },
   { icon: "zap", label: "Digital Twin Scenarios" },
 ];
@@ -81,7 +81,7 @@ export default function SignInScreen() {
             />
           </View>
           <Text style={[styles.tagline, { color: colors.mutedForeground }]}>
-            Your AI-powered financial pulse
+            Know your money. Before it knows you.
           </Text>
 
           <View style={styles.featurePills}>

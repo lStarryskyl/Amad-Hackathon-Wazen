@@ -96,7 +96,7 @@ export default function SignUpScreen() {
           <Text style={[styles.tagline, { color: colors.mutedForeground }]}>
             {isVerifying
               ? "Check your inbox for a code"
-              : "Start tracking your financial pulse"}
+              : "Know your money. Before it knows you."}
           </Text>
         </View>
 

@@ -28,10 +28,10 @@ export default function WelcomeScreen() {
         />
         
         <Text style={[styles.title, { color: colors.text }]}>
-          Your Financial Pulse
+          Know Your Money.
         </Text>
         <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
-          AI-powered insights for smarter money decisions
+          AI-powered financial balance, built around your real habits.
         </Text>
 
         <View style={styles.pillsContainer}>

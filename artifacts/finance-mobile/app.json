@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "Pulse",
-    "slug": "pulse-finance",
+    "name": "Wazen",
+    "slug": "wazen-finance",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "pulse",
+    "scheme": "wazen",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
@@ -15,10 +15,10 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.pulse.finance"
+      "bundleIdentifier": "com.wazen.finance"
     },
     "android": {
-      "package": "com.pulse.finance",
+      "package": "com.wazen.finance",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#0A0E1A"
@@ -34,7 +34,7 @@
       [
         "expo-notifications",
         {
-          "color": "#3B82F6"
+          "color": "#F59E0B"
         }
       ]
     ],
