@@ -30,7 +30,7 @@ const TICKER_ITEMS = [
   "Money Stories",
   "Digital Twin Lab",
   "Behavioral Guardrails",
-  "Financial Pulse",
+  "Financial Wazen",
   "Spending Patterns",
   "Wealth Simulation",
   "Smart Guardrails",
@@ -220,10 +220,10 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <img
               src={logo}
-              alt="Pulse"
+              alt="Wazen"
               className="w-10 h-10 rounded-xl object-cover"
             />
-            <span className="font-bold text-lg tracking-tight text-white">Pulse</span>
+            <span className="font-bold text-lg tracking-tight text-white">Wazen</span>
           </div>
           <motion.button
             data-testid="nav-download-btn"
@@ -236,7 +236,7 @@ export default function Home() {
               boxShadow: `0 0 24px ${GOLD}50`,
             }}
           >
-            Get Pulse
+            Get Wazen
           </motion.button>
         </div>
       </nav>
@@ -302,7 +302,7 @@ export default function Home() {
             />
             <img
               src={icon}
-              alt="Pulse"
+              alt="Wazen"
               className="w-24 h-24 rounded-2xl relative z-10"
               style={{ boxShadow: `0 0 0 1px ${BORDER}, 0 24px 64px ${GOLD}30` }}
             />
@@ -340,7 +340,7 @@ export default function Home() {
             className="text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed"
             style={{ color: "rgba(255,255,255,0.5)" }}
           >
-            Pulse scores every spending decision in real-time, generates rescue plans when budgets slip,
+            Wazen scores every spending decision in real-time, generates rescue plans when budgets slip,
             and narrates your financial life in plain English — powered by AI that actually knows your habits.
           </motion.p>
 
@@ -414,7 +414,7 @@ export default function Home() {
           <CapabilityCard
             eyebrow="History Analyzed"
             heading="6 months"
-            sub="Pulse ingests your full transaction history to build a financial model that's specific to you"
+            sub="Wazen ingests your full transaction history to build a financial model that's specific to you"
             delay={0.1}
           />
           <CapabilityCard
@@ -436,7 +436,7 @@ export default function Home() {
             className="text-xs font-bold uppercase tracking-[0.2em] mb-4"
             style={{ color: GOLD }}
           >
-            What Pulse Does
+            What Wazen Does
           </motion.p>
           <h2 className="text-4xl md:text-5xl font-black tracking-tight text-white">
             <WordReveal text="A new operating system for your money." />
@@ -447,7 +447,7 @@ export default function Home() {
           icon={Activity}
           eyebrow="Regret Score™"
           title="Catch bad decisions before your card clears."
-          desc="Every purchase gets scored 0–100 based on your patterns, goals, and past regret data. Pulse flags the ones you'll regret — before they become a problem."
+          desc="Every purchase gets scored 0–100 based on your patterns, goals, and past regret data. Wazen flags the ones you'll regret — before they become a problem."
           accent={GOLD}
         />
 
@@ -455,7 +455,7 @@ export default function Home() {
           icon={Zap}
           eyebrow="Rescue Plans"
           title="A personalized recovery plan in seconds."
-          desc="Overspent this month? Pulse analyzes your actual transactions and drafts a step-by-step plan to get back on track — not generic advice, your situation."
+          desc="Overspent this month? Wazen analyzes your actual transactions and drafts a step-by-step plan to get back on track — not generic advice, your situation."
           flip
           accent="#60A5FA"
         />
@@ -464,7 +464,7 @@ export default function Home() {
           icon={BookOpen}
           eyebrow="Money Stories"
           title="Your financial life, narrated in plain English."
-          desc="Every month, Pulse writes you a short story about your spending — what worked, what didn't, and what the data says about your habits. It reads like a chapter, not a ledger."
+          desc="Every month, Wazen writes you a short story about your spending — what worked, what didn't, and what the data says about your habits. It reads like a chapter, not a ledger."
           accent="#34D399"
         />
 
@@ -481,7 +481,7 @@ export default function Home() {
           icon={Shield}
           eyebrow="Behavioral Guardrails"
           title="Limits that adapt to how you actually live."
-          desc="Not another rigid budget. Pulse sets dynamic spending guardrails that learn your patterns, adjust to your lifestyle, and alert you before you cross the line."
+          desc="Not another rigid budget. Wazen sets dynamic spending guardrails that learn your patterns, adjust to your lifestyle, and alert you before you cross the line."
           accent="#A78BFA"
         />
 
@@ -489,7 +489,7 @@ export default function Home() {
           icon={Target}
           eyebrow="Streaks & Growth"
           title="Make good habits impossible to break."
-          desc="Track your streaks, celebrate milestones, and watch your financial health score climb. Pulse makes the boring parts of money management feel worth doing."
+          desc="Track your streaks, celebrate milestones, and watch your financial health score climb. Wazen makes the boring parts of money management feel worth doing."
           flip
           accent="#F87171"
         />
@@ -526,7 +526,7 @@ export default function Home() {
             Stop wondering where it all went.
           </h2>
           <p className="text-lg mb-10" style={{ color: "rgba(255,255,255,0.45)" }}>
-            Download Pulse and finally have a financial advisor that knows your habits,
+            Download Wazen and finally have a financial advisor that knows your habits,
             not just your balance.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -567,13 +567,13 @@ export default function Home() {
         style={{ borderTop: `1px solid ${BORDER}` }}
       >
         <div className="flex items-center justify-center gap-2.5 mb-4">
-          <img src={icon} alt="Pulse" className="w-5 h-5 rounded-lg opacity-40 grayscale" />
+          <img src={icon} alt="Wazen" className="w-5 h-5 rounded-lg opacity-40 grayscale" />
           <span className="text-xs font-bold uppercase tracking-[0.25em]" style={{ color: "rgba(255,255,255,0.3)" }}>
-            Pulse Finance
+            Wazen Finance
           </span>
         </div>
         <p className="text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>
-          © {new Date().getFullYear()} Pulse Finance. All rights reserved.
+          © {new Date().getFullYear()} Wazen Finance. All rights reserved.
         </p>
       </footer>
     </div>
