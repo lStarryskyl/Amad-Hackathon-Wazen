@@ -6,8 +6,33 @@ import {
   transactionsTable,
   goalsTable,
   recurringObligationsTable,
+  consentRecordsTable,
+  regretScoresTable,
+  rescuePlansTable,
+  moneyStoriesTable,
+  simulationRunsTable,
 } from "@workspace/db";
 import { eq } from "drizzle-orm";
+
+export async function deleteUser(clerkUserId: string) {
+  // Some tables have onDelete: cascade FKs to usersTable (alerts, achievements,
+  // daily_checkins, streaks, guardrails, push_tokens) and will be cleaned up
+  // automatically. The tables below have plain userId text columns with no FK
+  // constraint, so they must be deleted explicitly before the user row is removed.
+  await db.transaction(async (tx) => {
+    await tx.delete(simulationRunsTable).where(eq(simulationRunsTable.userId, clerkUserId));
+    await tx.delete(moneyStoriesTable).where(eq(moneyStoriesTable.userId, clerkUserId));
+    await tx.delete(rescuePlansTable).where(eq(rescuePlansTable.userId, clerkUserId));
+    await tx.delete(regretScoresTable).where(eq(regretScoresTable.userId, clerkUserId));
+    await tx.delete(consentRecordsTable).where(eq(consentRecordsTable.userId, clerkUserId));
+    await tx.delete(transactionsTable).where(eq(transactionsTable.userId, clerkUserId));
+    await tx.delete(goalsTable).where(eq(goalsTable.userId, clerkUserId));
+    await tx.delete(recurringObligationsTable).where(eq(recurringObligationsTable.userId, clerkUserId));
+    await tx.delete(accountsTable).where(eq(accountsTable.userId, clerkUserId));
+    // Delete user row last — cascade FKs fire here
+    await tx.delete(usersTable).where(eq(usersTable.id, clerkUserId));
+  });
+}
 
 export async function getOrCreateUser(clerkUserId: string) {
   const existing = await db

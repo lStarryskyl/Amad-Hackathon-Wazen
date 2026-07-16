@@ -4,6 +4,7 @@ import pinoHttp from "pino-http";
 import { clerkMiddleware } from "@clerk/express";
 import { publishableKeyFromHost } from "@clerk/shared/keys";
 import router from "./routes";
+import webhooksRouter from "./routes/webhooks";
 import { logger } from "./lib/logger";
 import {
   CLERK_PROXY_PATH,
@@ -29,6 +30,9 @@ app.use(
 
 // Clerk proxy must be mounted BEFORE express.json() — it streams raw bytes
 app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
+
+// Clerk webhook must also be mounted BEFORE express.json() — svix needs the raw body
+app.use("/api/webhooks", express.raw({ type: "application/json" }), webhooksRouter);
 
 app.use(cors({ credentials: true, origin: true }));
 app.use(express.json());
