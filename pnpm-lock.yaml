@@ -586,7 +586,7 @@ importers:
         specifier: 'catalog:'
         version: 3.25.76
 
-  artifacts/pulse-landing:
+  artifacts/wazen-landing:
     devDependencies:
       '@hookform/resolvers':
         specifier: ^3.10.0

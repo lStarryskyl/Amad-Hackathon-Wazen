@@ -1,8 +1,10 @@
-# Pulse — AI Personal Finance
+# Wazen (وازن) — AI Personal Finance
 
-Pulse is a mobile-first personal finance app that uses AI to score your spending decisions in real-time, generate personalized rescue plans when budgets slip, narrate your financial life in plain English, and simulate what-if scenarios against your actual transaction history.
+**Protect yourself from regret, and master your past, present, and future financial goals with us.**
 
-Built as a hackathon submission.
+Wazen is a mobile-first personal finance app that uses AI to score your spending decisions in real-time, generate personalized rescue plans when budgets slip, narrate your financial life in plain Arabic/English, and simulate what-if scenarios against your actual transaction history.
+
+Built as a hackathon submission for Alinma Bank.
 
 ---
 
@@ -10,12 +12,23 @@ Built as a hackathon submission.
 
 | Feature | Description |
 |---|---|
-| **Regret Score™** | Every transaction gets scored 0–100 based on your spending patterns and goals |
+| **Regret Score** | Every transaction gets scored 0–100 based on your spending patterns and goals |
 | **Rescue Plans** | When you overspend, AI generates a step-by-step recovery plan from your actual data |
 | **Money Stories** | Monthly AI-narrated summaries of your financial journey — reads like a chapter, not a ledger |
-| **Digital Twin Lab** | Run what-if simulations ("what if I saved $200 more/month?") against your real financial model |
-| **Behavioral Guardrails** | Adaptive spending limits that learn your habits and alert you before you cross the line |
-| **Streaks & Growth** | Gamified financial health tracking with achievements and milestones |
+| **Digital Twin Lab** | Run what-if simulations ("what if I saved 500 SAR more/month?") against your real financial model |
+| **Dynamic Safe Zones** | Adaptive spending limits that learn your habits and alert you before you cross the line |
+| **Streaks & Badges** | Gamified financial health tracking with achievements and milestones |
+
+---
+
+## Four Pillars
+
+| Pillar | Arabic | Core Features |
+|---|---|---|
+| **1. Protect** | **الحماية** | Regret Score, Rescue Plans, Live velocity alerts |
+| **2. Master Your Past** | **إتقان الماضي** | Money Stories, Behavioral Tags, Micro-Lessons |
+| **3. Master Your Present** | **إتقان الحاضر** | Dynamic Safe Zones, Daily Check-ins, Gamification |
+| **4. Master Your Future** | **إتقان المستقبل** | Digital Twin Lab, 12-Month Simulation, Narrative AI |
 
 ---
 
@@ -26,10 +39,10 @@ Built as a hackathon submission.
 ├── artifacts/
 │   ├── api-server/        # Express 5 REST API (TypeScript)
 │   ├── finance-mobile/    # Expo / React Native mobile app
-│   └── pulse-landing/     # Marketing landing page (React + Vite)
+│   └── wazen-landing/     # Marketing landing page (React + Vite)
 ├── libs/
 │   ├── db/                # PostgreSQL schema + Drizzle ORM
-│   └── api-client-react/  # Auto-generated React Query hooks
+│   └── api-zod/           # Auto-generated Zod schemas & API client
 └── package.json           # pnpm workspace root
 ```
 
@@ -63,7 +76,7 @@ Create a `.env` file in the project root (or set these in your environment):
 
 ```env
 # Database
-DATABASE_URL=postgresql://user:password@localhost:5432/pulse
+DATABASE_URL=postgresql://user:password@localhost:5432/wazen
 
 # Clerk authentication
 CLERK_PUBLISHABLE_KEY=pk_test_...
@@ -120,7 +133,7 @@ New users are automatically provisioned with 6 months of realistic demo transact
 ### Terminal 2 — Landing page
 
 ```bash
-pnpm --filter @workspace/pulse-landing run dev
+pnpm --filter @workspace/wazen-landing run dev
 ```
 
 Starts the marketing site on `http://localhost:3000` (or next available port).
@@ -185,7 +198,7 @@ Users can also supply their own API key through the app's Profile screen, which 
 pnpm --filter @workspace/db run push
 
 # Regenerate API client hooks after changing the OpenAPI spec
-pnpm --filter @workspace/api-spec run codegen
+pnpm --filter @workspace/api-zod run codegen
 ```
 
 ---
@@ -198,9 +211,38 @@ pnpm --filter @workspace/api-spec run codegen
 | `pnpm run typecheck` | Full TypeScript check across all packages |
 | `pnpm run build` | Typecheck + build all packages |
 | `pnpm --filter @workspace/api-server run dev` | Start API server (dev mode with hot-reload) |
-| `pnpm --filter @workspace/pulse-landing run dev` | Start landing page dev server |
+| `pnpm --filter @workspace/wazen-landing run dev` | Start landing page dev server |
 | `pnpm --filter @workspace/finance-mobile run dev` | Start Expo dev server |
 | `pnpm --filter @workspace/db run push` | Push DB schema changes |
+
+---
+
+## Docker Deployment
+
+For production or easy local deployment with all services:
+
+```bash
+# 1. Copy environment template
+cp .env.docker .env
+
+# 2. Edit .env with your real keys (Clerk, AI, etc.)
+
+# 3. Build and start all services
+docker compose up --build -d
+
+# 4. Run database migrations
+docker compose exec api pnpm --filter @workspace/db run push
+
+# 5. Access services:
+#    - Landing page: http://localhost:3000
+#    - API: http://localhost:8080
+#    - Mobile web demo: http://localhost:8081 (run with --profile demo)
+
+# 6. Stop
+docker compose down
+```
+
+See `docker-compose.yml` and individual `Dockerfile`s in each artifact for details.
 
 ---
 

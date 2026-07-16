@@ -99,7 +99,7 @@ export default function RegretMeterWidget({ onPress }: Props) {
         <View style={styles.header}>
           <View style={styles.titleRow}>
             <Feather name="bar-chart-2" size={18} color={colors.mutedForeground} />
-            <Text style={[styles.title, { color: colors.text }]}>Regret Meter</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Regret Score</Text>
           </View>
         </View>
         <Text style={[styles.summary, { color: colors.mutedForeground }]}>
@@ -126,7 +126,7 @@ export default function RegretMeterWidget({ onPress }: Props) {
         <View style={styles.header}>
           <View style={styles.titleRow}>
             <Feather name={levelIcon(s.level)} size={18} color={color} />
-            <Text style={[styles.title, { color: colors.text }]}>Regret Meter</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Regret Score</Text>
           </View>
           <View style={[styles.levelBadge, { backgroundColor: color + "20" }]}>
             <Text style={[styles.levelText, { color }]}>{levelLabel(s.level)}</Text>

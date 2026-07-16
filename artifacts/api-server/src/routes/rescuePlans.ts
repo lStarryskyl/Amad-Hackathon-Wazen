@@ -45,7 +45,7 @@ router.get("/rescue-plans", requireAuth, requireConsent, async (req, res): Promi
     } else {
       const { default: OpenAI } = await import("openai");
       const client = new OpenAI({ apiKey });
-      const prompt = `You are a compassionate financial coach for "Pulse". The user's financial regret risk score is ${score.score}/100 (${score.level} risk). Key factors: ${score.factors.map((f) => f.label).join(", ")}. Write a warm, non-judgmental 2-sentence intro for their rescue plan. Be specific and actionable. No markdown.`;
+      const prompt = `You are a compassionate financial coach for "Wazen". The user's financial regret risk score is ${score.score}/100 (${score.level} risk). Key factors: ${score.factors.map((f) => f.label).join(", ")}. Write a warm, non-judgmental 2-sentence intro for their rescue plan. Be specific and actionable. No markdown.`;
       const resp = await client.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{ role: "user", content: prompt }],

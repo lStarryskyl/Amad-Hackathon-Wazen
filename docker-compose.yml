@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # ─────────────────────────────────────────────
+  # PostgreSQL Database
+  # ─────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: wazen-postgres
+    environment:
+      POSTGRES_DB: wazen
+      POSTGRES_USER: wazen
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wazen_dev_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wazen -d wazen"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ─────────────────────────────────────────────
+  # API Server
+  # ─────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: artifacts/api-server/Dockerfile
+    container_name: wazen-api
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      DATABASE_URL: postgresql://wazen:${POSTGRES_PASSWORD:-wazen_dev_password}@postgres:5432/wazen
+      CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY}
+      CLERK_SECRET_KEY: ${CLERK_SECRET_KEY}
+      AI_API_KEY: ${AI_API_KEY}
+      EXPO_PUBLIC_DOMAIN: ${EXPO_PUBLIC_DOMAIN:-http://localhost:8080}
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # Landing Page (nginx)
+  # ─────────────────────────────────────────────
+  landing:
+    build:
+      context: .
+      dockerfile: artifacts/wazen-landing/Dockerfile
+    container_name: wazen-landing
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # Mobile Web Export (optional - for demo)
+  # ─────────────────────────────────────────────
+  mobile-web:
+    build:
+      context: .
+      dockerfile: artifacts/finance-mobile/Dockerfile
+    container_name: wazen-mobile-web
+    ports:
+      - "8081:8081"
+    environment:
+      EXPO_PUBLIC_DOMAIN: ${EXPO_PUBLIC_DOMAIN:-http://localhost:8080}
+      EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY: ${CLERK_PUBLISHABLE_KEY}
+    depends_on:
+      - api
+    profiles: ["demo"]
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

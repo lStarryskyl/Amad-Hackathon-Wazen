@@ -137,9 +137,9 @@ export default function ProfileScreen() {
         </Text>
         <View style={[styles.memberBadge, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Feather name="activity" size={11} color={colors.accent} />
-          <Text style={[styles.memberText, { color: colors.accent }]}>
-            Pulse Member
-          </Text>
+<Text style={[styles.memberText, { color: colors.accent }]}>
+              Wazen Member
+            </Text>
         </View>
       </View>
 
@@ -167,7 +167,7 @@ export default function ProfileScreen() {
         </Text>
         <View style={[styles.settingsCard, { backgroundColor: colors.card }]}>
           <SettingItem icon="help-circle" title="Help & Support" />
-          <SettingItem icon="info" title="About Pulse" />
+          <SettingItem icon="info" title="About Wazen" />
         </View>
       </View>
 
@@ -217,7 +217,7 @@ export default function ProfileScreen() {
           style={styles.brandLogo}
           resizeMode="contain"
         />
-        <Text style={[styles.brandName, { color: colors.mutedForeground }]}>Pulse</Text>
+        <Text style={[styles.brandName, { color: colors.mutedForeground }]}>Wazen</Text>
         <Text style={[styles.brandVersion, { color: colors.mutedForeground }]}>v1.0.0</Text>
       </View>
     </ScrollView>

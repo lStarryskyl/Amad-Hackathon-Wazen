@@ -154,7 +154,7 @@ function PatternCard({
   );
 }
 
-// ─── Regret Meter Section ────────────────────────────────────────────────────
+// ─── Regret Score Section ────────────────────────────────────────────────────
 
 function RegretMeterSection() {
   const colors = useColors();
@@ -212,7 +212,7 @@ function RegretMeterSection() {
               <Feather name="bar-chart-2" size={20} color={colors.mutedForeground} />
             </View>
             <View>
-              <Text style={[styles.cardTitle, { color: colors.text }]}>Regret Meter</Text>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>Regret Score</Text>
               <Text style={[styles.cardSubtitle, { color: colors.mutedForeground }]}>Short-term financial regret risk</Text>
             </View>
           </View>
@@ -230,7 +230,7 @@ function RegretMeterSection() {
           <Feather name="inbox" size={32} color={colors.mutedForeground} style={{ marginBottom: 12 }} />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>No Data Yet</Text>
           <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
-            Your Regret Meter will appear once you've added at least one month of transactions. Add some transactions to get started.
+            Your Regret Score will appear once you've added at least one month of transactions. Add some transactions to get started.
           </Text>
         </View>
       </View>
@@ -254,7 +254,7 @@ function RegretMeterSection() {
               />
             </View>
             <View>
-              <Text style={[styles.cardTitle, { color: colors.text }]}>Regret Meter</Text>
+              <Text style={[styles.cardTitle, { color: colors.text }]}>Regret Score</Text>
               <Text style={[styles.cardSubtitle, { color: colors.mutedForeground }]}>Short-term financial regret risk</Text>
             </View>
           </View>

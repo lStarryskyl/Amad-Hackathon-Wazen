@@ -394,7 +394,7 @@ export default function DashboardScreen() {
                 {regretScore.level === "low" ? "🟢" : regretScore.level === "medium" ? "🟡" : "🔴"}
               </Text>
               <View>
-                <Text style={[styles.regretTeaserTitle, { color: colors.text }]}>Regret Meter</Text>
+                <Text style={[styles.regretTeaserTitle, { color: colors.text }]}>Regret Score</Text>
                 <Text
                   style={[
                     styles.regretTeaserLevel,

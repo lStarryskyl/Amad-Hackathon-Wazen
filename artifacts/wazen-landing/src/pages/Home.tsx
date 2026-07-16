@@ -14,6 +14,8 @@ import {
   Zap,
   Target,
   ArrowUpRight,
+  Brain,
+  Sparkles,
 } from "lucide-react";
 import icon from "@/assets/icon.png";
 import logo from "@/assets/logo.png";
@@ -25,16 +27,16 @@ const GOLD_BORDER = "rgba(245,158,11,0.22)";
 const BORDER = "rgba(255,255,255,0.07)";
 
 const TICKER_ITEMS = [
-  "Regret Score™",
-  "AI Rescue Plans",
+  "Regret Score",
+  "Rescue Plans",
   "Money Stories",
   "Digital Twin Lab",
-  "Behavioral Guardrails",
-  "Financial Pulse",
-  "Spending Patterns",
-  "Wealth Simulation",
-  "Smart Guardrails",
-  "Growth Streaks",
+  "Dynamic Safe Zones",
+  "Daily Check-ins",
+  "Streaks & Badges",
+  "12-Month Simulation",
+  "Behavioral Tags",
+  "Micro-Lessons",
 ];
 
 function useAnimatedCounter(target: number, duration = 1.8) {
@@ -220,10 +222,10 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <img
               src={logo}
-              alt="Pulse"
+              alt="Wazen"
               className="w-10 h-10 rounded-xl object-cover"
             />
-            <span className="font-bold text-lg tracking-tight text-white">Pulse</span>
+            <span className="font-bold text-lg tracking-tight text-white">Wazen</span>
           </div>
           <motion.button
             data-testid="nav-download-btn"
@@ -236,7 +238,7 @@ export default function Home() {
               boxShadow: `0 0 24px ${GOLD}50`,
             }}
           >
-            Get Pulse
+            Get Wazen
           </motion.button>
         </div>
       </nav>
@@ -302,7 +304,7 @@ export default function Home() {
             />
             <img
               src={icon}
-              alt="Pulse"
+              alt="Wazen"
               className="w-24 h-24 rounded-2xl relative z-10"
               style={{ boxShadow: `0 0 0 1px ${BORDER}, 0 24px 64px ${GOLD}30` }}
             />
@@ -321,7 +323,7 @@ export default function Home() {
             }}
           >
             <Activity className="w-3.5 h-3.5" />
-            AI-Powered Personal Finance
+            Protect Yourself from Regret
           </motion.div>
 
           {/* Headline */}
@@ -329,7 +331,7 @@ export default function Home() {
             <WordReveal text="Know your money." />
             <br />
             <span style={{ color: GOLD }}>
-              <WordReveal text="Before it knows you." />
+              <WordReveal text="Master your past, present & future." />
             </span>
           </h1>
 
@@ -340,8 +342,8 @@ export default function Home() {
             className="text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed"
             style={{ color: "rgba(255,255,255,0.5)" }}
           >
-            Pulse scores every spending decision in real-time, generates rescue plans when budgets slip,
-            and narrates your financial life in plain English — powered by AI that actually knows your habits.
+            Wazen scores every spending decision in real-time, generates rescue plans when budgets slip,
+            narrates your financial life in plain Arabic/English, and simulates your future — powered by AI that actually knows your habits.
           </motion.p>
 
           <motion.div
@@ -414,7 +416,7 @@ export default function Home() {
           <CapabilityCard
             eyebrow="History Analyzed"
             heading="6 months"
-            sub="Pulse ingests your full transaction history to build a financial model that's specific to you"
+            sub="Wazen ingests your full transaction history to build a financial model that's specific to you"
             delay={0.1}
           />
           <CapabilityCard
@@ -436,62 +438,68 @@ export default function Home() {
             className="text-xs font-bold uppercase tracking-[0.2em] mb-4"
             style={{ color: GOLD }}
           >
-            What Pulse Does
+            Four Pillars of Financial Mastery
           </motion.p>
           <h2 className="text-4xl md:text-5xl font-black tracking-tight text-white">
-            <WordReveal text="A new operating system for your money." />
+            <WordReveal text="One platform. Complete financial control." />
           </h2>
         </div>
 
+        {/* Pillar 1: Protect */}
         <FeatureBlock
-          icon={Activity}
-          eyebrow="Regret Score™"
-          title="Catch bad decisions before your card clears."
-          desc="Every purchase gets scored 0–100 based on your patterns, goals, and past regret data. Pulse flags the ones you'll regret — before they become a problem."
+          icon={Shield}
+          eyebrow="Pillar 1: Protect"
+          title="Catch regret before your card clears."
+          desc="Every purchase gets a Regret Score (0–100) based on your patterns, goals, and past behavior. Wazen flags the ones you'll regret — before they become a problem. When you overspend, get 2–3 concrete, negotiable rescue plans generated from your actual data."
           accent={GOLD}
         />
 
-        <FeatureBlock
-          icon={Zap}
-          eyebrow="Rescue Plans"
-          title="A personalized recovery plan in seconds."
-          desc="Overspent this month? Pulse analyzes your actual transactions and drafts a step-by-step plan to get back on track — not generic advice, your situation."
-          flip
-          accent="#60A5FA"
-        />
-
+        {/* Pillar 2: Master Your Past */}
         <FeatureBlock
           icon={BookOpen}
-          eyebrow="Money Stories"
-          title="Your financial life, narrated in plain English."
-          desc="Every month, Pulse writes you a short story about your spending — what worked, what didn't, and what the data says about your habits. It reads like a chapter, not a ledger."
+          eyebrow="Pillar 2: Master Your Past"
+          title="Your financial life, narrated in plain language."
+          desc="Every month, Wazen writes you a Money Story in Arabic or English — what worked, what didn't, what the data says about your habits. Behavioral Tags highlight patterns like 'Most impulse buys happen after 10 PM' with actionable tips. Micro-Lessons serve 30-second financial literacy tied to your actual behavior."
+          flip
           accent="#34D399"
         />
 
+        {/* Pillar 3: Master Your Present */}
         <FeatureBlock
-          icon={TrendingUp}
-          eyebrow="Digital Twin Lab"
-          title="Run what-if scenarios against your real data."
-          desc={`"What if I cut dining out by $150/mo?" See the ripple effects across savings, investments, and your regret score — simulated against your real financial DNA.`}
-          flip
-          accent={GOLD}
+          icon={Zap}
+          eyebrow="Pillar 3: Master Your Present"
+          title="Limits that adapt to how you actually live."
+          desc="Not another rigid budget. Dynamic Safe Zones learn your patterns and suggest realistic spending ranges for food, transport, and more. Daily Check-ins give you a 10-second health score and streak. Gamification with streaks, badges, and milestones (1K SAR emergency fund, etc.) makes good habits stick."
+          accent="#60A5FA"
         />
 
+        {/* Pillar 4: Master Your Future */}
         <FeatureBlock
-          icon={Shield}
-          eyebrow="Behavioral Guardrails"
-          title="Limits that adapt to how you actually live."
-          desc="Not another rigid budget. Pulse sets dynamic spending guardrails that learn your patterns, adjust to your lifestyle, and alert you before you cross the line."
+          icon={Brain}
+          eyebrow="Pillar 4: Master Your Future"
+          title="Run what-if scenarios against your real data."
+          desc={`"What if I take a 50K SAR loan?" "What if I accelerate credit card payments?" Digital Twin Lab runs 12-month simulations showing exactly when debts clear or when your cash buffer runs out. Narrative AI translates the graph: "Your risk of going negative drops from Medium to Low."`}
+          flip
           accent="#A78BFA"
         />
 
+        {/* Daily Check-in */}
+        <FeatureBlock
+          icon={Sparkles}
+          eyebrow="Daily Habit Loop"
+          title="A 10-second habit that changes everything."
+          desc="One tap each morning. Get your financial health score, see if you're on track for the month, build streaks. The simplest habit with the biggest payoff — consistent awareness beats occasional intensity."
+          accent="#F87171"
+        />
+
+        {/* Streaks & Badges */}
         <FeatureBlock
           icon={Target}
-          eyebrow="Streaks & Growth"
+          eyebrow="Progress That Compounds"
           title="Make good habits impossible to break."
-          desc="Track your streaks, celebrate milestones, and watch your financial health score climb. Pulse makes the boring parts of money management feel worth doing."
+          desc="Track streaks, celebrate milestones, watch your financial health score climb. From your first check-in to building a 6-month runway — Wazen makes the boring parts of money management feel worth doing."
           flip
-          accent="#F87171"
+          accent="#F59E0B"
         />
       </section>
 
@@ -526,7 +534,7 @@ export default function Home() {
             Stop wondering where it all went.
           </h2>
           <p className="text-lg mb-10" style={{ color: "rgba(255,255,255,0.45)" }}>
-            Download Pulse and finally have a financial advisor that knows your habits,
+            Download Wazen and finally have a financial advisor that knows your habits,
             not just your balance.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -567,13 +575,13 @@ export default function Home() {
         style={{ borderTop: `1px solid ${BORDER}` }}
       >
         <div className="flex items-center justify-center gap-2.5 mb-4">
-          <img src={icon} alt="Pulse" className="w-5 h-5 rounded-lg opacity-40 grayscale" />
+          <img src={icon} alt="Wazen" className="w-5 h-5 rounded-lg opacity-40 grayscale" />
           <span className="text-xs font-bold uppercase tracking-[0.25em]" style={{ color: "rgba(255,255,255,0.3)" }}>
-            Pulse Finance
+            Wazen Finance
           </span>
         </div>
         <p className="text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>
-          © {new Date().getFullYear()} Pulse Finance. All rights reserved.
+          © {new Date().getFullYear()} Wazen Finance. All rights reserved.
         </p>
       </footer>
     </div>

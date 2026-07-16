@@ -28,14 +28,14 @@ export default function WelcomeScreen() {
         />
         
         <Text style={[styles.title, { color: colors.text }]}>
-          Your Financial Pulse
+          Your Financial Balance
         </Text>
         <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>
           AI-powered insights for smarter money decisions
         </Text>
 
         <View style={styles.pillsContainer}>
-          {["Regret Meter", "Rescue Plans", "Money Stories"].map((pill) => (
+          {["Regret Score", "Rescue Plans", "Money Stories", "Digital Twin"].map((pill) => (
             <View 
               key={pill} 
               style={[styles.pill, { backgroundColor: colors.card, borderColor: colors.border }]}
