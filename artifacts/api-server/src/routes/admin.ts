@@ -14,16 +14,30 @@
  * Query parameters:
  *   - inactiveDays (number, default 1): only consider users who have NOT made
  *     an authenticated request in the last N days.  Users active recently are
- *     skipped to avoid hammering the Clerk API for live sessions.
+ *     skipped to avoid hammering the Clerk API for live sessions.  Set to 0
+ *     for aggressive cleanup: EVERY user is checked against Clerk regardless
+ *     of recent activity.  This catches the "signed up and deleted the account
+ *     seconds later" case, where lastActiveAt is fresh but the Clerk identity
+ *     is already gone.  Safe because a user is only purged when Clerk returns
+ *     404 for their id — live sessions are never deleted.
  *   - dryRun (boolean, default false): report what would be deleted without
  *     actually deleting anything.
+ *
+ * Partial onboarding: users whose onboardingCompleted flag is still false are
+ * ALWAYS included as candidates (after a 10-minute grace period from account
+ * creation), even if they were active within the inactiveDays window.  A user
+ * who deletes their account mid-onboarding leaves seeded demo data plus
+ * partial records behind; because their lastActiveAt is recent, the normal
+ * inactivity filter would skip them until the window closes.  The grace
+ * period avoids hammering the Clerk API for users who are actively signing up
+ * right now.
  */
 
 import { Router } from "express";
 import { createClerkClient } from "@clerk/express";
 import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db";
-import { lt, or, isNull } from "drizzle-orm";
+import { and, eq, lt, or, isNull } from "drizzle-orm";
 import { deleteUser } from "../lib/userProvisioning";
 import { logger } from "../lib/logger";
 
@@ -49,8 +63,10 @@ function requireAdminSecret(
 }
 
 adminRouter.post("/admin/orphan-cleanup", requireAdminSecret, async (req, res) => {
+  // inactiveDays=0 is allowed: it means "check every user against Clerk now",
+  // useful for aggressive cleanup of accounts deleted seconds after signup.
   const rawDays = Number(req.query["inactiveDays"] ?? 1);
-  const inactiveDays = Number.isFinite(rawDays) && rawDays >= 0 ? Math.max(1, rawDays) : 1;
+  const inactiveDays = Number.isFinite(rawDays) && rawDays >= 0 ? rawDays : 1;
   const dryRun = req.query["dryRun"] === "true";
 
   const clerkSecretKey = process.env.CLERK_SECRET_KEY ?? process.env.CLERK_SECRET_API_KEY;
@@ -65,13 +81,31 @@ adminRouter.post("/admin/orphan-cleanup", requireAdminSecret, async (req, res) =
   // means they still have a valid Clerk session, so skip them.
   const cutoff = new Date(Date.now() - inactiveDays * 24 * 60 * 60 * 1000);
 
+  // Grace period for the partial-onboarding branch: don't check users who
+  // created their account within the last 10 minutes — they're likely still
+  // signing up right now.
+  const onboardingGraceCutoff = new Date(Date.now() - 10 * 60 * 1000);
+
   const candidates = await db
-    .select({ id: usersTable.id, lastActiveAt: usersTable.lastActiveAt, createdAt: usersTable.createdAt })
+    .select({
+      id: usersTable.id,
+      lastActiveAt: usersTable.lastActiveAt,
+      createdAt: usersTable.createdAt,
+      onboardingCompleted: usersTable.onboardingCompleted,
+    })
     .from(usersTable)
     .where(
       or(
         isNull(usersTable.lastActiveAt),
         lt(usersTable.lastActiveAt, cutoff),
+        // Partial onboarding: recently-active users normally get skipped, but
+        // if onboarding never completed and the account is >10 minutes old,
+        // verify against Clerk anyway — a user who deleted their account
+        // mid-onboarding leaves seeded demo data behind.
+        and(
+          eq(usersTable.onboardingCompleted, false),
+          lt(usersTable.createdAt, onboardingGraceCutoff),
+        ),
       ),
     );
 
