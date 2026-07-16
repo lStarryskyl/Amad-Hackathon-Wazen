@@ -7,7 +7,7 @@ Wazen is a mobile-first personal finance app that uses AI to score spending deci
 | Package | Path | Description |
 |---|---|---|
 | `@workspace/api-server` | `artifacts/api-server/` | Express 5 REST API (TypeScript, port 8080) |
-| `@workspace/pulse-landing` | `artifacts/pulse-landing/` | Marketing landing page (Vite + React + Tailwind, port 5000) |
+| `@workspace/wazen-landing` | `artifacts/wazen-landing/` | Marketing landing page (Vite + React + Tailwind, port 5000) |
 | `@workspace/finance-mobile` | `artifacts/finance-mobile/` | Expo / React Native mobile app |
 | `@workspace/db` | `lib/db/` | PostgreSQL schema + Drizzle ORM |
 | `@workspace/api-client-react` | `lib/api-client-react/` | React Query hooks (generated from OpenAPI spec) |

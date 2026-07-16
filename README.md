@@ -1,6 +1,6 @@
-# Pulse — AI Personal Finance
+# Wazen — AI Personal Finance
 
-Pulse is a mobile-first personal finance app that uses AI to score your spending decisions in real-time, generate personalized rescue plans when budgets slip, narrate your financial life in plain English, and simulate what-if scenarios against your actual transaction history.
+Wazen is a mobile-first personal finance app that uses AI to score your spending decisions in real-time, generate personalized rescue plans when budgets slip, narrate your financial life in plain English, and simulate what-if scenarios against your actual transaction history.
 
 Built as a hackathon submission.
 
@@ -26,7 +26,7 @@ Built as a hackathon submission.
 ├── artifacts/
 │   ├── api-server/        # Express 5 REST API (TypeScript)
 │   ├── finance-mobile/    # Expo / React Native mobile app
-│   └── pulse-landing/     # Marketing landing page (React + Vite)
+│   └── wazen-landing/     # Marketing landing page (React + Vite)
 ├── libs/
 │   ├── db/                # PostgreSQL schema + Drizzle ORM
 │   └── api-client-react/  # Auto-generated React Query hooks
@@ -63,7 +63,7 @@ Create a `.env` file in the project root (or set these in your environment):
 
 ```env
 # Database
-DATABASE_URL=postgresql://user:password@localhost:5432/pulse
+DATABASE_URL=postgresql://user:password@localhost:5432/wazen
 
 # Clerk authentication
 CLERK_PUBLISHABLE_KEY=pk_test_...
@@ -120,7 +120,7 @@ New users are automatically provisioned with 6 months of realistic demo transact
 ### Terminal 2 — Landing page
 
 ```bash
-pnpm --filter @workspace/pulse-landing run dev
+pnpm --filter @workspace/wazen-landing run dev
 ```
 
 Starts the marketing site on `http://localhost:3000` (or next available port).
@@ -198,7 +198,7 @@ pnpm --filter @workspace/api-spec run codegen
 | `pnpm run typecheck` | Full TypeScript check across all packages |
 | `pnpm run build` | Typecheck + build all packages |
 | `pnpm --filter @workspace/api-server run dev` | Start API server (dev mode with hot-reload) |
-| `pnpm --filter @workspace/pulse-landing run dev` | Start landing page dev server |
+| `pnpm --filter @workspace/wazen-landing run dev` | Start landing page dev server |
 | `pnpm --filter @workspace/finance-mobile run dev` | Start Expo dev server |
 | `pnpm --filter @workspace/db run push` | Push DB schema changes |
 

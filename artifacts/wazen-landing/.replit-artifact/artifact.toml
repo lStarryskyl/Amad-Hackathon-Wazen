@@ -1,8 +1,8 @@
 kind = "web"
 previewPath = "/"
-title = "Pulse — AI Finance"
+title = "Wazen — AI Finance"
 version = "1.0.0"
-id = "artifacts/pulse-landing"
+id = "artifacts/wazen-landing"
 router = "path"
 
 [[integratedSkills]]
@@ -15,11 +15,11 @@ paths = [ "/" ]
 localPort = 20646
 
 [services.development]
-run = "pnpm --filter @workspace/pulse-landing run dev"
+run = "pnpm --filter @workspace/wazen-landing run dev"
 
 [services.production]
-build = [ "pnpm", "--filter", "@workspace/pulse-landing", "run", "build" ]
-publicDir = "artifacts/pulse-landing/dist/public"
+build = [ "pnpm", "--filter", "@workspace/wazen-landing", "run", "build" ]
+publicDir = "artifacts/wazen-landing/dist/public"
 serve = "static"
 
 [[services.production.rewrites]]
