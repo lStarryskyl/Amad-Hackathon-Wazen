@@ -53,9 +53,14 @@ webhooksRouter.post("/clerk", async (req, res) => {
       return;
     }
     try {
+      // deleteUser is idempotent: if the user row is already gone (e.g. this is
+      // a Clerk retry after a previous successful delivery) all DELETE statements
+      // simply affect 0 rows and no error is raised.  Returning 200 on repeated
+      // deliveries is correct — it tells Clerk not to keep retrying.
       await deleteUser(clerkUserId);
-      logger.info({ clerkUserId }, "User data deleted via webhook");
+      logger.info({ clerkUserId }, "User data deleted via webhook (idempotent)");
     } catch (err) {
+      // Return 500 so Clerk will retry delivery — the data was NOT cleaned up.
       logger.error({ err, clerkUserId }, "Failed to delete user data");
       res.status(500).json({ error: "Failed to delete user data" });
       return;

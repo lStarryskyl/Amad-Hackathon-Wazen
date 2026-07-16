@@ -11,6 +11,9 @@ export const usersTable = pgTable("users", {
   onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
   // Encrypted user-provided OpenAI API key (AES-256-GCM, stored as iv:authTag:ciphertext)
   encryptedOpenAiKey: text("encrypted_openai_key"),
+  // Updated each time the user makes an authenticated request — used by the
+  // orphan-cleanup job to skip recently-active accounts before querying Clerk.
+  lastActiveAt: timestamp("last_active_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

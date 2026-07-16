@@ -12,7 +12,7 @@ import {
   moneyStoriesTable,
   simulationRunsTable,
 } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 export async function deleteUser(clerkUserId: string) {
   // Some tables have onDelete: cascade FKs to usersTable (alerts, achievements,
@@ -35,18 +35,30 @@ export async function deleteUser(clerkUserId: string) {
 }
 
 export async function getOrCreateUser(clerkUserId: string) {
-  const existing = await db
-    .select()
-    .from(usersTable)
-    .where(eq(usersTable.id, clerkUserId))
-    .limit(1);
+  // Step 1 — attempt to insert the user row.  ON CONFLICT DO NOTHING means
+  // only ONE concurrent request will get a row back; all others get nothing.
+  // The primary-key constraint acts as the serialization barrier, so only the
+  // request that wins the INSERT will proceed to seed demo data — eliminating
+  // the race condition where concurrent first-logins all see "no accounts yet"
+  // and each try to seed.
+  const [freshUser] = await db
+    .insert(usersTable)
+    .values({ id: clerkUserId })
+    .onConflictDoNothing()
+    .returning();
 
-  if (existing.length > 0) {
-    return existing[0];
+  // Step 2 — stamp last_active_at for both new and returning users.
+  const [user] = await db
+    .update(usersTable)
+    .set({ lastActiveAt: sql`now()` })
+    .where(eq(usersTable.id, clerkUserId))
+    .returning();
+
+  // Step 3 — seed only if this request won the INSERT race.
+  if (freshUser) {
+    await seedDemoData(clerkUserId);
   }
 
-  const [user] = await db.insert(usersTable).values({ id: clerkUserId }).returning();
-  await seedDemoData(clerkUserId);
   return user;
 }
 

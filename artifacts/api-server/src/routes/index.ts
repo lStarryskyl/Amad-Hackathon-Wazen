@@ -13,6 +13,7 @@ import intelligenceRouter from "./intelligence";
 import simulationsRouter from "./simulations";
 import engagementRouter from "./engagement";
 import devResetRouter from "./devReset";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
@@ -30,5 +31,6 @@ router.use(intelligenceRouter);
 router.use(simulationsRouter);
 router.use(engagementRouter);
 router.use(devResetRouter);
+router.use(adminRouter);
 
 export default router;
