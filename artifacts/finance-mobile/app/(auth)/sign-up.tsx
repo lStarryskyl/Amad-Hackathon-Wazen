@@ -19,11 +19,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
 export default function SignUpScreen() {
-  const { signUp, errors, fetchStatus } = useSignUp();
+  const { isLoaded, signUp, setActive } = useSignUp();
   const router = useRouter();
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
+  const [step, setStep] = React.useState<"register" | "verify">("register");
   const [emailAddress, setEmailAddress] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [code, setCode] = React.useState("");
@@ -31,59 +32,59 @@ export default function SignUpScreen() {
   const [loading, setLoading] = React.useState(false);
   const [showPass, setShowPass] = React.useState(false);
 
+  const extractError = (err: unknown): string => {
+    if (err && typeof err === "object") {
+      const e = err as Record<string, unknown>;
+      const errs = e.errors as Array<{ longMessage?: string; message?: string }> | undefined;
+      if (Array.isArray(errs) && errs.length > 0) {
+        return errs[0].longMessage || errs[0].message || "An error occurred.";
+      }
+      if (typeof e.message === "string") return e.message;
+    }
+    return "Something went wrong. Please try again.";
+  };
+
   const onSignUpPress = async () => {
+    if (!isLoaded) return;
     setLoading(true);
     setFormError("");
     try {
-      const { error } = await signUp.password({ emailAddress, password });
-      if (error) { console.error(JSON.stringify(error, null, 2)); return; }
-      const { error: sendError } = await signUp.verifications.sendEmailCode();
-      if (sendError) {
-        console.error(JSON.stringify(sendError, null, 2));
-        setFormError("We couldn't send the verification code. Please try again.");
-      }
-    } catch (err: any) {
-      console.error(err);
-      setFormError("Something went wrong creating your account. Please try again.");
+      await signUp.create({ emailAddress, password });
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      setStep("verify");
+    } catch (err: unknown) {
+      setFormError(extractError(err));
     } finally {
       setLoading(false);
     }
   };
 
   const onPressVerify = async () => {
+    if (!isLoaded) return;
     setLoading(true);
     setFormError("");
     try {
-      const { error } = await signUp.verifications.verifyEmailCode({ code });
-      if (error) { console.error(JSON.stringify(error, null, 2)); return; }
-      if (signUp.status === "complete") {
-        await signUp.finalize({
-          navigate: ({ decorateUrl }) => {
-            router.replace(decorateUrl("/onboarding") as any);
-          },
-        });
+      const result = await signUp.attemptEmailAddressVerification({ code });
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId });
+        router.replace("/onboarding");
       } else {
         setFormError("Verification didn't complete. Please check the code and try again.");
       }
-    } catch (err: any) {
-      console.error(err);
-      setFormError("Verification failed. Please try again.");
+    } catch (err: unknown) {
+      setFormError(extractError(err));
     } finally {
       setLoading(false);
     }
   };
 
-  const isVerifying =
-    signUp.status === "missing_requirements" &&
-    signUp.unverifiedFields.includes("email_address") &&
-    signUp.missingFields.length === 0;
+  const onBackToRegister = () => {
+    setStep("register");
+    setCode("");
+    setFormError("");
+  };
 
-  const errorMessage =
-    formError ||
-    errors.fields.emailAddress?.message ||
-    errors.fields.password?.message ||
-    errors.fields.code?.message ||
-    (errors as any).message;
+  const isVerifying = step === "verify";
 
   return (
     <KeyboardAvoidingView
@@ -158,23 +159,26 @@ export default function SignUpScreen() {
                     <Feather name={showPass ? "eye-off" : "eye"} size={16} color={colors.mutedForeground} />
                   </TouchableOpacity>
                 </View>
+                <Text style={[styles.hint, { color: colors.mutedForeground }]}>
+                  Use 8+ characters with letters, numbers, and symbols.
+                </Text>
               </View>
 
-              {errorMessage ? (
+              {formError ? (
                 <View style={[styles.errorBox, { backgroundColor: colors.danger + "18", borderColor: colors.danger + "40" }]}>
                   <Feather name="alert-circle" size={14} color={colors.danger} />
-                  <Text style={[styles.errorText, { color: colors.danger }]}>{errorMessage}</Text>
+                  <Text style={[styles.errorText, { color: colors.danger }]}>{formError}</Text>
                 </View>
               ) : null}
 
               <TouchableOpacity
-                style={[styles.cta, { backgroundColor: colors.primary, opacity: loading || fetchStatus === "fetching" ? 0.75 : 1 }]}
+                style={[styles.cta, { backgroundColor: colors.primary, opacity: loading ? 0.75 : 1 }]}
                 onPress={onSignUpPress}
-                disabled={loading || fetchStatus === "fetching"}
+                disabled={loading || !isLoaded}
                 activeOpacity={0.85}
                 testID="button-create-account"
               >
-                {loading || fetchStatus === "fetching" ? (
+                {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <Text style={styles.ctaText}>Create Account</Text>
@@ -208,33 +212,34 @@ export default function SignUpScreen() {
                     onChangeText={setCode}
                     keyboardType="numeric"
                     maxLength={6}
+                    autoFocus
                     testID="input-verification-code"
                   />
                 </View>
               </View>
 
-              {errorMessage ? (
+              {formError ? (
                 <View style={[styles.errorBox, { backgroundColor: colors.danger + "18", borderColor: colors.danger + "40" }]}>
                   <Feather name="alert-circle" size={14} color={colors.danger} />
-                  <Text style={[styles.errorText, { color: colors.danger }]}>{errorMessage}</Text>
+                  <Text style={[styles.errorText, { color: colors.danger }]}>{formError}</Text>
                 </View>
               ) : null}
 
               <TouchableOpacity
-                style={[styles.cta, { backgroundColor: colors.primary, opacity: loading || fetchStatus === "fetching" ? 0.75 : 1 }]}
+                style={[styles.cta, { backgroundColor: colors.primary, opacity: loading ? 0.75 : 1 }]}
                 onPress={onPressVerify}
-                disabled={loading || fetchStatus === "fetching"}
+                disabled={loading || !isLoaded}
                 activeOpacity={0.85}
                 testID="button-verify-email"
               >
-                {loading || fetchStatus === "fetching" ? (
+                {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <Text style={styles.ctaText}>Verify Email</Text>
                 )}
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.backBtn} onPress={() => signUp.reset()}>
+              <TouchableOpacity style={styles.backBtn} onPress={onBackToRegister}>
                 <Feather name="arrow-left" size={14} color={colors.mutedForeground} />
                 <Text style={[styles.backText, { color: colors.mutedForeground }]}>Back to sign up</Text>
               </TouchableOpacity>
@@ -269,6 +274,7 @@ const styles = StyleSheet.create({
 
   field: { marginBottom: 20 },
   label: { fontSize: 13, fontFamily: "Outfit_600SemiBold", marginBottom: 8 },
+  hint: { fontSize: 12, fontFamily: "Outfit_400Regular", marginTop: 6 },
   inputWrap: {
     flexDirection: "row",
     alignItems: "center",

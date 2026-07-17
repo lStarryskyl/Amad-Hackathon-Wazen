@@ -25,7 +25,7 @@ const FEATURES = [
 ];
 
 export default function SignInScreen() {
-  const { signIn, errors, fetchStatus } = useSignIn();
+  const { isLoaded, signIn, setActive } = useSignIn();
   const router = useRouter();
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -38,79 +38,73 @@ export default function SignInScreen() {
   const [loading, setLoading] = React.useState(false);
   const [showPass, setShowPass] = React.useState(false);
 
-  const finalizeToHome = async () => {
-    await signIn.finalize({
-      navigate: ({ decorateUrl }) => {
-        router.replace(decorateUrl("/(home)/(tabs)") as any);
-      },
-    });
+  const extractError = (err: unknown): string => {
+    if (err && typeof err === "object") {
+      const e = err as Record<string, unknown>;
+      const errs = e.errors as Array<{ longMessage?: string; message?: string }> | undefined;
+      if (Array.isArray(errs) && errs.length > 0) {
+        return errs[0].longMessage || errs[0].message || "An error occurred.";
+      }
+      if (typeof e.message === "string") return e.message;
+    }
+    return "Something went wrong. Please try again.";
   };
 
   const onSignInPress = async () => {
+    if (!isLoaded) return;
     setLoading(true);
     setFormError("");
     try {
-      const { error } = await signIn.password({ emailAddress, password });
-      if (error) {
-        console.error(JSON.stringify(error, null, 2));
-        return;
-      }
-      if (signIn.status === "complete") {
-        await finalizeToHome();
+      const result = await signIn.create({ identifier: emailAddress, password });
+
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId });
+        router.replace("/(home)/(tabs)");
       } else if (
-        signIn.status === "needs_second_factor" ||
-        signIn.status === "needs_client_trust"
+        result.status === "needs_second_factor" ||
+        // @ts-ignore — Clerk may return needs_client_trust on new devices
+        result.status === "needs_client_trust"
       ) {
-        // Clerk asks for an emailed code when signing in from a new device
-        // (client trust) or when 2FA is enabled for the account.
-        const { error: sendError } = await signIn.mfa.sendEmailCode();
-        if (sendError) {
-          console.error(JSON.stringify(sendError, null, 2));
-          setFormError("We couldn't send the verification code. Please try again.");
-          return;
-        }
+        // New-device verification or 2FA — send an email code
+        await signIn.prepareSecondFactor({ strategy: "email_code" });
         setVerifying(true);
-      } else if (signIn.status) {
+      } else if (result.status) {
         setFormError(
-          `Additional verification is required to sign in (${String(signIn.status).replace(/_/g, " ")}).`,
+          `Additional verification required: ${String(result.status).replace(/_/g, " ")}.`,
         );
       }
-    } catch (err: any) {
-      console.error(err);
-      setFormError("Something went wrong signing you in. Please try again.");
+    } catch (err: unknown) {
+      setFormError(extractError(err));
     } finally {
       setLoading(false);
     }
   };
 
   const onVerifyPress = async () => {
+    if (!isLoaded) return;
     setLoading(true);
     setFormError("");
     try {
-      const { error } = await signIn.mfa.verifyEmailCode({ code });
-      if (error) {
-        console.error(JSON.stringify(error, null, 2));
-        return;
-      }
-      if (signIn.status === "complete") {
-        await finalizeToHome();
+      const result = await signIn.attemptSecondFactor({ strategy: "email_code", code });
+
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId });
+        router.replace("/(home)/(tabs)");
       } else {
         setFormError("That code didn't work. Please try again.");
       }
-    } catch (err: any) {
-      console.error(err);
-      setFormError("Verification failed. Please try again.");
+    } catch (err: unknown) {
+      setFormError(extractError(err));
     } finally {
       setLoading(false);
     }
   };
 
-  const errorMessage =
-    formError ||
-    errors.fields.identifier?.message ||
-    errors.fields.password?.message ||
-    (errors.fields as any).code?.message ||
-    (errors as any).message;
+  const onBackToSignIn = () => {
+    setVerifying(false);
+    setCode("");
+    setFormError("");
+  };
 
   return (
     <KeyboardAvoidingView
@@ -147,7 +141,7 @@ export default function SignInScreen() {
                   key={f.icon}
                   style={[styles.pill, { backgroundColor: colors.card, borderColor: colors.border }]}
                 >
-                  <Feather name={f.icon as any} size={11} color={colors.primary} />
+                  <Feather name={f.icon as "activity"} size={11} color={colors.primary} />
                   <Text style={[styles.pillText, { color: colors.textSecondary }]}>{f.label}</Text>
                 </View>
               ))}
@@ -201,21 +195,23 @@ export default function SignInScreen() {
                 </View>
               </View>
 
-              {errorMessage ? (
+              {formError ? (
                 <View style={[styles.errorBox, { backgroundColor: colors.danger + "18", borderColor: colors.danger + "40" }]}>
                   <Feather name="alert-circle" size={14} color={colors.danger} />
-                  <Text style={[styles.errorText, { color: colors.danger }]} testID="text-signin-error">{errorMessage}</Text>
+                  <Text style={[styles.errorText, { color: colors.danger }]} testID="text-signin-error">
+                    {formError}
+                  </Text>
                 </View>
               ) : null}
 
               <TouchableOpacity
-                style={[styles.cta, { backgroundColor: colors.primary, opacity: loading || fetchStatus === "fetching" ? 0.75 : 1 }]}
+                style={[styles.cta, { backgroundColor: colors.primary, opacity: loading ? 0.75 : 1 }]}
                 onPress={onSignInPress}
-                disabled={loading || fetchStatus === "fetching"}
+                disabled={loading || !isLoaded}
                 activeOpacity={0.85}
                 testID="button-sign-in"
               >
-                {loading || fetchStatus === "fetching" ? (
+                {loading ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
                   <Text style={styles.ctaText}>Sign In</Text>
@@ -225,7 +221,7 @@ export default function SignInScreen() {
           ) : (
             <>
               <Text style={[styles.verifyHint, { color: colors.mutedForeground }]}>
-                You're signing in from a new device, so we sent a 6-digit code to {emailAddress}
+                You're signing in from a new device. We sent a 6-digit code to {emailAddress}.
               </Text>
 
               <View style={styles.field}>
@@ -240,40 +236,36 @@ export default function SignInScreen() {
                     onChangeText={setCode}
                     keyboardType="numeric"
                     maxLength={6}
+                    autoFocus
                     testID="input-verification-code"
                   />
                 </View>
               </View>
 
-              {errorMessage ? (
+              {formError ? (
                 <View style={[styles.errorBox, { backgroundColor: colors.danger + "18", borderColor: colors.danger + "40" }]}>
                   <Feather name="alert-circle" size={14} color={colors.danger} />
-                  <Text style={[styles.errorText, { color: colors.danger }]} testID="text-verify-error">{errorMessage}</Text>
+                  <Text style={[styles.errorText, { color: colors.danger }]} testID="text-verify-error">
+                    {formError}
+                  </Text>
                 </View>
               ) : null}
 
               <TouchableOpacity
-                style={[styles.cta, { backgroundColor: colors.primary, opacity: loading || fetchStatus === "fetching" ? 0.75 : 1 }]}
+                style={[styles.cta, { backgroundColor: colors.primary, opacity: loading ? 0.75 : 1 }]}
                 onPress={onVerifyPress}
-                disabled={loading || fetchStatus === "fetching"}
+                disabled={loading || !isLoaded}
                 activeOpacity={0.85}
                 testID="button-verify-code"
               >
-                {loading || fetchStatus === "fetching" ? (
+                {loading ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
                   <Text style={styles.ctaText}>Verify</Text>
                 )}
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.backBtn}
-                onPress={() => {
-                  setVerifying(false);
-                  setCode("");
-                  setFormError("");
-                }}
-              >
+              <TouchableOpacity style={styles.backBtn} onPress={onBackToSignIn}>
                 <Feather name="arrow-left" size={14} color={colors.mutedForeground} />
                 <Text style={[styles.backText, { color: colors.mutedForeground }]}>Back to sign in</Text>
               </TouchableOpacity>

@@ -1,0 +1,74 @@
+implementations/ReactFabric-dev.js:12024:23)
+  performWorkOnRoot (node_modules/.pnpm/react-native@0.81.5_@babel+core@7.29.7_@types+react@19.1.17_react@19.1.0/node_modules/react-native/Libraries/Renderer/implementations/ReactFabric-dev.js:11551:27)
+  performWorkOnRootViaSchedulerTask (node_modules/.pnpm/react-native@0.81.5_@babel+core@7.29.7_@types+react@19.1.17_react@19.1.0/node_modules/react-native/Libraries/Renderer/implementations/ReactFabric-dev.js:3073:24)
+ ERROR  {
+  "clerkError": true,
+  "code": "api_response_error",
+  "status": 422,
+  "errors": [
+    {
+      "code": "form_password_not_strong_enough",
+      "message": "Given password is not strong enough.",
+      "longMessage": "Given password is not strong enough.",
+      "meta": {
+        "paramName": "password",
+        "zxcvbn": {
+          "suggestions": [
+            {
+              "code": "anotherWord",
+              "message": "Add more words that are less common."
+            }
+          ]
+        }
+      }
+    }
+  ]
+} 
+
+Code: sign-up.tsx
+  37 |     try {
+  38 |       const { error } = await signUp.password({ emailAddress, password });
+> 39 |       if (error) { console.error(JSON.stringify(error, null, 2)); return; }
+     |                                 ^
+  40 |       const { error: sendError } = await signUp.verifications.sendEmailCode();
+  41 |       if (sendError) {
+  42 |         console.error(JSON.stringify(sendError, null, 2));
+Call Stack
+  onSignUpPress (artifacts/finance-mobile/app/(auth)/sign-up.tsx:39:33)
+ ERROR  [TypeError: signUp.reset is not a function (it is undefined)] 
+
+Code: sign-up.tsx
+  235 |               </TouchableOpacity>
+  236 |
+> 237 |               <TouchableOpacity style={styles.backBtn} onPress={() => signUp.reset()}>
+      |                                                                                   ^
+  238 |                 <Feather name="arrow-left" size={14} color={colors.mutedForeground} />
+  239 |                 <Text style={[styles.backText, { color: colors.mutedForeground }]}>Back to sign up</Text>
+  240 |               </TouchableOpacity>
+Call Stack
+  TouchableOpacity.props.onPress (artifacts/finance-mobile/app/(auth)/sign-up.tsx:237:83)
+ ERROR  [TypeError: signUp.reset is not a function (it is undefined)] 
+
+Code: sign-up.tsx
+  235 |               </TouchableOpacity>
+  236 |
+> 237 |               <TouchableOpacity style={styles.backBtn} onPress={() => signUp.reset()}>
+      |                                                                                   ^
+  238 |                 <Feather name="arrow-left" size={14} color={colors.mutedForeground} />
+  239 |                 <Text style={[styles.backText, { color: colors.mutedForeground }]}>Back to sign up</Text>
+  240 |               </TouchableOpacity>
+Call Stack
+  TouchableOpacity.props.onPress (artifacts/finance-mobile/app/(auth)/sign-up.tsx:237:83)
+ ERROR  [TypeError: signUp.reset is not a function (it is undefined)] 
+
+Code: sign-up.tsx
+  235 |               </TouchableOpacity>
+  236 |
+> 237 |               <TouchableOpacity style={styles.backBtn} onPress={() => signUp.reset()}>
+      |                                                                                   ^
+  238 |                 <Feather name="arrow-left" size={14} color={colors.mutedForeground} />
+  239 |                 <Text style={[styles.backText, { color: colors.mutedForeground }]}>Back to sign up</Text>
+  240 |               </TouchableOpacity>
+Call Stack
+  TouchableOpacity.props.onPress (artifacts/finance-mobile/app/(auth)/sign-up.tsx:237:83)
+› Stopped server
