@@ -10,7 +10,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:fallback": "node --experimental-strip-types src/lib/fallback-narratives.test.ts",
     "test:engagement": "pnpm run build && node --experimental-strip-types src/routes/engagement.test.ts",
-    "test:simulations": "pnpm run build && node --experimental-strip-types src/routes/simulations.test.ts"
+    "test:simulations": "pnpm run build && node --experimental-strip-types src/routes/simulations.test.ts",
+    "test:ai-parsing": "pnpm run build && /nix/store/bl6iwirn83qj9r8wng43kfdqd5mfahj8-nodejs-22.22.0/bin/node --experimental-strip-types src/lib/scenarioParsing.live-test.ts"
   },
   "dependencies": {
     "@clerk/express": "^2.1.35",

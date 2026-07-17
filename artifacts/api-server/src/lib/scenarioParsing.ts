@@ -209,9 +209,17 @@ Unrelated fields must be 0. If the question is vague, make a sensible conservati
       ],
       max_tokens: 400,
       temperature: 0.2,
-    });
+    }, { timeout: 20000 });
     const raw = response.choices[0]?.message?.content?.trim() ?? "";
-    const jsonText = raw.replace(/^```(?:json)?/m, "").replace(/```$/m, "").trim();
+    // Strip markdown code fences if present, then find the first complete JSON
+    // object — this handles models that add preamble text before the JSON.
+    const stripped = raw.replace(/^```(?:json)?\s*/m, "").replace(/\s*```\s*$/m, "").trim();
+    const objStart = stripped.indexOf("{");
+    const objEnd = stripped.lastIndexOf("}");
+    if (objStart === -1 || objEnd === -1 || objEnd < objStart) {
+      throw new Error(`No JSON object found in model response: ${raw.slice(0, 200)}`);
+    }
+    const jsonText = stripped.slice(objStart, objEnd + 1);
     const parsed = JSON.parse(jsonText) as Record<string, unknown>;
 
     const inputs: ScenarioInputs = {
