@@ -43,6 +43,7 @@ router.post("/simulations", requireAuth, requireConsent, async (req, res): Promi
     let inputs: ScenarioInputs;
     let assumptions: string[] = [];
 
+    let aiUnavailable = false;
     if (usePrompt) {
       const skipAI = process.env.NODE_ENV !== "production" && process.env.SKIP_AI_NARRATIVE === "true";
       const parsed = skipAI
@@ -50,6 +51,7 @@ router.post("/simulations", requireAuth, requireConsent, async (req, res): Promi
         : await parseScenarioPrompt(userId, prompt, context);
       inputs = parsed.inputs;
       assumptions = parsed.assumptions;
+      aiUnavailable = parsed.aiUnavailable;
     } else {
       inputs = {
         scenarioName: (body.scenarioName as string).trim(),
@@ -71,7 +73,12 @@ router.post("/simulations", requireAuth, requireConsent, async (req, res): Promi
       ? generateFallbackSimulationNarrative(inputs, results)
       : await generateSimulationNarrative(userId, inputs, results, { prompt: usePrompt ? prompt : undefined, context });
 
-    const storedInputs = { ...inputs, ...(usePrompt ? { prompt } : {}), ...(assumptions.length ? { assumptions } : {}) };
+    const storedInputs = {
+      ...inputs,
+      ...(usePrompt ? { prompt } : {}),
+      ...(assumptions.length ? { assumptions } : {}),
+      ...(aiUnavailable ? { aiUnavailable: true } : {}),
+    };
 
     const [saved] = await db.insert(simulationRunsTable).values({
       userId,
@@ -88,6 +95,7 @@ router.post("/simulations", requireAuth, requireConsent, async (req, res): Promi
       results,
       narrative,
       assumptions,
+      ...(aiUnavailable ? { aiUnavailable: true } : {}),
       createdAt: saved.createdAt,
     });
   } catch (err) {

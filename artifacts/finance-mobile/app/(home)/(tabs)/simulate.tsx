@@ -1412,6 +1412,19 @@ export default function SimulateScreen() {
           </View>
         )}
 
+        {/* Low-confidence banner — shown when the heuristic fallback was used */}
+        {run.inputs.aiUnavailable && (
+          <View style={[gs.section, { backgroundColor: colors.warning + "18", borderColor: colors.warning + "60", marginBottom: 12 }]}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <Feather name="alert-triangle" size={15} color={colors.warning} />
+              <Text style={{ fontSize: 11, fontWeight: "700", letterSpacing: 0.8, color: colors.warning }}>BEST GUESS — NOT FULLY UNDERSTOOD</Text>
+            </View>
+            <Text style={{ fontSize: 14, lineHeight: 21, color: colors.textSecondary }}>
+              We weren't fully sure how to read your question, so this result is our best estimate. The numbers may not match what you had in mind — try rephrasing for a more precise answer.
+            </Text>
+          </View>
+        )}
+
         {/* Narrative — the headline answer */}
         {run.narrative && (
           <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.primary + "40" }]}>

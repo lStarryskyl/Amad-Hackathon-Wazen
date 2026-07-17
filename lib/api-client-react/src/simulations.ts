@@ -20,6 +20,11 @@ export interface ScenarioInputs {
   prompt?: string;
   /** AI interpretation notes explaining how the prompt was translated. */
   assumptions?: string[];
+  /**
+   * True when the AI parser was unavailable and the heuristic fallback was
+   * used instead. Results may not fully reflect the user's question.
+   */
+  aiUnavailable?: boolean;
 }
 
 /** Body for prompt-based simulation runs (preferred). */
