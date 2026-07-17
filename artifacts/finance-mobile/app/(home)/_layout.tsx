@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/expo";
 import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { useGetOnboardingStatus } from "@workspace/api-client-react";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { DEV_BYPASS_AUTH } from "@/constants/devFlags";
 
 function LoadingScreen() {
   return (
@@ -35,17 +36,24 @@ function HomeLayoutInner() {
 }
 
 export default function HomeLayout() {
+  usePushNotifications();
+
+  // Dev bypass: skip Clerk entirely and go straight to the app.
+  if (DEV_BYPASS_AUTH) {
+    return <Stack screenOptions={{ headerShown: false }} />;
+  }
+
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { isSignedIn, isLoaded, getToken } = useAuth();
 
   // Set token getter synchronously so it's available on first API call
   // setAuthTokenGetter is idempotent — safe to call on every render
   setAuthTokenGetter(() => getToken());
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     setAuthTokenGetter(() => getToken());
   }, [getToken]);
-
-  usePushNotifications();
 
   // Don't kick users out while Clerk is still resolving the session —
   // navigating here right after sign-in finalize races auth-state propagation.
