@@ -321,10 +321,10 @@ export default function Home() {
 
           {/* Headline */}
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[1.05] mb-8">
-            <WordReveal text="Know your money." />
+            <WordReveal text="Know where's your money." />
             <br />
             <span style={{ color: GOLD }}>
-              <WordReveal text="Before it knows you." />
+              <WordReveal text="Before it leaves u." />
             </span>
           </h1>
 
