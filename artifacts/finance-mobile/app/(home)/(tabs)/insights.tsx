@@ -54,9 +54,9 @@ function impactColor(impact: string, colors: ReturnType<typeof useColors>) {
 
 function BehavioralPatternsSection() {
   const colors = useColors();
-  const { data, isLoading, refetch, isRefetching } = useGetPatterns({
+  const { data, isLoading, isError: patternsError, refetch, isRefetching } = useGetPatterns({
     staleTime: 5 * 60 * 1000,
-    retry: 1,
+    retry: 0,
   });
 
   const severityColor = (severity: BehavioralPattern["severity"]) => {
@@ -88,14 +88,14 @@ function BehavioralPatternsSection() {
         </TouchableOpacity>
       </View>
 
-      {isLoading && (
+      {isLoading && !patternsError && (
         <View style={[styles.emptyState, { backgroundColor: colors.cardElevated }]}>
           <ActivityIndicator color={colors.primary} style={{ marginBottom: 8 }} />
           <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>Analyzing your spending patterns…</Text>
         </View>
       )}
 
-      {!isLoading && (!data?.patterns || data.patterns.length === 0) && (
+      {(!isLoading || patternsError) && (!data?.patterns || data.patterns.length === 0) && (
         <View style={[styles.emptyState, { backgroundColor: colors.cardElevated }]}>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>No Patterns Yet</Text>
           <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
@@ -159,9 +159,9 @@ function PatternCard({
 
 function RegretMeterSection() {
   const colors = useColors();
-  const { data: score, isLoading, refetch, isRefetching } = useGetRegretScore({
+  const { data: score, isLoading, isError: scoreError, refetch, isRefetching } = useGetRegretScore({
     staleTime: 3 * 60 * 1000,
-    retry: 1,
+    retry: 0,
   });
 
   const animScore = useRef(new Animated.Value(0)).current;
@@ -193,7 +193,7 @@ function RegretMeterSection() {
     return () => { pulseRef.current?.stop(); };
   }, [score?.score, score?.level]);
 
-  if (isLoading) {
+  if ((isLoading && !scoreError) ) {
     return (
       <View style={[styles.card, { backgroundColor: colors.card }]}>
         <ActivityIndicator color={colors.primary} />
@@ -202,7 +202,7 @@ function RegretMeterSection() {
     );
   }
 
-  if (!score) return null;
+  if (scoreError || !score) return null;
 
   if (score.noData) {
     return (

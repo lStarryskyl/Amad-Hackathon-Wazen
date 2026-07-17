@@ -13,6 +13,7 @@ import { setBaseUrl, setAuthTokenGetter } from "@workspace/api-client-react";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { DEV_BYPASS_AUTH } from "@/constants/devFlags";
 
 // Set API base URL BEFORE any component renders
 const domain = process.env.EXPO_PUBLIC_DOMAIN;
@@ -24,7 +25,16 @@ const proxyUrl = process.env.EXPO_PUBLIC_CLERK_PROXY_URL || undefined;
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // In dev bypass mode there's no auth token so every API call 401s.
+      // Skip retries so screens render their empty states immediately
+      // instead of spinning for 10+ seconds.
+      retry: DEV_BYPASS_AUTH ? 0 : 3,
+    },
+  },
+});
 
 /**
  * Wires the Clerk session token into every API request so authenticated

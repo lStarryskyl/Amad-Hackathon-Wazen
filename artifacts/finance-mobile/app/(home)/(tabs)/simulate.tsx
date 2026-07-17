@@ -655,7 +655,7 @@ export default function SimulateScreen() {
 
   const selectMode = compareIds.length > 0;
 
-  const { data: simulations, isLoading: listLoading } = useGetSimulations({ staleTime: 30_000, retry: 1 });
+  const { data: simulations, isLoading: listLoading, isError: listError } = useGetSimulations({ staleTime: 30_000, retry: 0 });
 
   const { mutate: runSim, isPending: isRunning } = useRunSimulation({
     onSuccess: (run) => {
@@ -1002,7 +1002,7 @@ export default function SimulateScreen() {
             ) : null;
           })()}
 
-          {listLoading ? (
+          {listLoading && !listError ? (
             <View style={gs.center}>
               <ActivityIndicator color={colors.primary} size="large" />
               <Text style={[{ marginTop: 12, fontSize: 14 }, { color: colors.mutedForeground }]}>Loading scenarios…</Text>

@@ -227,12 +227,14 @@ export default function DashboardScreen() {
   const {
     data: summary,
     isLoading: summaryLoading,
+    isError: summaryError,
     refetch: refetchSummary
   } = useGetFinancialSummary();
 
   const {
     data: accounts,
     isLoading: accountsLoading,
+    isError: accountsError,
     refetch: refetchAccounts
   } = useGetAccounts();
 
@@ -252,7 +254,7 @@ export default function DashboardScreen() {
     return "Good evening";
   }, []);
 
-  if (summaryLoading || accountsLoading) {
+  if ((summaryLoading && !summaryError) || (accountsLoading && !accountsError)) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />

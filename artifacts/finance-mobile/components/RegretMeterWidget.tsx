@@ -39,9 +39,9 @@ interface Props {
 export default function RegretMeterWidget({ onPress }: Props) {
   const colors = useColors();
   const router = useRouter();
-  const { data: score, isLoading, isError } = useGetRegretScore({
+  const { data: score, isError } = useGetRegretScore({
     staleTime: 5 * 60 * 1000,
-    retry: 1,
+    retry: 0,
   });
 
   const animatedScore = useRef(new Animated.Value(0)).current;
@@ -74,17 +74,6 @@ export default function RegretMeterWidget({ onPress }: Props) {
       router.push("/(home)/(tabs)/insights" as any);
     }
   };
-
-  if (isLoading) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.card }]}>
-        <ActivityIndicator size="small" color={colors.primary} />
-        <Text style={[styles.loadingText, { color: colors.mutedForeground }]}>
-          Analyzing your finances…
-        </Text>
-      </View>
-    );
-  }
 
   if (isError || !score) {
     return null;
