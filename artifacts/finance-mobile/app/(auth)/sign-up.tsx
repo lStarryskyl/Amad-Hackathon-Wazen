@@ -45,10 +45,7 @@ export default function SignUpScreen() {
   };
 
   const onSignUpPress = async () => {
-    if (!isLoaded) {
-      setFormError("Still connecting — please wait a moment and try again.");
-      return;
-    }
+    if (!isLoaded) return;
     setLoading(true);
     setFormError("");
     try {
@@ -63,10 +60,7 @@ export default function SignUpScreen() {
   };
 
   const onPressVerify = async () => {
-    if (!isLoaded) {
-      setFormError("Still connecting — please wait a moment and try again.");
-      return;
-    }
+    if (!isLoaded) return;
     setLoading(true);
     setFormError("");
     try {
@@ -91,6 +85,14 @@ export default function SignUpScreen() {
   };
 
   const isVerifying = step === "verify";
+
+  if (!isLoaded) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView

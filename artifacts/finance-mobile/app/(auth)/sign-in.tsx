@@ -51,10 +51,7 @@ export default function SignInScreen() {
   };
 
   const onSignInPress = async () => {
-    if (!isLoaded) {
-      setFormError("Still connecting — please wait a moment and try again.");
-      return;
-    }
+    if (!isLoaded) return;
     setLoading(true);
     setFormError("");
     try {
@@ -84,10 +81,7 @@ export default function SignInScreen() {
   };
 
   const onVerifyPress = async () => {
-    if (!isLoaded) {
-      setFormError("Still connecting — please wait a moment and try again.");
-      return;
-    }
+    if (!isLoaded) return;
     setLoading(true);
     setFormError("");
     try {
@@ -111,6 +105,14 @@ export default function SignInScreen() {
     setCode("");
     setFormError("");
   };
+
+  if (!isLoaded) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
