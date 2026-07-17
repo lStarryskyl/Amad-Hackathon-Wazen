@@ -159,6 +159,11 @@ export default function ProfileScreen() {
             onPress={() => router.push("/open-banking")}
           />
           <SettingItem
+            icon="link"
+            title="Connected Banks"
+            onPress={() => router.push("/open-banking/connections")}
+          />
+          <SettingItem
             icon="bell"
             title="Notifications"
             type="switch"

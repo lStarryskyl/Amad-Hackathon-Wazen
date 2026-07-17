@@ -135,6 +135,23 @@ export {
   registerPushToken,
 } from "./engagement";
 
+// ─── connections.ts ──────────────────────────────────────────────────────────
+export type {
+  ConnectedAccount,
+  BankConnection,
+  ConnectionsResult,
+  DisconnectResult,
+} from "./connections";
+export {
+  getConnectionsUrl,
+  getConnections,
+  getConnectionsQueryKey,
+  useGetConnections,
+  disconnectBankUrl,
+  disconnectBank,
+  useDisconnectBank,
+} from "./connections";
+
 // ─── Generated API (must come last so explicit exports above win) ─────────────
 export * from "./generated/api";
 export * from "./generated/api.schemas";
