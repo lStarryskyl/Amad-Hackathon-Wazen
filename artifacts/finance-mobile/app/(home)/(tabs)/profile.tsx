@@ -11,6 +11,7 @@ import {
   Image,
 } from "react-native";
 import { useUser, useAuth } from "@clerk/expo";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
@@ -18,6 +19,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { user } = useUser();
   const { signOut, getToken } = useAuth();
   const colors = useColors();
@@ -151,7 +153,11 @@ export default function ProfileScreen() {
           PREFERENCES
         </Text>
         <View style={[styles.settingsCard, { backgroundColor: colors.card }]}>
-          <SettingItem icon="shield" title="Privacy & Data" />
+          <SettingItem
+            icon="shield"
+            title="Privacy & Data"
+            onPress={() => router.push("/open-banking")}
+          />
           <SettingItem
             icon="bell"
             title="Notifications"

@@ -73,8 +73,13 @@ export default function ConsentScreen() {
           ))}
         </View>
 
-        <TouchableOpacity style={styles.linkButton}>
-          <Text style={[styles.linkText, { color: colors.primary }]}>Learn More</Text>
+        <TouchableOpacity
+          style={styles.linkButton}
+          onPress={() => router.push("/open-banking")}
+        >
+          <Text style={[styles.linkText, { color: colors.primary }]}>
+            Learn how open banking works
+          </Text>
         </TouchableOpacity>
 
         {errorMessage ? (
