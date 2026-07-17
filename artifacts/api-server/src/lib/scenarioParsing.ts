@@ -164,18 +164,27 @@ export function heuristicParseScenario(prompt: string): ParsedScenario {
  * Turn a natural-language what-if question into structured scenario inputs,
  * grounded in the user's actual transaction history. Falls back to a
  * deterministic heuristic parser when the AI is unavailable.
+ *
+ * @param priorPrompt - The prompt from the scenario being refined, if any.
+ *   Passed as conversation context so the AI can parse relative follow-ups
+ *   ("what if only 20% instead?") more accurately.
  */
 export async function parseScenarioPrompt(
   userId: string,
   prompt: string,
-  context: TransactionContext
+  context: TransactionContext,
+  priorPrompt?: string
 ): Promise<ParsedScenario> {
   const skipAI = process.env.NODE_ENV !== "production" && process.env.SKIP_AI_NARRATIVE === "true";
   const aiClient = skipAI ? null : await getAIClient(userId);
   if (!aiClient) return heuristicParseScenario(prompt);
 
-  const systemPrompt = `You convert a user's plain-English financial what-if question into structured simulation parameters, using their real spending history for grounding.
+  const priorContext = priorPrompt
+    ? `\nThe user is refining a previous scenario. Their original question was: "${priorPrompt}"\nUse this as context if the new question is relative or refers back to it (e.g. "what if only 20% instead?").\n`
+    : "";
 
+  const systemPrompt = `You convert a user's plain-English financial what-if question into structured simulation parameters, using their real spending history for grounding.
+${priorContext}
 User's recent history:
 ${formatContextForPrompt(context)}
 

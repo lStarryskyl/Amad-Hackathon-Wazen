@@ -647,6 +647,7 @@ export default function SimulateScreen() {
   const [selectedRun, setSelectedRun] = useState<SimulationRun | null>(null);
   const [promptText, setPromptText] = useState("");
   const [chartWidth, setChartWidth] = useState(0);
+  const [refinedFromRun, setRefinedFromRun] = useState<SimulationRun | null>(null);
 
   // Compare selection state
   const [compareIds, setCompareIds] = useState<number[]>([]);
@@ -673,8 +674,12 @@ export default function SimulateScreen() {
   const handleRun = useCallback(() => {
     const trimmed = promptText.trim();
     if (!trimmed) { Alert.alert("Question needed", "Type a what-if question first, like \u201cWhat if I cut dining out by 30%?\u201d"); return; }
-    runSim({ prompt: trimmed });
-  }, [promptText, runSim]);
+    const payload: { prompt: string; priorPrompt?: string } = { prompt: trimmed };
+    if (refinedFromRun?.inputs.prompt) {
+      payload.priorPrompt = refinedFromRun.inputs.prompt;
+    }
+    runSim(payload);
+  }, [promptText, refinedFromRun, runSim]);
 
   const handleDelete = useCallback((id: number) => {
     Alert.alert("Delete scenario", "Remove this simulation?", [
@@ -683,8 +688,9 @@ export default function SimulateScreen() {
     ]);
   }, [deleteSim]);
 
-  const openBuilder = useCallback((prefill?: string) => {
+  const openBuilder = useCallback((prefill?: string, refinedFrom?: SimulationRun) => {
     setPromptText(prefill ?? "");
+    setRefinedFromRun(refinedFrom ?? null);
     setScreen("builder");
   }, []);
 
@@ -1057,6 +1063,7 @@ export default function SimulateScreen() {
 
   // ─── Builder screen ────────────────────────────────────────────────────────
   if (screen === "builder") {
+    const isRefining = !!refinedFromRun;
     return (
       <View style={[gs.flex, { backgroundColor: colors.background }]}>
         <ScrollView
@@ -1065,12 +1072,39 @@ export default function SimulateScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={gs.navRow}>
-            <TouchableOpacity onPress={() => setScreen("list")} style={gs.navBtn}>
+            <TouchableOpacity
+              onPress={() => {
+                if (refinedFromRun) {
+                  setSelectedRun(refinedFromRun);
+                  setScreen("results");
+                } else {
+                  setScreen("list");
+                }
+              }}
+              style={gs.navBtn}
+            >
               <Feather name="arrow-left" size={20} color={colors.text} />
             </TouchableOpacity>
-            <Text style={[gs.navTitle, { color: colors.text }]}>Ask a What-If</Text>
+            <Text style={[gs.navTitle, { color: colors.text }]}>
+              {isRefining ? "Refine Scenario" : "Ask a What-If"}
+            </Text>
             <View style={gs.navBtn} />
           </View>
+
+          {/* Refinement context banner */}
+          {isRefining && refinedFromRun && (
+            <View style={[gs.section, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "40", marginBottom: 16 }]}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                <Feather name="refresh-cw" size={13} color={colors.primary} />
+                <Text style={{ fontSize: 11, fontWeight: "700", letterSpacing: 0.8, color: colors.primary }}>
+                  REFINING: {refinedFromRun.scenarioName.toUpperCase()}
+                </Text>
+              </View>
+              <Text style={{ fontSize: 13, color: colors.textSecondary, lineHeight: 19 }}>
+                Your previous question is pre-filled below. Tweak the numbers or angle — the AI will use it as context to parse your follow-up more accurately.
+              </Text>
+            </View>
+          )}
 
           {/* Prompt */}
           <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -1496,10 +1530,26 @@ export default function SimulateScreen() {
       </ScrollView>
 
       <View style={[gs.fixedBottom, { paddingBottom: insets.bottom + 12, backgroundColor: colors.background, borderTopColor: colors.border }]}>
-        <TouchableOpacity style={[gs.runBtn, { backgroundColor: colors.primary }]} onPress={() => openBuilder()} activeOpacity={0.8}>
-          <Feather name="plus" size={18} color="#fff" />
-          <Text style={gs.runBtnText}>New Scenario</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", gap: 10 }}>
+          {run.inputs.prompt ? (
+            <TouchableOpacity
+              style={[gs.runBtn, { flex: 1, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }]}
+              onPress={() => openBuilder(run.inputs.prompt, run)}
+              activeOpacity={0.8}
+            >
+              <Feather name="refresh-cw" size={16} color={colors.primary} />
+              <Text style={[gs.runBtnText, { color: colors.primary }]}>Refine</Text>
+            </TouchableOpacity>
+          ) : null}
+          <TouchableOpacity
+            style={[gs.runBtn, { flex: run.inputs.prompt ? 2 : 1, backgroundColor: colors.primary }]}
+            onPress={() => openBuilder()}
+            activeOpacity={0.8}
+          >
+            <Feather name="plus" size={18} color="#fff" />
+            <Text style={gs.runBtnText}>New Scenario</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );

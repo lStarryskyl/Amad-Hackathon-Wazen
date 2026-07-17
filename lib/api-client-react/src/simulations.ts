@@ -30,6 +30,8 @@ export interface ScenarioInputs {
 /** Body for prompt-based simulation runs (preferred). */
 export interface RunSimulationPromptBody {
   prompt: string;
+  /** Prior prompt from the scenario being refined — gives the AI context for relative follow-ups. */
+  priorPrompt?: string;
 }
 
 export interface MonthDataPoint {

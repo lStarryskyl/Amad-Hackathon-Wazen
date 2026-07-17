@@ -23,8 +23,9 @@ router.post("/simulations", requireAuth, requireConsent, async (req, res): Promi
   const userId = (req as any).userId as string;
   await getOrCreateUser(userId);
 
-  const body = req.body as Partial<ScenarioInputs> & { prompt?: string };
+  const body = req.body as Partial<ScenarioInputs> & { prompt?: string; priorPrompt?: string };
   const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
+  const priorPrompt = typeof body.priorPrompt === "string" ? body.priorPrompt.trim() : undefined;
   const usePrompt = prompt.length > 0;
 
   if (!usePrompt && (!body.scenarioName || typeof body.scenarioName !== "string" || body.scenarioName.trim().length === 0)) {
@@ -48,7 +49,7 @@ router.post("/simulations", requireAuth, requireConsent, async (req, res): Promi
       const skipAI = process.env.NODE_ENV !== "production" && process.env.SKIP_AI_NARRATIVE === "true";
       const parsed = skipAI
         ? heuristicParseScenario(prompt)
-        : await parseScenarioPrompt(userId, prompt, context);
+        : await parseScenarioPrompt(userId, prompt, context, priorPrompt);
       inputs = parsed.inputs;
       assumptions = parsed.assumptions;
       aiUnavailable = parsed.aiUnavailable;
