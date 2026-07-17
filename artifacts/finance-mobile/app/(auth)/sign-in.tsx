@@ -51,7 +51,10 @@ export default function SignInScreen() {
   };
 
   const onSignInPress = async () => {
-    if (!isLoaded) return;
+    if (!isLoaded) {
+      setFormError("Still connecting — please wait a moment and try again.");
+      return;
+    }
     setLoading(true);
     setFormError("");
     try {
@@ -81,7 +84,10 @@ export default function SignInScreen() {
   };
 
   const onVerifyPress = async () => {
-    if (!isLoaded) return;
+    if (!isLoaded) {
+      setFormError("Still connecting — please wait a moment and try again.");
+      return;
+    }
     setLoading(true);
     setFormError("");
     try {
@@ -207,7 +213,7 @@ export default function SignInScreen() {
               <TouchableOpacity
                 style={[styles.cta, { backgroundColor: colors.primary, opacity: loading ? 0.75 : 1 }]}
                 onPress={onSignInPress}
-                disabled={loading || !isLoaded}
+                disabled={loading}
                 activeOpacity={0.85}
                 testID="button-sign-in"
               >
@@ -254,7 +260,7 @@ export default function SignInScreen() {
               <TouchableOpacity
                 style={[styles.cta, { backgroundColor: colors.primary, opacity: loading ? 0.75 : 1 }]}
                 onPress={onVerifyPress}
-                disabled={loading || !isLoaded}
+                disabled={loading}
                 activeOpacity={0.85}
                 testID="button-verify-code"
               >

@@ -45,7 +45,10 @@ export default function SignUpScreen() {
   };
 
   const onSignUpPress = async () => {
-    if (!isLoaded) return;
+    if (!isLoaded) {
+      setFormError("Still connecting — please wait a moment and try again.");
+      return;
+    }
     setLoading(true);
     setFormError("");
     try {
@@ -60,7 +63,10 @@ export default function SignUpScreen() {
   };
 
   const onPressVerify = async () => {
-    if (!isLoaded) return;
+    if (!isLoaded) {
+      setFormError("Still connecting — please wait a moment and try again.");
+      return;
+    }
     setLoading(true);
     setFormError("");
     try {
@@ -174,7 +180,7 @@ export default function SignUpScreen() {
               <TouchableOpacity
                 style={[styles.cta, { backgroundColor: colors.primary, opacity: loading ? 0.75 : 1 }]}
                 onPress={onSignUpPress}
-                disabled={loading || !isLoaded}
+                disabled={loading}
                 activeOpacity={0.85}
                 testID="button-create-account"
               >
@@ -228,7 +234,7 @@ export default function SignUpScreen() {
               <TouchableOpacity
                 style={[styles.cta, { backgroundColor: colors.primary, opacity: loading ? 0.75 : 1 }]}
                 onPress={onPressVerify}
-                disabled={loading || !isLoaded}
+                disabled={loading}
                 activeOpacity={0.85}
                 testID="button-verify-email"
               >
