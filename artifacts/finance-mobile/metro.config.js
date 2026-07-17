@@ -7,10 +7,15 @@ const config = getDefaultConfig(__dirname);
 const originalResolveRequest = config.resolver?.resolveRequest;
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  // @clerk/react@5.x imports loadClerkUiScript from @clerk/shared/loadClerkJsScript
-  // to inject the Clerk frontend UI bundle via a <script> tag.  On native platforms
-  // this function doesn't exist (the headless RN build omits it), causing a crash.
-  // Redirect the import to a no-op shim so Clerk works in Expo Go / dev builds.
+  // On NATIVE: @clerk/react@5.54.0 tries to inject a CDN <script> tag via
+  // loadClerkJsScript (browser-only), and checks global.__unstable_ClerkUiCtor
+  // after loadClerkUiScript resolves. Neither works in React Native.
+  // Use a no-op shim instead — the headless Clerk instance (passed via the Clerk
+  // prop by @clerk/expo) handles actual auth without needing these web loaders.
+  //
+  // On WEB: use the real @clerk/shared module so Clerk.js loads from CDN normally.
+  // The @clerk/shared@3.47.8 node_modules patch adds loadClerkUiScript as a no-op
+  // so the post-load global check passes without needing the CDN UI bundle.
   if (
     platform !== "web" &&
     (moduleName === "@clerk/shared/loadClerkJsScript" ||

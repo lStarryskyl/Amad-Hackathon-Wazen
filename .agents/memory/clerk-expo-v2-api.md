@@ -68,3 +68,16 @@ const msg = Array.isArray(errs) ? (errs[0]?.longMessage || errs[0]?.message) : e
 **Why:** The legacy API (`.password()`, `.verifications.sendEmailCode()`, `.mfa.sendEmailCode()`,
 `.finalize()`, `.reset()`) was never valid in @clerk/react@5.x. These method calls throw at runtime.
 The correct API is `create()` → `prepareEmailAddressVerification()` → `attemptEmailAddressVerification()`.
+
+## @clerk/shared@3.47.8 missing loadClerkUiScript
+
+`@clerk/shared@3.47.8` does NOT export `loadClerkUiScript` from its `loadClerkJsScript` module.
+`@clerk/react@5.54.0` calls it and then checks `global.__unstable_ClerkUiCtor`, causing a crash.
+
+**Fix applied:**
+1. Directly patched `node_modules/.pnpm/@clerk+shared@3.47.8.../dist/runtime/loadClerkJsScript.js`
+   to append `exports.loadClerkUiScript = async function() { global.__unstable_ClerkUiCtor = ... }`
+2. Added `scripts/patch-clerk-shared.cjs` + root `postinstall` hook to re-apply after `pnpm install`
+3. Metro config shims `@clerk/shared/loadClerkJsScript` for `platform !== "web"` only:
+   - **Native**: shim replaces both loaders (headless Clerk handles auth, no CDN needed)
+   - **Web**: real module used so Clerk.js loads from CDN; patched module provides `loadClerkUiScript` no-op
