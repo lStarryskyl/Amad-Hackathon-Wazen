@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -74,7 +75,11 @@ export default function OnboardingCompleteScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.content}>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 40 }]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <Animated.View style={[styles.iconContainer, animatedStyle, { backgroundColor: colors.accent + "20" }]}>
           <Feather name="check" size={48} color={colors.accent} />
         </Animated.View>
@@ -90,7 +95,7 @@ export default function OnboardingCompleteScreen() {
             <Text style={[styles.errorText, { color: colors.danger }]}>{errorMessage}</Text>
           </View>
         ) : null}
-      </View>
+      </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
         {errorMessage ? (
@@ -144,10 +149,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 32,
+    paddingBottom: 32,
   },
   iconContainer: {
     width: 96,

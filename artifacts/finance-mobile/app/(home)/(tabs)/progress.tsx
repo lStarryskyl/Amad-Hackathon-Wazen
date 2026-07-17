@@ -10,6 +10,8 @@ import {
   TextInput,
   Animated,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import {
@@ -300,7 +302,11 @@ function GuardrailsSection({ colors, highlightId }: { colors: ReturnType<typeof 
       )}
 
       <Modal visible={showAdd} transparent animationType="slide" onRequestClose={() => setShowAdd(false)}>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalOverlay}>
           <View style={[styles.addModal, { backgroundColor: colors.card }]}>
             <Text style={[styles.addModalTitle, { color: colors.text }]}>Add Safe Zone</Text>
 
@@ -370,6 +376,7 @@ function GuardrailsSection({ colors, highlightId }: { colors: ReturnType<typeof 
             </View>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
