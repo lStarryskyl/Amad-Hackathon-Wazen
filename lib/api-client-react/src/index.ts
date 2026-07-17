@@ -46,6 +46,8 @@ export {
 // ─── simulations.ts ──────────────────────────────────────────────────────────
 export type {
   ScenarioInputs,
+  RunSimulationPromptBody,
+  RunSimulationBody,
   MonthDataPoint,
   GoalTimeline,
   SimulationResults,

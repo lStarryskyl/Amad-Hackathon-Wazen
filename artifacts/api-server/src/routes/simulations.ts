@@ -8,52 +8,75 @@ import { getOrCreateUser } from "../lib/userProvisioning";
 import { runSimulation } from "../lib/simulationEngine";
 import { generateSimulationNarrative, generateFallbackSimulationNarrative } from "../lib/aiOrchestration";
 import type { ScenarioInputs } from "../lib/simulationEngine";
+import {
+  buildTransactionContext,
+  parseScenarioPrompt,
+  heuristicParseScenario,
+  MAX_HORIZON_MONTHS,
+} from "../lib/scenarioParsing";
 
 const router = Router();
 
-// POST /simulations — run a new simulation
+// POST /simulations — run a new simulation from a natural-language prompt
+// (preferred) or legacy structured inputs. Forecasts are capped at 6 months.
 router.post("/simulations", requireAuth, requireConsent, async (req, res): Promise<void> => {
   const userId = (req as any).userId as string;
   await getOrCreateUser(userId);
 
-  const {
-    scenarioName,
-    incomeChangePercent = 0,
-    spendingChangePercent = 0,
-    additionalMonthlySaving = 0,
-    newMonthlyObligation = 0,
-    oneTimeExpense = 0,
-    timeHorizonMonths = 12,
-  } = req.body as Partial<ScenarioInputs>;
+  const body = req.body as Partial<ScenarioInputs> & { prompt?: string };
+  const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
+  const usePrompt = prompt.length > 0;
 
-  if (!scenarioName || typeof scenarioName !== "string" || scenarioName.trim().length === 0) {
-    res.status(400).json({ error: "BadRequest", message: "scenarioName is required" });
+  if (!usePrompt && (!body.scenarioName || typeof body.scenarioName !== "string" || body.scenarioName.trim().length === 0)) {
+    res.status(400).json({ error: "BadRequest", message: "prompt or scenarioName is required" });
+    return;
+  }
+  if (usePrompt && prompt.length > 300) {
+    res.status(400).json({ error: "BadRequest", message: "prompt must be 300 characters or fewer" });
     return;
   }
 
-  const safeHorizon = Math.min(Math.max(Number(timeHorizonMonths) || 12, 1), 60);
-
-  const inputs: ScenarioInputs = {
-    scenarioName: scenarioName.trim(),
-    incomeChangePercent: Number(incomeChangePercent) || 0,
-    spendingChangePercent: Number(spendingChangePercent) || 0,
-    additionalMonthlySaving: Math.max(0, Number(additionalMonthlySaving) || 0),
-    newMonthlyObligation: Math.max(0, Number(newMonthlyObligation) || 0),
-    oneTimeExpense: Math.max(0, Number(oneTimeExpense) || 0),
-    timeHorizonMonths: safeHorizon,
-  };
-
   try {
+    // Pull the user's real transaction history as grounding context.
+    const context = await buildTransactionContext(userId);
+
+    let inputs: ScenarioInputs;
+    let assumptions: string[] = [];
+
+    if (usePrompt) {
+      const skipAI = process.env.NODE_ENV !== "production" && process.env.SKIP_AI_NARRATIVE === "true";
+      const parsed = skipAI
+        ? heuristicParseScenario(prompt)
+        : await parseScenarioPrompt(userId, prompt, context);
+      inputs = parsed.inputs;
+      assumptions = parsed.assumptions;
+    } else {
+      inputs = {
+        scenarioName: (body.scenarioName as string).trim(),
+        incomeChangePercent: Number(body.incomeChangePercent) || 0,
+        spendingChangePercent: Number(body.spendingChangePercent) || 0,
+        additionalMonthlySaving: Math.max(0, Number(body.additionalMonthlySaving) || 0),
+        newMonthlyObligation: Math.max(0, Number(body.newMonthlyObligation) || 0),
+        oneTimeExpense: Math.max(0, Number(body.oneTimeExpense) || 0),
+        timeHorizonMonths: Number(body.timeHorizonMonths) || MAX_HORIZON_MONTHS,
+      };
+    }
+
+    // Hard cap: forecasts never exceed 6 months.
+    inputs.timeHorizonMonths = Math.min(Math.max(Math.round(inputs.timeHorizonMonths) || MAX_HORIZON_MONTHS, 1), MAX_HORIZON_MONTHS);
+
     const results = await runSimulation(userId, inputs);
     const skipAI = process.env.NODE_ENV !== "production" && process.env.SKIP_AI_NARRATIVE === "true";
     const narrative = skipAI
       ? generateFallbackSimulationNarrative(inputs, results)
-      : await generateSimulationNarrative(userId, inputs, results);
+      : await generateSimulationNarrative(userId, inputs, results, { prompt: usePrompt ? prompt : undefined, context });
+
+    const storedInputs = { ...inputs, ...(usePrompt ? { prompt } : {}), ...(assumptions.length ? { assumptions } : {}) };
 
     const [saved] = await db.insert(simulationRunsTable).values({
       userId,
       scenarioName: inputs.scenarioName,
-      inputs: inputs as any,
+      inputs: storedInputs as any,
       results: results as any,
       narrative,
     }).returning();
@@ -61,9 +84,10 @@ router.post("/simulations", requireAuth, requireConsent, async (req, res): Promi
     res.status(201).json({
       id: saved.id,
       scenarioName: saved.scenarioName,
-      inputs,
+      inputs: storedInputs,
       results,
       narrative,
+      assumptions,
       createdAt: saved.createdAt,
     });
   } catch (err) {

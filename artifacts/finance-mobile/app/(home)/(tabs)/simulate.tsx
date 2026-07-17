@@ -22,7 +22,7 @@ import {
   useUpdateSimulation,
   getSimulationsQueryKey,
 } from "@workspace/api-client-react";
-import type { SimulationRun, ScenarioInputs, MonthDataPoint } from "@workspace/api-client-react";
+import type { SimulationRun, MonthDataPoint } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 import {
   checkCompareEligibility,
@@ -248,66 +248,15 @@ function CompareChart({
   );
 }
 
-// ─── Slider row ───────────────────────────────────────────────────────────────
+// ─── Example prompts ──────────────────────────────────────────────────────────
 
-function SliderRow({
-  label,
-  value,
-  min,
-  max,
-  step,
-  format,
-  onChange,
-  color,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step: number;
-  format: (v: number) => string;
-  onChange: (v: number) => void;
-  color: string;
-}) {
-  const colors = useColors();
-  const steps = Math.round((max - min) / step);
-  const currentStep = Math.round((value - min) / step);
-  const pct = steps > 0 ? Math.max(0, Math.min(1, currentStep / steps)) : 0;
-
-  const decrement = () => onChange(Math.max(min, Math.round((value - step) * 100) / 100));
-  const increment = () => onChange(Math.min(max, Math.round((value + step) * 100) / 100));
-
-  return (
-    <View style={sliderStyles.row}>
-      <View style={sliderStyles.labelRow}>
-        <Text style={[sliderStyles.label, { color: colors.textSecondary }]}>{label}</Text>
-        <Text style={[sliderStyles.value, { color }]}>{format(value)}</Text>
-      </View>
-      <View style={sliderStyles.controls}>
-        <TouchableOpacity onPress={decrement} style={[sliderStyles.btn, { backgroundColor: colors.cardElevated }]}>
-          <Feather name="minus" size={14} color={colors.mutedForeground} />
-        </TouchableOpacity>
-        <View style={[sliderStyles.track, { backgroundColor: colors.border }]}>
-          <View style={[sliderStyles.fill, { width: `${Math.round(pct * 100)}%`, backgroundColor: color }]} />
-        </View>
-        <TouchableOpacity onPress={increment} style={[sliderStyles.btn, { backgroundColor: colors.cardElevated }]}>
-          <Feather name="plus" size={14} color={colors.mutedForeground} />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
-
-const sliderStyles = StyleSheet.create({
-  row: { marginBottom: 20 },
-  labelRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
-  label: { fontSize: 14, fontWeight: "500" },
-  value: { fontSize: 14, fontWeight: "700" },
-  controls: { flexDirection: "row", alignItems: "center", gap: 8 },
-  btn: { width: 32, height: 32, borderRadius: 8, justifyContent: "center", alignItems: "center" },
-  track: { flex: 1, height: 6, borderRadius: 3, overflow: "hidden" },
-  fill: { height: "100%", borderRadius: 3, minWidth: 4 },
-});
+const EXAMPLE_PROMPTS = [
+  "What if I cut dining out by 30%?",
+  "What if I save an extra $200 a month?",
+  "What if I take on a $450/month car payment?",
+  "What if I get a 10% raise?",
+  "What if I spend $3,000 on a vacation?",
+];
 
 // ─── Scenario card ────────────────────────────────────────────────────────────
 
@@ -571,32 +520,27 @@ const cardStyles = StyleSheet.create({
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
 
-function EmptyState({ onNew, colors }: { onNew: () => void; colors: ReturnType<typeof useColors> }) {
-  const examples = [
-    "What if I save $200/month?",
-    "What if I cut spending 20%?",
-    "What if I take on a $500/mo loan?",
-  ];
+function EmptyState({ onNew, onExample, colors }: { onNew: () => void; onExample: (prompt: string) => void; colors: ReturnType<typeof useColors> }) {
   return (
     <View style={emptyStyles.container}>
       <View style={[emptyStyles.icon, { backgroundColor: colors.primary + "20" }]}>
-        <Feather name="layers" size={36} color={colors.primary} />
+        <Feather name="message-circle" size={36} color={colors.primary} />
       </View>
-      <Text style={[emptyStyles.title, { color: colors.text }]}>No simulations yet</Text>
+      <Text style={[emptyStyles.title, { color: colors.text }]}>Ask a what-if question</Text>
       <Text style={[emptyStyles.desc, { color: colors.mutedForeground }]}>
-        Run your first scenario to see how financial decisions play out over time.
+        Type a question in plain English and see how it would play out over the next 6 months, based on your real spending.
       </Text>
       <View style={emptyStyles.chips}>
-        {examples.map((ex) => (
-          <View key={ex} style={[emptyStyles.chip, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        {EXAMPLE_PROMPTS.slice(0, 3).map((ex) => (
+          <TouchableOpacity key={ex} onPress={() => onExample(ex)} activeOpacity={0.7} style={[emptyStyles.chip, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Feather name="zap" size={11} color={colors.primary} />
             <Text style={[emptyStyles.chipText, { color: colors.mutedForeground }]}>{ex}</Text>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
       <TouchableOpacity style={[emptyStyles.btn, { backgroundColor: colors.primary }]} onPress={onNew} activeOpacity={0.8}>
-        <Feather name="plus" size={16} color="#fff" />
-        <Text style={emptyStyles.btnText}>Create First Scenario</Text>
+        <Feather name="edit-3" size={16} color="#fff" />
+        <Text style={emptyStyles.btnText}>Ask Your First Question</Text>
       </TouchableOpacity>
     </View>
   );
@@ -612,36 +556,6 @@ const emptyStyles = StyleSheet.create({
   chipText: { fontSize: 13 },
   btn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14 },
   btnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-});
-
-// ─── Small metric card ────────────────────────────────────────────────────────
-
-function MetricCard({
-  label,
-  value,
-  icon,
-  color,
-  colors,
-}: {
-  label: string;
-  value: string;
-  icon: string;
-  color: string;
-  colors: ReturnType<typeof useColors>;
-}) {
-  return (
-    <View style={[metricStyles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <Feather name={icon as any} size={14} color={color} style={{ marginBottom: 6 }} />
-      <Text style={[metricStyles.value, { color }]}>{value}</Text>
-      <Text style={[metricStyles.label, { color: colors.mutedForeground }]}>{label}</Text>
-    </View>
-  );
-}
-
-const metricStyles = StyleSheet.create({
-  card: { flex: 1, borderRadius: 12, borderWidth: 1, padding: 12, minWidth: "45%" },
-  value: { fontSize: 18, fontWeight: "800", marginBottom: 2 },
-  label: { fontSize: 11 },
 });
 
 // ─── Goal timeline row ────────────────────────────────────────────────────────
@@ -721,17 +635,6 @@ const diffStyles = StyleSheet.create({
   val: { fontSize: 14 },
 });
 
-// ─── Default inputs ───────────────────────────────────────────────────────────
-
-const DEFAULT_INPUTS: Omit<ScenarioInputs, "scenarioName"> = {
-  incomeChangePercent: 0,
-  spendingChangePercent: 0,
-  additionalMonthlySaving: 0,
-  newMonthlyObligation: 0,
-  oneTimeExpense: 0,
-  timeHorizonMonths: 12,
-};
-
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function SimulateScreen() {
@@ -741,8 +644,7 @@ export default function SimulateScreen() {
 
   const [screen, setScreen] = useState<Screen>("list");
   const [selectedRun, setSelectedRun] = useState<SimulationRun | null>(null);
-  const [scenarioName, setScenarioName] = useState("My Scenario");
-  const [inputs, setInputs] = useState<Omit<ScenarioInputs, "scenarioName">>(DEFAULT_INPUTS);
+  const [promptText, setPromptText] = useState("");
   const [chartWidth, setChartWidth] = useState(0);
 
   // Compare selection state
@@ -768,9 +670,10 @@ export default function SimulateScreen() {
   });
 
   const handleRun = useCallback(() => {
-    if (!scenarioName.trim()) { Alert.alert("Name required", "Give your scenario a name."); return; }
-    runSim({ ...inputs, scenarioName: scenarioName.trim() });
-  }, [scenarioName, inputs, runSim]);
+    const trimmed = promptText.trim();
+    if (!trimmed) { Alert.alert("Question needed", "Type a what-if question first, like \u201cWhat if I cut dining out by 30%?\u201d"); return; }
+    runSim({ prompt: trimmed });
+  }, [promptText, runSim]);
 
   const handleDelete = useCallback((id: number) => {
     Alert.alert("Delete scenario", "Remove this simulation?", [
@@ -779,9 +682,8 @@ export default function SimulateScreen() {
     ]);
   }, [deleteSim]);
 
-  const openBuilder = useCallback(() => {
-    setScenarioName("My Scenario");
-    setInputs(DEFAULT_INPUTS);
+  const openBuilder = useCallback((prefill?: string) => {
+    setPromptText(prefill ?? "");
     setScreen("builder");
   }, []);
 
@@ -1045,8 +947,6 @@ export default function SimulateScreen() {
     }
   }, [compareRuns]);
 
-  const formatPct = (v: number) => (v >= 0 ? `+${v}%` : `${v}%`);
-  const formatDollar = (v: number) => (v === 0 ? "$0" : `$${v.toLocaleString()}`);
 
   const fmtK = (v: number) => {
     const abs = Math.abs(v);
@@ -1070,7 +970,7 @@ export default function SimulateScreen() {
               <Text style={[gs.pageTitle, { color: colors.text }]}>Digital Twin Lab</Text>
               <Text style={[gs.pageSubtitle, { color: colors.mutedForeground }]}>Run what-if simulations on your finances</Text>
             </View>
-            <TouchableOpacity style={[gs.newBtn, { backgroundColor: colors.primary }]} onPress={openBuilder} activeOpacity={0.8}>
+            <TouchableOpacity style={[gs.newBtn, { backgroundColor: colors.primary }]} onPress={() => openBuilder()} activeOpacity={0.8}>
               <Feather name="plus" size={16} color="#fff" />
               <Text style={gs.newBtnText}>New</Text>
             </TouchableOpacity>
@@ -1101,7 +1001,7 @@ export default function SimulateScreen() {
               <Text style={[{ marginTop: 12, fontSize: 14 }, { color: colors.mutedForeground }]}>Loading scenarios…</Text>
             </View>
           ) : !simulations || simulations.length === 0 ? (
-            <EmptyState onNew={openBuilder} colors={colors} />
+            <EmptyState onNew={() => openBuilder()} onExample={(p) => openBuilder(p)} colors={colors} />
           ) : (
             simulations.map((run) => (
               <ScenarioCard
@@ -1144,7 +1044,7 @@ export default function SimulateScreen() {
           </View>
         ) : (
           <View style={[gs.fixedBottom, { paddingBottom: insets.bottom + 12, backgroundColor: colors.background, borderTopColor: colors.border }]}>
-            <TouchableOpacity style={[gs.runBtn, { backgroundColor: colors.primary }]} onPress={openBuilder} activeOpacity={0.8}>
+            <TouchableOpacity style={[gs.runBtn, { backgroundColor: colors.primary }]} onPress={() => openBuilder()} activeOpacity={0.8}>
               <Feather name="plus" size={18} color="#fff" />
               <Text style={gs.runBtnText}>New Scenario</Text>
             </TouchableOpacity>
@@ -1167,108 +1067,64 @@ export default function SimulateScreen() {
             <TouchableOpacity onPress={() => setScreen("list")} style={gs.navBtn}>
               <Feather name="arrow-left" size={20} color={colors.text} />
             </TouchableOpacity>
-            <Text style={[gs.navTitle, { color: colors.text }]}>Scenario Builder</Text>
+            <Text style={[gs.navTitle, { color: colors.text }]}>Ask a What-If</Text>
             <View style={gs.navBtn} />
           </View>
 
-          {/* Name */}
+          {/* Prompt */}
           <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[gs.sectionLabel, { color: colors.mutedForeground }]}>SCENARIO NAME</Text>
+            <Text style={[gs.sectionLabel, { color: colors.mutedForeground }]}>YOUR QUESTION</Text>
             <TextInput
-              value={scenarioName}
-              onChangeText={setScenarioName}
-              placeholder="e.g. Cut dining by 30%"
+              value={promptText}
+              onChangeText={setPromptText}
+              placeholder={'e.g. "What if I cut dining out by 30%?"'}
               placeholderTextColor={colors.mutedForeground}
-              style={[gs.nameInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.cardElevated }]}
-              maxLength={60}
+              style={[gs.promptInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.cardElevated }]}
+              maxLength={300}
+              multiline
+              autoFocus
             />
+            <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 10, lineHeight: 18 }}>
+              We'll read your recent transactions, estimate the impact, and project the next 6 months.
+            </Text>
           </View>
 
-          {/* Income */}
+          {/* Example prompts */}
           <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[gs.sectionLabel, { color: colors.mutedForeground }]}>INCOME</Text>
-            <SliderRow
-              label="Income change"
-              value={inputs.incomeChangePercent}
-              min={-50} max={100} step={5}
-              format={formatPct}
-              onChange={(v) => setInputs((p) => ({ ...p, incomeChangePercent: v }))}
-              color={inputs.incomeChangePercent >= 0 ? colors.accent : colors.danger}
-            />
-          </View>
-
-          {/* Spending */}
-          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[gs.sectionLabel, { color: colors.mutedForeground }]}>SPENDING</Text>
-            <SliderRow
-              label="Spending change"
-              value={inputs.spendingChangePercent}
-              min={-60} max={60} step={5}
-              format={formatPct}
-              onChange={(v) => setInputs((p) => ({ ...p, spendingChangePercent: v }))}
-              color={inputs.spendingChangePercent <= 0 ? colors.accent : colors.danger}
-            />
-            <SliderRow
-              label="New monthly obligation"
-              value={inputs.newMonthlyObligation}
-              min={0} max={2000} step={50}
-              format={formatDollar}
-              onChange={(v) => setInputs((p) => ({ ...p, newMonthlyObligation: v }))}
-              color={inputs.newMonthlyObligation === 0 ? colors.mutedForeground : colors.warning}
-            />
-            <SliderRow
-              label="One-time expense"
-              value={inputs.oneTimeExpense}
-              min={0} max={50000} step={500}
-              format={formatDollar}
-              onChange={(v) => setInputs((p) => ({ ...p, oneTimeExpense: v }))}
-              color={inputs.oneTimeExpense === 0 ? colors.mutedForeground : colors.warning}
-            />
-          </View>
-
-          {/* Savings */}
-          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[gs.sectionLabel, { color: colors.mutedForeground }]}>SAVINGS</Text>
-            <SliderRow
-              label="Extra monthly savings"
-              value={inputs.additionalMonthlySaving}
-              min={0} max={2000} step={50}
-              format={formatDollar}
-              onChange={(v) => setInputs((p) => ({ ...p, additionalMonthlySaving: v }))}
-              color={inputs.additionalMonthlySaving === 0 ? colors.mutedForeground : colors.accent}
-            />
-          </View>
-
-          {/* Time horizon */}
-          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[gs.sectionLabel, { color: colors.mutedForeground }]}>TIME HORIZON</Text>
-            <View style={gs.chipRow}>
-              {([3, 6, 12, 24, 36, 60] as const).map((mo) => {
-                const label = mo < 12 ? `${mo}mo` : mo === 12 ? "1yr" : mo === 24 ? "2yr" : mo === 36 ? "3yr" : "5yr";
-                const active = inputs.timeHorizonMonths === mo;
-                return (
-                  <TouchableOpacity
-                    key={mo}
-                    onPress={() => setInputs((p) => ({ ...p, timeHorizonMonths: mo }))}
-                    style={[gs.chip, { backgroundColor: active ? colors.primary : colors.cardElevated, borderColor: active ? colors.primary : colors.border }]}
-                  >
-                    <Text style={[gs.chipText, { color: active ? "#fff" : colors.mutedForeground }]}>{label}</Text>
-                  </TouchableOpacity>
-                );
-              })}
+            <Text style={[gs.sectionLabel, { color: colors.mutedForeground }]}>TRY ONE OF THESE</Text>
+            <View style={{ gap: 8 }}>
+              {EXAMPLE_PROMPTS.map((ex) => (
+                <TouchableOpacity
+                  key={ex}
+                  onPress={() => setPromptText(ex)}
+                  activeOpacity={0.7}
+                  style={{ flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.cardElevated, padding: 12 }}
+                >
+                  <Feather name="zap" size={12} color={colors.primary} />
+                  <Text style={{ fontSize: 13, color: colors.textSecondary, flex: 1 }}>{ex}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
+          </View>
+
+          {/* Horizon note */}
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 4, marginBottom: 16 }}>
+            <Feather name="clock" size={13} color={colors.mutedForeground} />
+            <Text style={{ fontSize: 12, color: colors.mutedForeground, flex: 1 }}>
+              Forecasts are capped at 6 months — long-range guesses get unreliable fast.
+            </Text>
           </View>
         </ScrollView>
 
         <View style={[gs.fixedBottom, { paddingBottom: insets.bottom + 12, backgroundColor: colors.background, borderTopColor: colors.border }]}>
           <TouchableOpacity
-            style={[gs.runBtn, { backgroundColor: colors.primary, opacity: isRunning ? 0.7 : 1 }]}
+            style={[gs.runBtn, { backgroundColor: promptText.trim() ? colors.primary : colors.border, opacity: isRunning ? 0.7 : 1 }]}
             onPress={handleRun}
-            disabled={isRunning}
+            disabled={isRunning || !promptText.trim()}
             activeOpacity={0.8}
           >
-            {isRunning ? <ActivityIndicator color="#fff" size="small" /> : <Feather name="play" size={18} color="#fff" />}
-            <Text style={gs.runBtnText}>{isRunning ? "Simulating…" : "Run Simulation"}</Text>
+            {isRunning ? <ActivityIndicator color="#fff" size="small" /> : <Feather name="send" size={18} color="#fff" />}
+            <Text style={gs.runBtnText}>{isRunning ? "Thinking through your scenario…" : "See What Happens"}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -1540,10 +1396,31 @@ export default function SimulateScreen() {
             <Feather name="arrow-left" size={20} color={colors.text} />
           </TouchableOpacity>
           <Text style={[gs.navTitle, { color: colors.text }]} numberOfLines={1}>{run.scenarioName}</Text>
-          <TouchableOpacity onPress={openBuilder} style={gs.navBtn}>
+          <TouchableOpacity onPress={() => openBuilder()} style={gs.navBtn}>
             <Feather name="plus" size={20} color={colors.primary} />
           </TouchableOpacity>
         </View>
+
+        {/* The question asked */}
+        {run.inputs.prompt && (
+          <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start", marginBottom: 16, paddingHorizontal: 4 }}>
+            <Feather name="message-circle" size={14} color={colors.mutedForeground} style={{ marginTop: 3 }} />
+            <Text style={{ fontSize: 14, fontStyle: "italic", color: colors.mutedForeground, flex: 1, lineHeight: 20 }}>
+              "{run.inputs.prompt}"
+            </Text>
+          </View>
+        )}
+
+        {/* Narrative — the headline answer */}
+        {run.narrative && (
+          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.primary + "40" }]}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
+              <Feather name="cpu" size={14} color={colors.primary} />
+              <Text style={{ fontSize: 11, fontWeight: "700", letterSpacing: 0.8, color: colors.primary }}>HERE'S WHAT WOULD HAPPEN</Text>
+            </View>
+            <Text style={{ fontSize: 16, lineHeight: 25, color: colors.text }}>{run.narrative}</Text>
+          </View>
+        )}
 
         {/* Hero */}
         <View style={[gs.heroCard, { backgroundColor: isPositive ? colors.accent + "18" : colors.danger + "18", borderColor: changeColor + "50" }]}>
@@ -1561,30 +1438,11 @@ export default function SimulateScreen() {
           style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}
           onLayout={(e) => setChartWidth(e.nativeEvent.layout.width - 32)}
         >
-          <Text style={[gs.sectionLabel, { color: colors.mutedForeground, marginBottom: 16 }]}>BALANCE TRAJECTORY</Text>
+          <Text style={[gs.sectionLabel, { color: colors.mutedForeground, marginBottom: 16 }]}>NEXT {run.inputs.timeHorizonMonths} MONTHS</Text>
           {chartWidth > 10 && results.dataPoints && results.dataPoints.length > 1 && (
             <BalanceChart dataPoints={results.dataPoints} width={chartWidth} />
           )}
         </View>
-
-        {/* Metrics */}
-        <View style={gs.metricsGrid}>
-          <MetricCard label="Savings Rate" value={`${results.finalSavingsRate.toFixed(1)}%`} icon="trending-up" color={results.finalSavingsRate >= 15 ? colors.accent : results.finalSavingsRate >= 0 ? colors.warning : colors.danger} colors={colors} />
-          <MetricCard label="Avg Monthly Saved" value={fmtK(results.avgMonthlySavings)} icon="dollar-sign" color={results.avgMonthlySavings >= 0 ? colors.accent : colors.danger} colors={colors} />
-          <MetricCard label="Total Saved" value={fmtK(results.totalSaved)} icon="archive" color={colors.primary} colors={colors} />
-          <MetricCard label="Monthly Income" value={fmtK(results.projectedMonthlyIncome)} icon="activity" color={colors.textSecondary} colors={colors} />
-        </View>
-
-        {/* AI narrative */}
-        {run.narrative && (
-          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
-              <Feather name="cpu" size={14} color={colors.primary} />
-              <Text style={{ fontSize: 11, fontWeight: "700", letterSpacing: 0.8, color: colors.primary }}>AI ANALYSIS</Text>
-            </View>
-            <Text style={{ fontSize: 15, lineHeight: 24, color: colors.textSecondary }}>{run.narrative}</Text>
-          </View>
-        )}
 
         {/* Goal timelines */}
         {results.goalTimelines && results.goalTimelines.length > 0 && (
@@ -1596,20 +1454,35 @@ export default function SimulateScreen() {
           </View>
         )}
 
-        {/* Inputs summary */}
-        <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[gs.sectionLabel, { color: colors.mutedForeground }]}>SCENARIO INPUTS</Text>
-          <InputSummaryRow label="Income change" value={`${run.inputs.incomeChangePercent >= 0 ? "+" : ""}${run.inputs.incomeChangePercent}%`} colors={colors} />
-          <InputSummaryRow label="Spending change" value={`${run.inputs.spendingChangePercent >= 0 ? "+" : ""}${run.inputs.spendingChangePercent}%`} colors={colors} />
-          {run.inputs.additionalMonthlySaving > 0 && <InputSummaryRow label="Extra savings" value={`+$${run.inputs.additionalMonthlySaving.toLocaleString()}/mo`} colors={colors} />}
-          {run.inputs.newMonthlyObligation > 0 && <InputSummaryRow label="New obligation" value={`$${run.inputs.newMonthlyObligation.toLocaleString()}/mo`} colors={colors} />}
-          {run.inputs.oneTimeExpense > 0 && <InputSummaryRow label="One-time expense" value={`$${run.inputs.oneTimeExpense.toLocaleString()}`} colors={colors} />}
-          <InputSummaryRow label="Time horizon" value={horizonText} colors={colors} />
-        </View>
+        {/* How we read your question */}
+        {run.inputs.assumptions && run.inputs.assumptions.length > 0 && (
+          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[gs.sectionLabel, { color: colors.mutedForeground }]}>HOW WE READ YOUR QUESTION</Text>
+            {run.inputs.assumptions.map((a, i) => (
+              <View key={i} style={{ flexDirection: "row", gap: 8, marginBottom: 8, alignItems: "flex-start" }}>
+                <Feather name="check" size={13} color={colors.accent} style={{ marginTop: 3 }} />
+                <Text style={{ fontSize: 13, color: colors.textSecondary, flex: 1, lineHeight: 19 }}>{a}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Details for legacy structured runs */}
+        {!run.inputs.prompt && (
+          <View style={[gs.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[gs.sectionLabel, { color: colors.mutedForeground }]}>SCENARIO INPUTS</Text>
+            <InputSummaryRow label="Income change" value={`${run.inputs.incomeChangePercent >= 0 ? "+" : ""}${run.inputs.incomeChangePercent}%`} colors={colors} />
+            <InputSummaryRow label="Spending change" value={`${run.inputs.spendingChangePercent >= 0 ? "+" : ""}${run.inputs.spendingChangePercent}%`} colors={colors} />
+            {run.inputs.additionalMonthlySaving > 0 && <InputSummaryRow label="Extra savings" value={`+${run.inputs.additionalMonthlySaving.toLocaleString()}/mo`} colors={colors} />}
+            {run.inputs.newMonthlyObligation > 0 && <InputSummaryRow label="New obligation" value={`${run.inputs.newMonthlyObligation.toLocaleString()}/mo`} colors={colors} />}
+            {run.inputs.oneTimeExpense > 0 && <InputSummaryRow label="One-time expense" value={`${run.inputs.oneTimeExpense.toLocaleString()}`} colors={colors} />}
+            <InputSummaryRow label="Time horizon" value={horizonText} colors={colors} />
+          </View>
+        )}
       </ScrollView>
 
       <View style={[gs.fixedBottom, { paddingBottom: insets.bottom + 12, backgroundColor: colors.background, borderTopColor: colors.border }]}>
-        <TouchableOpacity style={[gs.runBtn, { backgroundColor: colors.primary }]} onPress={openBuilder} activeOpacity={0.8}>
+        <TouchableOpacity style={[gs.runBtn, { backgroundColor: colors.primary }]} onPress={() => openBuilder()} activeOpacity={0.8}>
           <Feather name="plus" size={18} color="#fff" />
           <Text style={gs.runBtnText}>New Scenario</Text>
         </TouchableOpacity>
@@ -1652,6 +1525,7 @@ const gs = StyleSheet.create({
   section: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 16 },
   sectionLabel: { fontSize: 11, fontWeight: "700", letterSpacing: 0.8, marginBottom: 14 },
   nameInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, fontWeight: "600" },
+  promptInput: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 12, fontSize: 16, minHeight: 92, textAlignVertical: "top", lineHeight: 22 },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1 },
   chipText: { fontSize: 13, fontWeight: "600" },

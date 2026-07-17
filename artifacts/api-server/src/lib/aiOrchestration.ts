@@ -159,7 +159,11 @@ Make it feel human and insightful — not like a spreadsheet summary. No bullet 
 export async function generateSimulationNarrative(
   userId: string,
   inputs: import("./simulationEngine").ScenarioInputs,
-  results: import("./simulationEngine").SimulationResults
+  results: import("./simulationEngine").SimulationResults,
+  extras?: {
+    prompt?: string;
+    context?: import("./scenarioParsing").TransactionContext;
+  }
 ): Promise<string> {
   const aiClient = await getAIClient(userId);
   if (!aiClient) {
@@ -179,8 +183,14 @@ export async function generateSimulationNarrative(
     .map((g) => `${g.goalName} (${g.completionLabel})`)
     .join(", ");
 
-  const prompt = `You are a clear-headed personal finance coach. A user just ran a "${inputs.scenarioName}" simulation over ${inputs.timeHorizonMonths} months.
+  const { formatContextForPrompt } = await import("./scenarioParsing.js");
+  const historyBlock = extras?.context
+    ? `\nTheir actual recent spending history:\n${formatContextForPrompt(extras.context)}\n`
+    : "";
+  const questionBlock = extras?.prompt ? `\nThey asked, in their own words: "${extras.prompt}"\n` : "";
 
+  const prompt = `You are a clear-headed personal finance coach. A user just ran a "${inputs.scenarioName}" simulation over ${inputs.timeHorizonMonths} months (forecasts are capped at 6 months to stay realistic).
+${questionBlock}${historyBlock}
 Scenario changes: ${changes.length > 0 ? changes.join(", ") : "baseline (no changes)"}
 
 Projected outcomes:

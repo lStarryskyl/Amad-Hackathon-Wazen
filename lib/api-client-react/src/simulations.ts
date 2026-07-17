@@ -16,6 +16,15 @@ export interface ScenarioInputs {
   oneTimeExpense: number;
   timeHorizonMonths: number;
   note?: string;
+  /** Original natural-language what-if question, when the run was prompt-based. */
+  prompt?: string;
+  /** AI interpretation notes explaining how the prompt was translated. */
+  assumptions?: string[];
+}
+
+/** Body for prompt-based simulation runs (preferred). */
+export interface RunSimulationPromptBody {
+  prompt: string;
 }
 
 export interface MonthDataPoint {
@@ -58,6 +67,7 @@ export interface SimulationRun {
   inputs: ScenarioInputs;
   results: SimulationResults | null;
   narrative: string | null;
+  assumptions?: string[];
   createdAt: string;
 }
 
@@ -65,7 +75,9 @@ export interface SimulationRun {
 
 export const runSimulationUrl = () => `/api/simulations`;
 
-export const runSimulation = async (body: ScenarioInputs, options?: RequestInit): Promise<SimulationRun> =>
+export type RunSimulationBody = ScenarioInputs | RunSimulationPromptBody;
+
+export const runSimulation = async (body: RunSimulationBody, options?: RequestInit): Promise<SimulationRun> =>
   customFetch<SimulationRun>(runSimulationUrl(), {
     ...options,
     method: "POST",
@@ -74,10 +86,10 @@ export const runSimulation = async (body: ScenarioInputs, options?: RequestInit)
   });
 
 export const useRunSimulation = <TError = unknown, TContext = unknown>(
-  options?: UseMutationOptions<SimulationRun, TError, ScenarioInputs, TContext>
-): UseMutationResult<SimulationRun, TError, ScenarioInputs, TContext> =>
+  options?: UseMutationOptions<SimulationRun, TError, RunSimulationBody, TContext>
+): UseMutationResult<SimulationRun, TError, RunSimulationBody, TContext> =>
   useMutation({
-    mutationFn: (inputs: ScenarioInputs) => runSimulation(inputs),
+    mutationFn: (body: RunSimulationBody) => runSimulation(body),
     ...options,
   });
 

@@ -5,6 +5,12 @@ description: How the simulation/what-if scenario feature is structured across se
 
 # Digital Twin Lab
 
+## Natural-language flow (current)
+- Users type a free-form what-if question; POST /simulations accepts `{ prompt }` (preferred) or legacy structured inputs. Forecast horizon is hard-capped at 6 months server-side.
+- `artifacts/api-server/src/lib/scenarioParsing.ts` — builds 3-month transaction context (per-month income/expenses/top categories), AI-parses the prompt into ScenarioInputs, with a deterministic regex heuristic fallback (used when AI unavailable or SKIP_AI_NARRATIVE=true). `assumptions` explain the interpretation and are stored inside `inputs` jsonb.
+- Narrative generation receives the original prompt + transaction context for grounding.
+- Test run recipe: `pnpm exec esbuild src/routes/simulations.test.ts --bundle --platform=node --format=esm --outfile=src/routes/.sim.test.run.mjs && CLERK_SECRET_KEY=sk_test_dummy node src/routes/.sim.test.run.mjs` (node 20 lacks --experimental-strip-types; shell env has no Clerk secret but test auth bypass only needs any key present).
+
 ## Structure
 - `artifacts/api-server/src/lib/simulationEngine.ts` — deterministic projection; takes ScenarioInputs + DB data → SimulationResults with month-by-month dataPoints, goalTimelines, summary stats
 - `artifacts/api-server/src/lib/aiOrchestration.ts` — `generateSimulationNarrative()` added here; uses same getOpenAIClient() pattern with graceful fallback
