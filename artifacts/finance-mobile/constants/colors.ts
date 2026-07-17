@@ -1,85 +1,66 @@
 /**
- * Semantic design tokens — Slate + Teal corporate palette.
+ * Semantic design tokens — organic, warm, and intentional palette.
  *
- * Light mode is primary (Robinhood-meets-Fidelity aesthetic):
- * clean whites, slate-grey text, teal as the trust-signal accent.
- *
- * Dark mode mirrors the same semantic slots on a deep-slate canvas
- * so colours feel purposeful rather than inverted.
+ * Light mode is primary: warm eggshell, deep pine, terracotta.
+ * Dark mode: deep charcoal, muted copper, sage.
  *
  * Consumed via ThemeContext → useColors().
  */
 
 export type ColorTokens = typeof LightColors;
 
-// ── Light (primary) ──────────────────────────────────────────────────────────
 export const LightColors = {
-  // Backgrounds
-  background:     "#F8FAFC",   // slate-50
-  card:           "#FFFFFF",   // pure white cards
-  cardElevated:   "#F1F5F9",   // slate-100 — subtle lift
+  background:     "#FBF9F6",   // Warm eggshell/sand
+  card:           "#FFFFFF",
+  cardElevated:   "#F3EFE7",   // Slightly darker sand
+  
+  primary:        "#2C4C3B",   // Deep Pine
+  primaryLight:   "#3E6A53",   // Lighter pine
+  primaryForeground:"#FFFFFF",
 
-  // Brand / actions
-  primary:            "#0D9488",   // teal-600 — CTAs, active states
-  primaryLight:       "#14B8A6",   // teal-500 — hover / lighter variant
-  primaryForeground:  "#FFFFFF",   // text/icon on top of primary bg
+  accent:         "#3A7D44",   // Organic green
+  accentLight:    "#4B9F5A",
+  danger:         "#C04A3B",   // Rust / Terracotta
+  dangerLight:    "#D97669",
+  warning:        "#D48C29",   // Ochre
 
-  // Semantic status
-  accent:         "#059669",   // emerald-600 — positive / income / success
-  accentLight:    "#10B981",   // emerald-500
-  danger:         "#DC2626",   // red-600   — errors / high-risk
-  dangerLight:    "#FCA5A5",   // red-300   — soft danger tint
-  warning:        "#D97706",   // amber-600 — caution (muted, not primary)
+  text:           "#1C211F",   // Very dark green-black
+  textSecondary:  "#545E59",   // Charcoal
+  mutedForeground:"#8A948F",   // Muted sage
 
-  // Typography
-  text:           "#0F172A",   // slate-900 — primary body copy
-  textSecondary:  "#475569",   // slate-600 — secondary labels
-  mutedForeground:"#94A3B8",   // slate-400 — placeholders / timestamps
-
-  // Borders & dividers
-  border:         "#E2E8F0",   // slate-200
-  borderLight:    "#CBD5E1",   // slate-300
-
-  // Surface aliases
+  border:         "#E6E1D6",   // Soft beige border
+  borderLight:    "#D4CEBF",
+  
   surface:        "#FFFFFF",
-  surfaceElevated:"#F8FAFC",
+  surfaceElevated:"#F3EFE7",
 };
 
-// ── Dark (secondary) ─────────────────────────────────────────────────────────
 export const DarkColors: ColorTokens = {
-  // Backgrounds
-  background:     "#0F172A",   // slate-900
-  card:           "#1E293B",   // slate-800
-  cardElevated:   "#334155",   // slate-700
+  background:     "#151716",   // Deep charcoal
+  card:           "#1D201E",
+  cardElevated:   "#272B29",
+  
+  primary:        "#D48C70",   // Soft clay/copper for dark mode
+  primaryLight:   "#E2A68F",
+  primaryForeground:"#151716",
 
-  // Brand / actions
-  primary:            "#14B8A6",   // teal-500  — slightly lighter for dark bg
-  primaryLight:       "#2DD4BF",   // teal-400
-  primaryForeground:  "#FFFFFF",   // text/icon on top of primary bg
+  accent:         "#53A561",
+  accentLight:    "#6CBD7B",
+  danger:         "#D65E50",
+  dangerLight:    "#E28B81",
+  warning:        "#E8A843",
 
-  // Semantic status
-  accent:         "#10B981",   // emerald-500
-  accentLight:    "#34D399",   // emerald-400
-  danger:         "#F87171",   // red-400   — softer on dark
-  dangerLight:    "#FCA5A5",
-  warning:        "#FBBF24",   // amber-400
+  text:           "#EBEFEB",
+  textSecondary:  "#A1ADA7",
+  mutedForeground:"#6C7672",
 
-  // Typography
-  text:           "#F1F5F9",   // slate-100
-  textSecondary:  "#94A3B8",   // slate-400
-  mutedForeground:"#64748B",   // slate-500
-
-  // Borders & dividers
-  border:         "#334155",   // slate-700
-  borderLight:    "#475569",   // slate-600
-
-  // Surface aliases
-  surface:        "#1E293B",
-  surfaceElevated:"#334155",
+  border:         "#303633",
+  borderLight:    "#3E4743",
+  
+  surface:        "#1D201E",
+  surfaceElevated:"#272B29",
 };
 
-// Legacy default export (used by tabs _layout and any place that
-// hasn't migrated to useColors() yet).  Prefer useColors().
 export const Colors = LightColors;
 
 export default {

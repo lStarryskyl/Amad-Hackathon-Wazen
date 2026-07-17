@@ -1,10 +1,6 @@
-import {
-  Inter_400Regular,
-  Inter_500Medium,
-  Inter_600SemiBold,
-  Inter_700Bold,
-  useFonts,
-} from "@expo-google-fonts/inter";
+import { useFonts } from "expo-font";
+import { Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold } from "@expo-google-fonts/outfit";
+import { Lora_400Regular, Lora_500Medium, Lora_600SemiBold, Lora_700Bold, Lora_400Regular_Italic } from "@expo-google-fonts/lora";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -59,10 +55,15 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
+    Outfit_400Regular,
+    Outfit_500Medium,
+    Outfit_600SemiBold,
+    Outfit_700Bold,
+    Lora_400Regular,
+    Lora_500Medium,
+    Lora_600SemiBold,
+    Lora_700Bold,
+    Lora_400Regular_Italic,
   });
 
   useEffect(() => {

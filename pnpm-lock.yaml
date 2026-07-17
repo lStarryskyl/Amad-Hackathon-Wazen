@@ -236,6 +236,12 @@ importers:
 
   artifacts/finance-mobile:
     dependencies:
+      '@expo-google-fonts/lora':
+        specifier: ^0.4.2
+        version: 0.4.2
+      '@expo-google-fonts/outfit':
+        specifier: ^0.4.3
+        version: 0.4.3
       expo-notifications:
         specifier: ^57.0.2
         version: 57.0.2(expo@54.0.35)(react-native@0.81.5(@babel/core@7.29.7)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)(typescript@5.9.3)
@@ -1450,6 +1456,12 @@ packages:
 
   '@expo-google-fonts/inter@0.4.2':
     resolution: {integrity: sha512-syfiImMaDmq7cFi0of+waE2M4uSCyd16zgyWxdPOY7fN2VBmSLKEzkfbZgeOjJq61kSqPBNNtXjggiQiSD6gMQ==}
+
+  '@expo-google-fonts/lora@0.4.2':
+    resolution: {integrity: sha512-Bnofh2mIOUKp4KUS48VjaBgug4lQOcw/ftU0NFv5OPtiutL422//G1v63xDZEMUEL6ft4fi5q94/uKcpDjbPag==}
+
+  '@expo-google-fonts/outfit@0.4.3':
+    resolution: {integrity: sha512-2uQmDVJencWLllxds6SG92E+SjxyZfvg7eZKZ5XLHggmm5AuUyQK7lzMAFOUzT6kheq2kJ7BAiubMdjKT32fJg==}
 
   '@expo/cli@54.0.23':
     resolution: {integrity: sha512-km0h72SFfQCmVycH/JtPFTVy69w6Lx1cHNDmfLfQqgKFYeeHTjx7LVDP4POHCtNxFP2UeRazrygJhlh4zz498g==}
@@ -8242,6 +8254,10 @@ snapshots:
     optional: true
 
   '@expo-google-fonts/inter@0.4.2': {}
+
+  '@expo-google-fonts/lora@0.4.2': {}
+
+  '@expo-google-fonts/outfit@0.4.3': {}
 
   '@expo/cli@54.0.23(expo-router@6.0.24)(expo@54.0.35)(react-native@0.81.5(@babel/core@7.29.7)(@types/react@19.1.17)(react@19.1.0))(typescript@5.9.3)':
     dependencies:

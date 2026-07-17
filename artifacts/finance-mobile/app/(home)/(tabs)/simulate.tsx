@@ -115,7 +115,7 @@ function BalanceChart({ dataPoints, width }: { dataPoints: MonthDataPoint[]; wid
           return (
             <G key={idx}>
               <Line x1={padLeft} y1={y} x2={width - 8} y2={y} stroke={colors.border} strokeWidth={1} strokeDasharray="3,3" />
-              <SvgText x={padLeft - 4} y={y + 4} fill={colors.mutedForeground} fontSize={9} textAnchor="end">
+              <SvgText x={padLeft - 4} y={y + 4} fill={colors.mutedForeground} fontSize={10} fontFamily="Outfit_500Medium" textAnchor="end">
                 {fmt(v)}
               </SvgText>
             </G>
@@ -126,7 +126,7 @@ function BalanceChart({ dataPoints, width }: { dataPoints: MonthDataPoint[]; wid
           const d = dataPoints[i];
           const x = toX(i);
           return (
-            <SvgText key={i} x={x} y={H - 6} fill={colors.mutedForeground} fontSize={9} textAnchor="middle">
+            <SvgText key={i} x={x} y={H - 6} fill={colors.mutedForeground} fontSize={10} fontFamily="Outfit_500Medium" textAnchor="middle">
               {d.label}
             </SvgText>
           );
@@ -209,7 +209,7 @@ function CompareChart({
           return (
             <G key={idx}>
               <Line x1={padLeft} y1={y} x2={width - 8} y2={y} stroke={colors.border} strokeWidth={1} strokeDasharray="3,3" />
-              <SvgText x={padLeft - 4} y={y + 4} fill={colors.mutedForeground} fontSize={9} textAnchor="end">
+              <SvgText x={padLeft - 4} y={y + 4} fill={colors.mutedForeground} fontSize={10} fontFamily="Outfit_500Medium" textAnchor="end">
                 {fmt(v)}
               </SvgText>
             </G>
@@ -227,7 +227,7 @@ function CompareChart({
           const src = srcA || srcB;
           const x = padLeft + (i / Math.max(maxLen - 1, 1)) * cw;
           return (
-            <SvgText key={i} x={x} y={H - 6} fill={colors.mutedForeground} fontSize={9} textAnchor="middle">
+            <SvgText key={i} x={x} y={H - 6} fill={colors.mutedForeground} fontSize={10} fontFamily="Outfit_500Medium" textAnchor="middle">
               {src?.label ?? ""}
             </SvgText>
           );
@@ -237,11 +237,11 @@ function CompareChart({
       <View style={{ flexDirection: "row", gap: 20, marginTop: 8, paddingLeft: padLeft }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <View style={{ width: 20, height: 3, backgroundColor: COMPARE_COLOR_A, borderRadius: 2 }} />
-          <Text style={{ fontSize: 11, color: colors.mutedForeground }} numberOfLines={1}>{labelA}</Text>
+          <Text style={{ fontSize: 12, fontFamily: "Outfit_500Medium", color: colors.mutedForeground }} numberOfLines={1}>{labelA}</Text>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
           <View style={{ width: 20, height: 3, backgroundColor: COMPARE_COLOR_B, borderRadius: 2, borderStyle: "dashed" }} />
-          <Text style={{ fontSize: 11, color: colors.mutedForeground }} numberOfLines={1}>{labelB}</Text>
+          <Text style={{ fontSize: 12, fontFamily: "Outfit_500Medium", color: colors.mutedForeground }} numberOfLines={1}>{labelB}</Text>
         </View>
       </View>
     </View>
@@ -366,43 +366,43 @@ function ScenarioCard({
   if (isEditing) {
     return (
       <View style={[cardStyles.container, { backgroundColor: colors.card, borderColor: colors.primary, borderWidth: 2 }]}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 }}>
           <View style={[cardStyles.dot, { backgroundColor: changeColor }]} />
-          <Text style={{ fontSize: 11, fontWeight: "700", letterSpacing: 0.6, color: colors.primary, flex: 1 }}>EDITING SCENARIO</Text>
+          <Text style={{ fontSize: 12, fontFamily: "Outfit_700Bold", letterSpacing: 0.6, color: colors.primary, flex: 1 }}>EDITING SCENARIO</Text>
           <TouchableOpacity onPress={handleCancelEdit} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Feather name="x" size={16} color={colors.mutedForeground} />
+            <Feather name="x" size={18} color={colors.mutedForeground} />
           </TouchableOpacity>
         </View>
 
-        <Text style={{ fontSize: 11, color: colors.mutedForeground, marginBottom: 6, fontWeight: "600" }}>NAME</Text>
+        <Text style={{ fontSize: 12, color: colors.mutedForeground, marginBottom: 8, fontFamily: "Outfit_600SemiBold", textTransform: "uppercase", letterSpacing: 0.5 }}>NAME</Text>
         <TextInput
           value={editName}
           onChangeText={setEditName}
           placeholder="Scenario name"
           placeholderTextColor={colors.mutedForeground}
-          style={[gs.nameInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.cardElevated, marginBottom: 14 }]}
+          style={[gs.nameInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.cardElevated, marginBottom: 16 }]}
           maxLength={60}
           autoFocus
         />
 
-        <Text style={{ fontSize: 11, color: colors.mutedForeground, marginBottom: 6, fontWeight: "600" }}>NOTE (optional)</Text>
+        <Text style={{ fontSize: 12, color: colors.mutedForeground, marginBottom: 8, fontFamily: "Outfit_600SemiBold", textTransform: "uppercase", letterSpacing: 0.5 }}>NOTE (optional)</Text>
         <TextInput
           value={editNote}
           onChangeText={setEditNote}
           placeholder="e.g. aggressive savings plan, worst-case scenario…"
           placeholderTextColor={colors.mutedForeground}
-          style={[gs.nameInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.cardElevated, marginBottom: 16, fontSize: 14 }]}
+          style={[gs.nameInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.cardElevated, marginBottom: 20, fontSize: 15 }]}
           maxLength={120}
           multiline
         />
 
-        <View style={{ flexDirection: "row", gap: 10 }}>
+        <View style={{ flexDirection: "row", gap: 12 }}>
           <TouchableOpacity
             style={[cardStyles.editBtn, { backgroundColor: colors.cardElevated, borderWidth: 1, borderColor: colors.border, flex: 1 }]}
             onPress={handleCancelEdit}
             activeOpacity={0.8}
           >
-            <Text style={{ fontSize: 14, fontWeight: "600", color: colors.textSecondary }}>Cancel</Text>
+            <Text style={{ fontSize: 15, fontFamily: "Outfit_600SemiBold", color: colors.textSecondary }}>Cancel</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[cardStyles.editBtn, { backgroundColor: colors.primary, flex: 2, opacity: isSaving ? 0.7 : 1 }]}
@@ -412,8 +412,8 @@ function ScenarioCard({
           >
             {isSaving
               ? <ActivityIndicator size="small" color="#fff" />
-              : <Feather name="check" size={15} color="#fff" />}
-            <Text style={{ fontSize: 14, fontWeight: "700", color: "#fff" }}>{isSaving ? "Saving…" : "Save"}</Text>
+              : <Feather name="check" size={16} color="#fff" />}
+            <Text style={{ fontSize: 15, fontFamily: "Outfit_700Bold", color: "#fff" }}>{isSaving ? "Saving…" : "Save"}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -436,7 +436,7 @@ function ScenarioCard({
               cardStyles.checkbox,
               { borderColor: selected ? COMPARE_COLOR_A : colors.border, backgroundColor: selected ? COMPARE_COLOR_A : "transparent" },
             ]}>
-              {selected && <Feather name="check" size={11} color="#fff" />}
+              {selected && <Feather name="check" size={12} color="#fff" />}
             </View>
           ) : (
             <View style={[cardStyles.dot, { backgroundColor: changeColor }]} />
@@ -445,30 +445,30 @@ function ScenarioCard({
             style={{ flex: 1 }}
             onPress={selectMode ? onToggleSelect : () => setIsEditing(true)}
             activeOpacity={0.7}
-            hitSlop={{ top: 4, bottom: 4, left: 0, right: 0 }}
+            hitSlop={{ top: 8, bottom: 8, left: 0, right: 0 }}
           >
             <Text style={[cardStyles.title, { color: colors.text }]} numberOfLines={1}>
               {run.scenarioName}
             </Text>
             {currentNote ? (
-              <Text style={{ fontSize: 12, color: colors.mutedForeground, marginTop: 1 }} numberOfLines={1}>
+              <Text style={{ fontSize: 13, fontFamily: "Outfit_400Regular", color: colors.mutedForeground, marginTop: 2 }} numberOfLines={1}>
                 {currentNote}
               </Text>
             ) : !selectMode ? (
-              <Text style={{ fontSize: 11, color: colors.primary + "80", marginTop: 1 }}>
+              <Text style={{ fontSize: 12, fontFamily: "Outfit_500Medium", color: colors.primary + "80", marginTop: 2 }}>
                 Tap to rename / add note
               </Text>
             ) : null}
           </TouchableOpacity>
           {!selectMode && (
-            <TouchableOpacity onPress={() => setIsEditing(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ marginRight: 8 }}>
-              <Feather name="edit-2" size={13} color={colors.mutedForeground} />
+            <TouchableOpacity onPress={() => setIsEditing(true)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ marginRight: 10 }}>
+              <Feather name="edit-2" size={14} color={colors.mutedForeground} />
             </TouchableOpacity>
           )}
         </View>
         {!selectMode && (
           <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Feather name="trash-2" size={14} color={colors.mutedForeground} />
+            <Feather name="trash-2" size={16} color={colors.mutedForeground} />
           </TouchableOpacity>
         )}
       </View>
@@ -493,7 +493,7 @@ function ScenarioCard({
       </View>
 
       {results.dataPoints && results.dataPoints.length > 1 && (
-        <View style={{ marginBottom: 8 }}>
+        <View style={{ marginBottom: 10 }}>
           <MiniSparkline dataPoints={results.dataPoints} color={changeColor} />
         </View>
       )}
@@ -504,18 +504,18 @@ function ScenarioCard({
 }
 
 const cardStyles = StyleSheet.create({
-  container: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 12 },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  titleRow: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  checkbox: { width: 20, height: 20, borderRadius: 6, borderWidth: 2, justifyContent: "center", alignItems: "center" },
-  title: { fontSize: 16, fontWeight: "700" },
-  metrics: { flexDirection: "row", gap: 16, marginBottom: 12 },
+  container: { borderRadius: 24, borderWidth: 1, padding: 20, marginBottom: 16, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 12, elevation: 2 },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
+  titleRow: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
+  dot: { width: 10, height: 10, borderRadius: 5 },
+  checkbox: { width: 22, height: 22, borderRadius: 8, borderWidth: 2, justifyContent: "center", alignItems: "center" },
+  title: { fontSize: 17, fontFamily: "Outfit_700Bold" },
+  metrics: { flexDirection: "row", gap: 16, marginBottom: 16 },
   metric: { flex: 1 },
-  metricLabel: { fontSize: 11, marginBottom: 2 },
-  metricValue: { fontSize: 15, fontWeight: "700" },
-  date: { fontSize: 11 },
-  editBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 12, borderRadius: 10 },
+  metricLabel: { fontSize: 12, fontFamily: "Outfit_500Medium", marginBottom: 4 },
+  metricValue: { fontSize: 16, fontFamily: "Outfit_700Bold" },
+  date: { fontSize: 12, fontFamily: "Outfit_400Regular" },
+  editBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 14, borderRadius: 16 },
 });
 
 // ─── Empty state ──────────────────────────────────────────────────────────────
@@ -523,8 +523,8 @@ const cardStyles = StyleSheet.create({
 function EmptyState({ onNew, onExample, colors }: { onNew: () => void; onExample: (prompt: string) => void; colors: ReturnType<typeof useColors> }) {
   return (
     <View style={emptyStyles.container}>
-      <View style={[emptyStyles.icon, { backgroundColor: colors.primary + "20" }]}>
-        <Feather name="message-circle" size={36} color={colors.primary} />
+      <View style={[emptyStyles.icon, { backgroundColor: colors.primary + "15" }]}>
+        <Feather name="message-circle" size={40} color={colors.primary} />
       </View>
       <Text style={[emptyStyles.title, { color: colors.text }]}>Ask a what-if question</Text>
       <Text style={[emptyStyles.desc, { color: colors.mutedForeground }]}>
@@ -533,13 +533,13 @@ function EmptyState({ onNew, onExample, colors }: { onNew: () => void; onExample
       <View style={emptyStyles.chips}>
         {EXAMPLE_PROMPTS.slice(0, 3).map((ex) => (
           <TouchableOpacity key={ex} onPress={() => onExample(ex)} activeOpacity={0.7} style={[emptyStyles.chip, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Feather name="zap" size={11} color={colors.primary} />
+            <Feather name="zap" size={12} color={colors.primary} />
             <Text style={[emptyStyles.chipText, { color: colors.mutedForeground }]}>{ex}</Text>
           </TouchableOpacity>
         ))}
       </View>
       <TouchableOpacity style={[emptyStyles.btn, { backgroundColor: colors.primary }]} onPress={onNew} activeOpacity={0.8}>
-        <Feather name="edit-3" size={16} color="#fff" />
+        <Feather name="edit-3" size={18} color="#fff" />
         <Text style={emptyStyles.btnText}>Ask Your First Question</Text>
       </TouchableOpacity>
     </View>
@@ -548,14 +548,14 @@ function EmptyState({ onNew, onExample, colors }: { onNew: () => void; onExample
 
 const emptyStyles = StyleSheet.create({
   container: { alignItems: "center", paddingTop: 60, paddingBottom: 40 },
-  icon: { width: 80, height: 80, borderRadius: 40, justifyContent: "center", alignItems: "center", marginBottom: 20 },
-  title: { fontSize: 22, fontWeight: "700", marginBottom: 10 },
-  desc: { fontSize: 15, textAlign: "center", lineHeight: 22, marginBottom: 28, maxWidth: 280 },
-  chips: { gap: 8, marginBottom: 32, alignSelf: "stretch" },
-  chip: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 10, borderWidth: 1, padding: 12 },
-  chipText: { fontSize: 13 },
-  btn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14 },
-  btnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  icon: { width: 96, height: 96, borderRadius: 48, justifyContent: "center", alignItems: "center", marginBottom: 24 },
+  title: { fontSize: 24, fontFamily: "Lora_700Bold", marginBottom: 12 },
+  desc: { fontSize: 16, fontFamily: "Outfit_400Regular", textAlign: "center", lineHeight: 24, marginBottom: 32, maxWidth: 300 },
+  chips: { gap: 10, marginBottom: 40, alignSelf: "stretch" },
+  chip: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 16, borderWidth: 1, padding: 16 },
+  chipText: { fontSize: 14, fontFamily: "Outfit_500Medium" },
+  btn: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 28, paddingVertical: 18, borderRadius: 24 },
+  btnText: { color: "#fff", fontSize: 16, fontFamily: "Outfit_700Bold" },
 });
 
 // ─── Goal timeline row ────────────────────────────────────────────────────────
@@ -564,17 +564,17 @@ function GoalTimelineRow({ goal, colors }: { goal: any; colors: ReturnType<typeo
   const pct = Math.min(100, (goal.currentAmount / goal.targetAmount) * 100);
   const willFinish = goal.monthsToComplete !== null;
   return (
-    <View style={{ marginBottom: 14 }}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
-        <Text style={{ fontSize: 13, fontWeight: "600", color: colors.text, flex: 1 }} numberOfLines={1}>
+    <View style={{ marginBottom: 16 }}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
+        <Text style={{ fontSize: 14, fontFamily: "Outfit_600SemiBold", color: colors.text, flex: 1 }} numberOfLines={1}>
           {goal.goalName}
         </Text>
-        <Text style={{ fontSize: 12, fontWeight: "500", color: willFinish ? colors.accent : colors.mutedForeground, marginLeft: 8 }}>
+        <Text style={{ fontSize: 13, fontFamily: "Outfit_500Medium", color: willFinish ? colors.accent : colors.mutedForeground, marginLeft: 8 }}>
           {willFinish ? `✓ ${goal.completionLabel}` : "Beyond horizon"}
         </Text>
       </View>
-      <View style={{ height: 4, borderRadius: 2, backgroundColor: colors.border, overflow: "hidden" }}>
-        <View style={{ height: "100%", borderRadius: 2, minWidth: 4, width: `${pct}%`, backgroundColor: willFinish ? colors.accent : colors.mutedForeground }} />
+      <View style={{ height: 6, borderRadius: 3, backgroundColor: colors.border, overflow: "hidden" }}>
+        <View style={{ height: "100%", borderRadius: 3, minWidth: 4, width: `${pct}%`, backgroundColor: willFinish ? colors.accent : colors.mutedForeground }} />
       </View>
     </View>
   );
@@ -584,9 +584,9 @@ function GoalTimelineRow({ goal, colors }: { goal: any; colors: ReturnType<typeo
 
 function InputSummaryRow({ label, value, colors }: { label: string; value: string; colors: ReturnType<typeof useColors> }) {
   return (
-    <View style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 6 }}>
-      <Text style={{ fontSize: 13, color: colors.mutedForeground }}>{label}</Text>
-      <Text style={{ fontSize: 13, fontWeight: "600", color: colors.textSecondary }}>{value}</Text>
+    <View style={{ flexDirection: "row", justifyContent: "space-between", paddingVertical: 8 }}>
+      <Text style={{ fontSize: 14, fontFamily: "Outfit_400Regular", color: colors.mutedForeground }}>{label}</Text>
+      <Text style={{ fontSize: 14, fontFamily: "Outfit_600SemiBold", color: colors.textSecondary }}>{value}</Text>
     </View>
   );
 }
@@ -610,15 +610,15 @@ function DiffRow({
     <View style={diffStyles.row}>
       <Text style={[diffStyles.label, { color: colors.mutedForeground }]}>{label}</Text>
       <View style={diffStyles.values}>
-        <View style={[diffStyles.cell, winnerIsA === true && { backgroundColor: COMPARE_COLOR_A + "20", borderRadius: 8 }]}>
-          {winnerIsA === true && <Feather name="award" size={10} color={COMPARE_COLOR_A} style={{ marginRight: 3 }} />}
-          <Text style={[diffStyles.val, { color: winnerIsA === true ? COMPARE_COLOR_A : colors.textSecondary, fontWeight: winnerIsA === true ? "800" : "600" }]}>
+        <View style={[diffStyles.cell, winnerIsA === true && { backgroundColor: COMPARE_COLOR_A + "20", borderRadius: 10 }]}>
+          {winnerIsA === true && <Feather name="award" size={12} color={COMPARE_COLOR_A} style={{ marginRight: 4 }} />}
+          <Text style={[diffStyles.val, { color: winnerIsA === true ? COMPARE_COLOR_A : colors.textSecondary, fontFamily: winnerIsA === true ? "Outfit_700Bold" : "Outfit_600SemiBold" }]}>
             {valueA}
           </Text>
         </View>
-        <View style={[diffStyles.cell, winnerIsA === false && { backgroundColor: COMPARE_COLOR_B + "20", borderRadius: 8 }]}>
-          {winnerIsA === false && <Feather name="award" size={10} color={COMPARE_COLOR_B} style={{ marginRight: 3 }} />}
-          <Text style={[diffStyles.val, { color: winnerIsA === false ? COMPARE_COLOR_B : colors.textSecondary, fontWeight: winnerIsA === false ? "800" : "600" }]}>
+        <View style={[diffStyles.cell, winnerIsA === false && { backgroundColor: COMPARE_COLOR_B + "20", borderRadius: 10 }]}>
+          {winnerIsA === false && <Feather name="award" size={12} color={COMPARE_COLOR_B} style={{ marginRight: 4 }} />}
+          <Text style={[diffStyles.val, { color: winnerIsA === false ? COMPARE_COLOR_B : colors.textSecondary, fontFamily: winnerIsA === false ? "Outfit_700Bold" : "Outfit_600SemiBold" }]}>
             {valueB}
           </Text>
         </View>
@@ -628,11 +628,11 @@ function DiffRow({
 }
 
 const diffStyles = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "center", paddingVertical: 10, borderBottomWidth: 1 },
-  label: { fontSize: 13, flex: 1 },
-  values: { flexDirection: "row", gap: 8 },
-  cell: { width: 90, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", paddingHorizontal: 8, paddingVertical: 4 },
-  val: { fontSize: 14 },
+  row: { flexDirection: "row", alignItems: "center", paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth },
+  label: { fontSize: 14, fontFamily: "Outfit_400Regular", flex: 1 },
+  values: { flexDirection: "row", gap: 10 },
+  cell: { width: 96, flexDirection: "row", alignItems: "center", justifyContent: "flex-end", paddingHorizontal: 10, paddingVertical: 6 },
+  val: { fontSize: 15 },
 });
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
@@ -1494,19 +1494,19 @@ export default function SimulateScreen() {
 // ─── Compare column header styles ─────────────────────────────────────────────
 
 const compareColStyles = StyleSheet.create({
-  headerRow: { flexDirection: "row", marginBottom: 16, borderRadius: 16, overflow: "hidden", borderWidth: 1 },
+  headerRow: { flexDirection: "row", marginBottom: 20, borderRadius: 24, overflow: "hidden", borderWidth: 1, backgroundColor: "transparent" },
   labelCol: { flex: 1 },
-  col: { flex: 2, borderLeftWidth: 1, padding: 12, alignItems: "center" },
-  colorDot: { width: 10, height: 10, borderRadius: 5, marginBottom: 6 },
-  colTitle: { fontSize: 13, fontWeight: "700", textAlign: "center", marginBottom: 2 },
-  colSub: { fontSize: 11, textAlign: "center" },
-  colNote: { fontSize: 11, textAlign: "center", marginTop: 6, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, lineHeight: 16 },
+  col: { flex: 2, borderLeftWidth: 1, padding: 16, alignItems: "center" },
+  colorDot: { width: 12, height: 12, borderRadius: 6, marginBottom: 8 },
+  colTitle: { fontSize: 14, fontFamily: "Outfit_700Bold", textAlign: "center", marginBottom: 4 },
+  colSub: { fontSize: 12, fontFamily: "Outfit_400Regular", textAlign: "center" },
+  colNote: { fontSize: 12, fontFamily: "Outfit_400Regular", textAlign: "center", marginTop: 8, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, lineHeight: 18 },
 });
 
 const compareHintStyles = StyleSheet.create({
-  banner: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 16 },
-  text: { flex: 1, fontSize: 12, lineHeight: 18 },
-  btn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  banner: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 20, borderWidth: 1, padding: 16, marginBottom: 24 },
+  text: { flex: 1, fontSize: 13, lineHeight: 20, fontFamily: "Outfit_500Medium" },
+  btn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
 });
 
 // ─── Global styles ────────────────────────────────────────────────────────────
@@ -1514,27 +1514,27 @@ const compareHintStyles = StyleSheet.create({
 const gs = StyleSheet.create({
   flex: { flex: 1 },
   center: { alignItems: "center", paddingVertical: 60 },
-  pageHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 },
-  pageTitle: { fontSize: 28, fontWeight: "800", marginBottom: 4 },
-  pageSubtitle: { fontSize: 14 },
-  newBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12 },
-  newBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
-  navRow: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
-  navBtn: { width: 36, height: 36, justifyContent: "center", alignItems: "center" },
-  navTitle: { fontSize: 18, fontWeight: "700", flex: 1, textAlign: "center", marginHorizontal: 4 },
-  section: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 16 },
-  sectionLabel: { fontSize: 11, fontWeight: "700", letterSpacing: 0.8, marginBottom: 14 },
-  nameInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, fontWeight: "600" },
-  promptInput: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 12, fontSize: 16, minHeight: 92, textAlignVertical: "top", lineHeight: 22 },
-  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1 },
-  chipText: { fontSize: 13, fontWeight: "600" },
-  fixedBottom: { paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1 },
-  runBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 16, borderRadius: 16 },
-  runBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  heroCard: { borderRadius: 20, borderWidth: 1, padding: 24, alignItems: "center", marginBottom: 16 },
-  heroLabel: { fontSize: 13, marginBottom: 8, fontWeight: "500" },
-  heroValue: { fontSize: 44, fontWeight: "900", marginBottom: 4 },
-  heroSub: { fontSize: 14 },
-  metricsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 16 },
+  pageHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 },
+  pageTitle: { fontSize: 36, fontFamily: "Lora_700Bold", marginBottom: 4, letterSpacing: -0.5 },
+  pageSubtitle: { fontSize: 16, fontFamily: "Outfit_400Regular" },
+  newBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20 },
+  newBtnText: { color: "#fff", fontFamily: "Outfit_700Bold", fontSize: 14 },
+  navRow: { flexDirection: "row", alignItems: "center", marginBottom: 24 },
+  navBtn: { width: 44, height: 44, borderRadius: 22, justifyContent: "center", alignItems: "center", backgroundColor: "transparent" },
+  navTitle: { fontSize: 22, fontFamily: "Lora_700Bold", flex: 1, textAlign: "center", marginHorizontal: 8 },
+  section: { borderRadius: 24, borderWidth: 1, padding: 20, marginBottom: 24, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 12, elevation: 2 },
+  sectionLabel: { fontSize: 12, fontFamily: "Outfit_700Bold", letterSpacing: 1, marginBottom: 16, textTransform: "uppercase" },
+  nameInput: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 16, fontSize: 16, fontFamily: "Outfit_500Medium" },
+  promptInput: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16, fontSize: 16, fontFamily: "Outfit_500Medium", minHeight: 100, textAlignVertical: "top", lineHeight: 24 },
+  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  chip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 16, borderWidth: 1 },
+  chipText: { fontSize: 14, fontFamily: "Outfit_600SemiBold" },
+  fixedBottom: { paddingHorizontal: 20, paddingTop: 16, borderTopWidth: 1 },
+  runBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 18, borderRadius: 24 },
+  runBtnText: { color: "#fff", fontSize: 16, fontFamily: "Outfit_700Bold" },
+  heroCard: { borderRadius: 32, borderWidth: 1, padding: 32, alignItems: "center", marginBottom: 24 },
+  heroLabel: { fontSize: 15, marginBottom: 12, fontFamily: "Outfit_500Medium" },
+  heroValue: { fontSize: 56, fontFamily: "Lora_700Bold", marginBottom: 8, letterSpacing: -1.5 },
+  heroSub: { fontSize: 16, fontFamily: "Outfit_400Regular" },
+  metricsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 24 },
 });

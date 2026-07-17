@@ -54,11 +54,20 @@ function ClassicTabLayout() {
         tabBarStyle: {
           position: "absolute",
           backgroundColor: isIOS ? "transparent" : colors.background,
-          borderTopWidth: isWeb ? 1 : 0,
+          borderTopWidth: 1,
           borderTopColor: colors.border,
           elevation: 0,
           paddingBottom: isWeb ? 0 : safeAreaInsets.bottom,
-          height: isWeb ? 84 : undefined,
+          paddingTop: 8,
+          height: isWeb ? 84 : 64 + safeAreaInsets.bottom,
+        },
+        tabBarItemStyle: {
+          paddingBottom: 4,
+        },
+        tabBarLabelStyle: {
+          fontFamily: "Outfit_500Medium",
+          fontSize: 11,
+          marginTop: 2,
         },
         tabBarBackground: () =>
           isIOS ? (
