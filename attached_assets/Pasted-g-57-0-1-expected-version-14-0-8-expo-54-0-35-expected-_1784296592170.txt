@@ -1,0 +1,77 @@
+g@57.0.1 - expected version: ~14.0.8
+  expo@54.0.35 - expected version: ~54.0.36
+Your project may not work correctly until you install the expected versions of the packages.
+▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
+█ ▄▄▄▄▄ █▀▀ ███▄█▀▀ ▄▀ ▄ ▀██ ▄█ ▄▄▄▄▄ █
+█ █   █ █▄▀██▀▀▄▄▀▄▀▄██▀ ▀█▀ ▄█ █   █ █
+█ █▄▄▄█ █ ▄ █ ██▀▀▀█▀█▀▄▄█▄  ▄█ █▄▄▄█ █
+█▄▄▄▄▄▄▄█ █ ▀▄▀▄▀ ▀▄█▄▀ ▀▄█ ▀ █▄▄▄▄▄▄▄█
+█  █ ██▄▄▀▀█  ▀▄▀ █▄▄▀▄ ██▄▀███  ▄█  ▀█
+█▀ ▀   ▄▀███   ▄▄▀▄█▄ ▀███ ▄▀ █▄▀▀▄▄▀ █
+█▀▄██▄▀▄▄▀█▄ █▀  ▀ ▀▀▀▄▄█▀  ▄ ▀ ▄█▀▀ ▀█
+█▄▀ █▄█▄█▀ ▄ █▄▄▀█▀▄█▀▀▄▄▄▀▀▀███ █▀█  █
+██ ██▄▀▄▄▄▄ █  ▀▀▀▄██ ▄▄▀█▀▀█▄▀ ▄▀▄▄▀▀█
+█▀██  ▀▄▀ ▄█▄ █ ▄▄▀▀▀▀ ▀▀▀▄██▄ ▄▀█▀ ▀▄█
+█ █▀▀▀▀▄█▄█ ▀██▀ ▄▀▀▄▀▄▀█▄ ▄█ ▀  ▄▄█▄ █
+█▀██▄  ▄▄█ ▄███▀█▀█▄  ▀▀█▄▀ ▀▀▄ █▄ █▄▄█
+██▄▀█▀ ▄ ▀█ ▀ ████▄█▀▀ ▀██▄██▀█ ██ ██▀█
+█▄▀▄█ ▀▄██▀▄█ ▀▀▀▀ █▀█ ▄ ▄▀▄▀█ ▄▀▀█▄█▄█
+█▄▄▄▄█▄▄▄  ▀▄█▄▄█▀ ███▄ ▀█▀▄▄ ▄▄▄ ▀▄▄ █
+█ ▄▄▄▄▄ █▄██▀█ █▀▄▀ █▀  ▀▀█▄  █▄█ ▄▀▄▄█
+█ █   █ █▀█▄  ▀▄█ ▀▀█▀▄██▄▄▀█▄ ▄▄ ▀█▄▄█
+█ █▄▄▄█ █▀▀▀   ▄█▀██▄▄ ▄▀█ ▄  ▄█▄▄▄▄▄▄█
+█▄▄▄▄▄▄▄█▄██▄██▄▄▄▄▄▄▄▄▄██▄▄█▄█▄█▄██▄▄█
+
+› Metro waiting on
+exp://b458ccc8-6a30-4f00-94f1-0c0c99fbd093-00-2q8ump88nybzn.expo.riker.replit.dev
+› Scan the QR code above with Expo Go (Android) or the Camera app (iOS)
+
+› Web is waiting on http://localhost:21672
+
+› Using Expo Go
+› Press s │ switch to development build
+
+› Press a │ open Android
+› Press w │ open web
+
+› Press j │ open debugger
+› Press r │ reload app
+› Press m │ toggle menu
+› shift+m │ more tools
+› Press o │ open project code in your editor
+
+› Press ? │ show all commands
+
+Logs for your project will appear below. Press Ctrl+C to exit.
+Web Bundled 25275ms node_modules/.pnpm/expo-router@6.0.24_54ef691e9d2855cbffb47e3256c8ea65/node_modules/expo-router/entry.js (1692 modules)
+ LOG  [web] Logs will appear in the browser console
+Android Bundled 34983ms node_modules/.pnpm/expo-router@6.0.24_54ef691e9d2855cbffb47e3256c8ea65/node_modules/expo-router/entry.js (2034 modules)
+ WARN  setLayoutAnimationEnabledExperimental is currently a no-op in the New Architecture.
+ WARN  Route "./(home)/_layout.tsx" is missing the required default export. Ensure a React component is exported as default.
+ ERROR  [Error: expo-notifications: Android Push notifications (remote notifications) functionality provided by expo-notifications was removed from Expo Go with the release of SDK 53. Use a development build instead of Expo Go. Learn more at https://docs.expo.dev/develop/development-builds/introduction/.] 
+
+Code: usePushNotifications.ts
+  1 | import { useEffect, useRef } from "react";
+  2 | import { Platform } from "react-native";
+> 3 | import * as Notifications from "expo-notifications";
+    | ^
+  4 | import { useRouter } from "expo-router";
+  5 | import { registerPushToken } from "@workspace/api-client-react";
+  6 |
+Call Stack
+  <global> (artifacts/finance-mobile/hooks/usePushNotifications.ts:3)
+  <global> (artifacts/finance-mobile/app/(home)/_layout.tsx:7)
+ ERROR  [Error: @clerk/clerk-js: The publishableKey passed to Clerk is invalid. You can get your Publishable key at https://dashboard.clerk.com/last-active?path=api-keys. (key=[10:30 PM, 7/16/2026] Omar Sufyan: pk_test_d2FudGVkLWtpd2ktMzguY2xlcmsu YWNjb3VudHMuZGV2JA  publishable key  sk_test_oVBKqujYs3heP5OzhiH4NObVG94e RG6wtlbiBmcJFb  secret [10:30 PM, 7/16/2026] Omar Sufyan: from openai import OpenAI import os import sys  _USE_COLOR = sys.stdout.isatty() and os.getenv("NO_COLOR") is None _REASONING_COLOR = "\033[90m" if _USE_COLOR else "" _RESET_COLOR = "\033[0m" if _USE_COLOR else ""  client = OpenAI(   base_url = "https://integrate.api.nvidia.com/v1",   api_key = "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" )   completion = client.chat.completions.create(   model="z-ai/glm-5.2",   messages=[{"role":"user","content":""}],   temperature=1,   top_p=1,   max_tokens=16384,   seed=42,      stream=True )  for chunk in completion:   if not getattr(chunk, "choices", None):     continue   if len(chunk.choices) == 0 or getattr(chunk.choices[0], "delta", None) is None:     continue   delta = chunk.choices[0].delta   if getattr(delta, "content", None) is not None:     print(delta.content, end=""))] 
+
+Code: _layout.tsx
+  75 |
+  76 |   return (
+> 77 |     <ClerkProvider
+     |     ^
+  78 |       publishableKey={publishableKey}
+  79 |       proxyUrl={proxyUrl}
+  80 |     >
+Call Stack
+  RootLayout (artifacts/finance-mobile/app/_layout.tsx:77:5)
+Could not open editor, you can set it by defining the $EDITOR environment variable with the binary of your editor. (e.g. "vscode" or "atom")
+› Stopped server
