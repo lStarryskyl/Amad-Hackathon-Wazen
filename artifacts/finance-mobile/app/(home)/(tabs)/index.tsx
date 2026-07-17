@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { shadow } from "@/utils/shadow";
 import {
   View,
   Text,
@@ -535,11 +536,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 16,
     borderWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 16,
-    elevation: 2,
+    ...shadow({ opacity: 0.03, radius: 16, elevation: 2 }),
   },
   checkinLeft: { flexDirection: "row", alignItems: "center", gap: 16, flex: 1 },
   checkinTitle: { fontSize: 16, fontFamily: "Outfit_600SemiBold", marginBottom: 4 },
@@ -557,7 +554,7 @@ const styles = StyleSheet.create({
   healthScoreLabel: { fontSize: 11, fontFamily: "Outfit_600SemiBold", marginTop: 2, textTransform: "uppercase", letterSpacing: 0.5 },
 
   achModalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "center", alignItems: "center", padding: 24 },
-  achModalCard: { borderRadius: 32, padding: 32, alignItems: "center", width: "100%", maxWidth: 340, shadowColor: "#000", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20 },
+  achModalCard: { borderRadius: 32, padding: 32, alignItems: "center", width: "100%", maxWidth: 340, ...shadow({ offsetY: 10, opacity: 0.1, radius: 20 }) },
   achModalEmoji: { fontSize: 64, marginBottom: 16 },
   achModalTitle: { fontSize: 14, fontFamily: "Outfit_600SemiBold", marginBottom: 6, opacity: 0.7, textTransform: "uppercase", letterSpacing: 1 },
   achModalName: { fontSize: 28, fontFamily: "Lora_700Bold", marginBottom: 12, textAlign: "center" },
@@ -596,7 +593,7 @@ const styles = StyleSheet.create({
   alertTime: { fontSize: 12, fontFamily: "Outfit_400Regular" },
   unreadDot: { width: 10, height: 10, borderRadius: 5, marginTop: 8 },
 
-  balanceCard: { marginHorizontal: 20, padding: 28, borderRadius: 32, marginBottom: 28, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 16, elevation: 2 },
+  balanceCard: { marginHorizontal: 20, padding: 28, borderRadius: 32, marginBottom: 28, ...shadow({ opacity: 0.03, radius: 16, elevation: 2 }) },
   balanceLabel: { fontSize: 14, fontFamily: "Outfit_500Medium", marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 },
   balanceAmount: { fontSize: 44, fontFamily: "Lora_700Bold", marginBottom: 16, letterSpacing: -1 },
   balanceChangeContainer: { flexDirection: "row", alignItems: "center" },
@@ -651,7 +648,7 @@ const styles = StyleSheet.create({
   regretTeaserTitle: { fontSize: 15, fontFamily: "Outfit_700Bold", marginBottom: 4 },
   regretTeaserLevel: { fontSize: 14, fontFamily: "Outfit_600SemiBold" },
 
-  categoriesCard: { marginHorizontal: 20, padding: 24, borderRadius: 28, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 16, elevation: 2 },
+  categoriesCard: { marginHorizontal: 20, padding: 24, borderRadius: 28, ...shadow({ opacity: 0.03, radius: 16, elevation: 2 }) },
   categoryRow: { marginBottom: 20 },
   categoryInfo: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
   categoryIcon: { width: 32, height: 32, borderRadius: 16, justifyContent: "center", alignItems: "center", marginRight: 12 },
@@ -661,7 +658,7 @@ const styles = StyleSheet.create({
   categoryBarFill: { height: "100%", borderRadius: 4 },
   categoryPercent: { fontSize: 13, fontFamily: "Outfit_600SemiBold", width: 40 },
 
-  transactionsList: { marginHorizontal: 20, borderRadius: 28, padding: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 16, elevation: 2 },
+  transactionsList: { marginHorizontal: 20, borderRadius: 28, padding: 20, ...shadow({ opacity: 0.03, radius: 16, elevation: 2 }) },
   transactionItem: {
     flexDirection: "row",
     justifyContent: "space-between",

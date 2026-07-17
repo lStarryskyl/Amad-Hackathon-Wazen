@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { shadow } from "@/utils/shadow";
 import {
   View,
   Text,
@@ -661,11 +662,7 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     padding: 24,
     marginBottom: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 16,
-    elevation: 2,
+    ...shadow({ opacity: 0.03, radius: 16, elevation: 2 }),
   },
   cardHeader: {
     flexDirection: "row",

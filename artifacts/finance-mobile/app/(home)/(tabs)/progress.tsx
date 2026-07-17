@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { shadow } from "@/utils/shadow";
 import {
   View,
   Text,
@@ -558,11 +559,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: "center",
     borderWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.02,
-    shadowRadius: 12,
-    elevation: 2,
+    ...shadow({ opacity: 0.02, radius: 12, elevation: 2 }),
   },
   streakFlame: { fontSize: 32, marginBottom: 8 },
   streakCount: { fontSize: 40, fontFamily: "Outfit_800Black" },
@@ -583,7 +580,7 @@ const styles = StyleSheet.create({
   achDot: { position: "absolute", top: 10, right: 10, width: 8, height: 8, borderRadius: 4 },
 
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", alignItems: "center", padding: 24 },
-  achDetailCard: { borderRadius: 32, padding: 32, alignItems: "center", width: "100%", maxWidth: 340, shadowColor: "#000", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20 },
+  achDetailCard: { borderRadius: 32, padding: 32, alignItems: "center", width: "100%", maxWidth: 340, ...shadow({ offsetY: 10, opacity: 0.1, radius: 20 }) },
   achDetailEmoji: { fontSize: 64, marginBottom: 16 },
   achDetailTitle: { fontSize: 24, fontFamily: "Lora_700Bold", marginBottom: 10 },
   achDetailDesc: { fontSize: 16, lineHeight: 24, fontFamily: "Outfit_400Regular", textAlign: "center", marginBottom: 16 },
@@ -591,7 +588,7 @@ const styles = StyleSheet.create({
   lockedBadge: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16 },
   lockedText: { fontSize: 14, fontFamily: "Outfit_500Medium" },
 
-  guardrailBar: { borderRadius: 24, padding: 20, marginBottom: 16, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 12, elevation: 2 },
+  guardrailBar: { borderRadius: 24, padding: 20, marginBottom: 16, ...shadow({ opacity: 0.02, radius: 12, elevation: 2 }) },
   guardrailBarHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   guardrailBarLeft: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
   guardrailDot: { width: 12, height: 12, borderRadius: 6 },
@@ -612,7 +609,7 @@ const styles = StyleSheet.create({
 
   addSmallBtn: { width: 36, height: 36, borderRadius: 18, justifyContent: "center", alignItems: "center" },
 
-  addModal: { borderRadius: 32, padding: 28, width: "100%", maxWidth: 380, shadowColor: "#000", shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20 },
+  addModal: { borderRadius: 32, padding: 28, width: "100%", maxWidth: 380, ...shadow({ offsetY: 10, opacity: 0.1, radius: 20 }) },
   addModalTitle: { fontSize: 24, fontFamily: "Lora_700Bold", marginBottom: 24 },
   fieldLabel: { fontSize: 13, fontFamily: "Outfit_600SemiBold", marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 },
   catChip: {
@@ -640,13 +637,13 @@ const styles = StyleSheet.create({
   modalSaveBtn: { flex: 1, paddingVertical: 16, borderRadius: 20, alignItems: "center" },
   modalSaveText: { fontSize: 16, fontFamily: "Outfit_700Bold", color: "#fff" },
 
-  statsBar: { flexDirection: "row", padding: 24, borderRadius: 28, marginBottom: 24, alignItems: "center", shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 12, elevation: 2 },
+  statsBar: { flexDirection: "row", padding: 24, borderRadius: 28, marginBottom: 24, alignItems: "center", ...shadow({ opacity: 0.02, radius: 12, elevation: 2 }) },
   statItem: { flex: 1, alignItems: "center" },
   statValue: { fontSize: 20, fontFamily: "Outfit_700Bold", marginBottom: 6 },
   statLabel: { fontSize: 13, fontFamily: "Outfit_500Medium" },
   statDivider: { width: 1, height: 40 },
 
-  goalCard: { borderRadius: 24, padding: 20, marginBottom: 16, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 12, elevation: 2 },
+  goalCard: { borderRadius: 24, padding: 20, marginBottom: 16, ...shadow({ opacity: 0.02, radius: 12, elevation: 2 }) },
   goalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   goalTitleContainer: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
   goalIcon: { width: 40, height: 40, borderRadius: 20, justifyContent: "center", alignItems: "center" },

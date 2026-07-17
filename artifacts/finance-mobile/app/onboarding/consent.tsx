@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { shadow, noShadow } from "@/utils/shadow";
 import {
   View,
   Text,
@@ -205,15 +206,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     flexDirection: "row",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
+    ...shadow({ opacity: 0.1, radius: 12, elevation: 4 }),
   },
   buttonDisabled: {
     opacity: 0.7,
-    shadowOpacity: 0,
+    ...noShadow,
   },
   buttonText: {
     color: "#FFFFFF",
@@ -223,7 +220,7 @@ const styles = StyleSheet.create({
   retryButton: {
     borderWidth: 2,
     backgroundColor: "transparent",
-    shadowOpacity: 0,
+    ...noShadow,
     elevation: 0,
   },
   retryIcon: {

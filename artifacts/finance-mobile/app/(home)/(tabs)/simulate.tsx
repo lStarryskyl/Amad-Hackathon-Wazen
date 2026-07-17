@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react";
+import { shadow } from "@/utils/shadow";
 import {
   View,
   Text,
@@ -504,7 +505,7 @@ function ScenarioCard({
 }
 
 const cardStyles = StyleSheet.create({
-  container: { borderRadius: 24, borderWidth: 1, padding: 20, marginBottom: 16, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 12, elevation: 2 },
+  container: { borderRadius: 24, borderWidth: 1, padding: 20, marginBottom: 16, ...shadow({ opacity: 0.02, radius: 12, elevation: 2 }) },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
   dot: { width: 10, height: 10, borderRadius: 5 },
@@ -1522,7 +1523,7 @@ const gs = StyleSheet.create({
   navRow: { flexDirection: "row", alignItems: "center", marginBottom: 24 },
   navBtn: { width: 44, height: 44, borderRadius: 22, justifyContent: "center", alignItems: "center", backgroundColor: "transparent" },
   navTitle: { fontSize: 22, fontFamily: "Lora_700Bold", flex: 1, textAlign: "center", marginHorizontal: 8 },
-  section: { borderRadius: 24, borderWidth: 1, padding: 20, marginBottom: 24, shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 12, elevation: 2 },
+  section: { borderRadius: 24, borderWidth: 1, padding: 20, marginBottom: 24, ...shadow({ opacity: 0.02, radius: 12, elevation: 2 }) },
   sectionLabel: { fontSize: 12, fontFamily: "Outfit_700Bold", letterSpacing: 1, marginBottom: 16, textTransform: "uppercase" },
   nameInput: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 16, fontSize: 16, fontFamily: "Outfit_500Medium" },
   promptInput: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16, fontSize: 16, fontFamily: "Outfit_500Medium", minHeight: 100, textAlignVertical: "top", lineHeight: 24 },

@@ -1,4 +1,5 @@
 import React from "react";
+import { shadow } from "@/utils/shadow";
 import {
   View,
   Text,
@@ -261,11 +262,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 28,
     marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 16,
-    elevation: 2,
+    ...shadow({ opacity: 0.03, radius: 16, elevation: 2 }),
   },
   formTitle: { fontSize: 22, fontFamily: "Lora_700Bold", marginBottom: 24 },
   verifyHint: { fontSize: 14, fontFamily: "Outfit_400Regular", marginBottom: 20, lineHeight: 22 },

@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { shadow } from "@/utils/shadow";
 import { reloadAppAsync } from "expo";
 import React, { useState } from "react";
 import {
@@ -214,14 +215,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 24,
     minWidth: 200,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    ...shadow({ offsetY: 2, opacity: 0.1, radius: 4, elevation: 3 }),
   },
   buttonText: {
     fontWeight: "600",

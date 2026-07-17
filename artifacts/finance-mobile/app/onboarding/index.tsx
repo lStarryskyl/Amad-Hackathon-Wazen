@@ -1,4 +1,5 @@
 import React from "react";
+import { shadow } from "@/utils/shadow";
 import {
   View,
   Text,
@@ -113,11 +114,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
+    ...shadow({ opacity: 0.1, radius: 12, elevation: 4 }),
   },
   buttonText: {
     color: "#FFFFFF",
