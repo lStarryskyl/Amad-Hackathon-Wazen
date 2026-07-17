@@ -9,3 +9,4 @@
 - [Playwright iteration limit](playwright-iteration-limit.md) — Playwright test runner has a hard 10-action budget (per-click, not per-step); mobile onboarding+simulation exceeds it; use server integration tests instead.
 - [Clerk device verification](clerk-device-verification.md) — new-device sign-ins demand an email_code second factor even with MFA off; handle needs_second_factor or UI stalls silently; +clerk_test emails use 424242.
 - [NVIDIA model latency](nvidia-model-latency.md) — some NVIDIA models hang forever (glm-5.2: 0 bytes in 270s); curl-test latency before wiring; llama-3.1-70b ~5s; avoid thinking models with small max_tokens.
+- [Dev auth bypass](dev-auth-bypass.md) — client DEV_BYPASS_AUTH flag + server dev-bypass-user fallback in requireAuth; ClerkLoaded must be skipped or app blanks on device.

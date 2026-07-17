@@ -12,7 +12,8 @@ export const requireConsent = async (req: Request, res: Response, next: NextFunc
     }
   }
 
-  const { userId } = getAuth(req);
+  // Prefer the userId already resolved by requireAuth (covers dev bypass).
+  const userId = (req as any).userId ?? getAuth(req).userId;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized", message: "Authentication required" });
     return;
