@@ -1,0 +1,21 @@
+{
+  "name": "Wazen — AI Personal Finance",
+  "short_name": "Wazen",
+  "description": "AI-powered financial balance. Score your spending, get rescue plans, and simulate what-if scenarios.",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "portrait",
+  "background_color": "#F6F7FB",
+  "theme_color": "#4F46E5",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "categories": ["finance", "productivity"],
+  "lang": "en"
+}

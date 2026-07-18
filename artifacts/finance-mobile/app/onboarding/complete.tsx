@@ -20,6 +20,7 @@ import Animated, {
   withDelay 
 } from "react-native-reanimated";
 import { useColors } from "@/hooks/useColors";
+import { PrimaryButton } from "@/components/ui";
 
 export default function OnboardingCompleteScreen() {
   const router = useRouter();
@@ -124,21 +125,13 @@ export default function OnboardingCompleteScreen() {
             </TouchableOpacity>
           </>
         ) : (
-          <TouchableOpacity
-            style={[
-              styles.button,
-              { backgroundColor: colors.primary },
-              isPending && styles.buttonDisabled,
-            ]}
+          <PrimaryButton
+            label="Go to Dashboard"
+            icon="arrow-right"
+            loading={isPending}
             onPress={handleFinish}
-            disabled={isPending}
-          >
-            {isPending ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.buttonText}>Go to Dashboard</Text>
-            )}
-          </TouchableOpacity>
+            hapticKind="success"
+          />
         )}
       </View>
     </View>

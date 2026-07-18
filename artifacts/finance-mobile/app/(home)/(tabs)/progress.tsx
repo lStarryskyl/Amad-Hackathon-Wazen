@@ -13,6 +13,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import {
@@ -24,12 +25,16 @@ import {
   useCreateGuardrail,
   useDeleteGuardrail,
   useCheckGuardrailAlerts,
+  useCreateGoal,
+  getGetGoalsQueryKey,
 } from "@workspace/api-client-react";
 import type { Streak, Achievement, GuardrailStanding } from "@workspace/api-client-react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useQueryClient } from "@tanstack/react-query";
+import { Radius } from "@/constants/colors";
+import { ScreenHeader, PrimaryButton, haptic } from "@/components/ui";
 
 // ─── Streak Card ──────────────────────────────────────────────────────────────
 
@@ -251,6 +256,7 @@ function GuardrailsSection({ colors, highlightId }: { colors: ReturnType<typeof 
 
   function handleCreate() {
     if (!limitAmount || isNaN(parseFloat(limitAmount))) return;
+    haptic("medium");
     createGuardrail({ categoryName: catName, period, limitAmount: parseFloat(limitAmount), color: catColor });
     checkAlerts();
   }
@@ -268,9 +274,9 @@ function GuardrailsSection({ colors, highlightId }: { colors: ReturnType<typeof 
         <Text style={[styles.sectionTitle, { color: colors.text }]}>🛡️ Safe Zones</Text>
         <TouchableOpacity
           style={[styles.addSmallBtn, { backgroundColor: colors.primary }]}
-          onPress={() => setShowAdd(true)}
+          onPress={() => { haptic("light"); setShowAdd(true); }}
         >
-          <Feather name="plus" size={16} color="#fff" />
+          <Feather name="plus" size={16} color={colors.primaryForeground} />
         </TouchableOpacity>
       </View>
 
@@ -372,7 +378,9 @@ function GuardrailsSection({ colors, highlightId }: { colors: ReturnType<typeof 
                 onPress={handleCreate}
                 disabled={!limitAmount || creating}
               >
-                {creating ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.modalSaveText}>Set Guardrail</Text>}
+                {creating
+                  ? <ActivityIndicator size="small" color={colors.primaryForeground} />
+                  : <Text style={[styles.modalSaveText, { color: colors.primaryForeground }]}>Set Guardrail</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -386,9 +394,45 @@ function GuardrailsSection({ colors, highlightId }: { colors: ReturnType<typeof 
 // ─── Goals Section ────────────────────────────────────────────────────────────
 
 function GoalsSection({ colors }: { colors: ReturnType<typeof useColors> }) {
+  const queryClient = useQueryClient();
   const { data: goals, isLoading } = useGetGoals();
   const activeGoals = goals?.filter((g) => g.status === "active") || [];
   const completedGoals = goals?.filter((g) => g.status === "completed") || [];
+
+  const [showAddGoal, setShowAddGoal] = useState(false);
+  const [goalName, setGoalName] = useState("");
+  const [goalTarget, setGoalTarget] = useState("");
+  const [goalSaved, setGoalSaved] = useState("");
+
+  const { mutate: createGoal, isPending: creatingGoal } = useCreateGoal({
+    mutation: {
+      onSuccess: () => {
+        haptic("success");
+        queryClient.invalidateQueries({ queryKey: getGetGoalsQueryKey() });
+        setShowAddGoal(false);
+        setGoalName("");
+        setGoalTarget("");
+        setGoalSaved("");
+      },
+      onError: () => Alert.alert("Error", "Could not create the goal. Please try again."),
+    },
+  });
+
+  const canCreateGoal =
+    goalName.trim().length > 0 && !isNaN(parseFloat(goalTarget)) && parseFloat(goalTarget) > 0;
+
+  function handleCreateGoal() {
+    if (!canCreateGoal) return;
+    createGoal({
+      data: {
+        name: goalName.trim(),
+        targetAmount: String(parseFloat(goalTarget)),
+        ...(goalSaved && !isNaN(parseFloat(goalSaved))
+          ? { currentAmount: String(parseFloat(goalSaved)) }
+          : {}),
+      },
+    });
+  }
 
   const totalSaved = goals?.reduce((acc, g) => acc + parseFloat(g.currentAmount), 0) || 0;
   const avgCompletion = goals && goals.length > 0
@@ -401,8 +445,11 @@ function GoalsSection({ colors }: { colors: ReturnType<typeof useColors> }) {
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>🎯 Goals</Text>
-        <TouchableOpacity style={[styles.addSmallBtn, { backgroundColor: colors.primary }]}>
-          <Feather name="plus" size={16} color="#fff" />
+        <TouchableOpacity
+          style={[styles.addSmallBtn, { backgroundColor: colors.primary }]}
+          onPress={() => { haptic("light"); setShowAddGoal(true); }}
+        >
+          <Feather name="plus" size={16} color={colors.primaryForeground} />
         </TouchableOpacity>
       </View>
 
@@ -436,10 +483,79 @@ function GoalsSection({ colors }: { colors: ReturnType<typeof useColors> }) {
         <View style={[styles.emptyGoals, { backgroundColor: colors.card }]}>
           <Feather name="target" size={40} color={colors.border} />
           <Text style={[styles.emptyGoalText, { color: colors.mutedForeground }]}>
-            No goals yet. Tap + to create your first goal.
+            No goals yet. Create your first savings goal.
           </Text>
+          <PrimaryButton
+            label="Create a Goal"
+            small
+            icon="plus"
+            onPress={() => setShowAddGoal(true)}
+            style={{ marginTop: 16 }}
+          />
         </View>
       )}
+
+      {/* ── Add goal modal ── */}
+      <Modal visible={showAddGoal} transparent animationType="slide" onRequestClose={() => setShowAddGoal(false)}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.addModal, { backgroundColor: colors.card }]}>
+              <Text style={[styles.addModalTitle, { color: colors.text }]}>New Goal</Text>
+
+              <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>What are you saving for?</Text>
+              <TextInput
+                style={[styles.amountInput, { backgroundColor: colors.cardElevated, color: colors.text, borderColor: colors.border, marginBottom: 20, fontSize: 16 }]}
+                placeholder="e.g. Emergency fund, Vacation…"
+                placeholderTextColor={colors.mutedForeground}
+                value={goalName}
+                onChangeText={setGoalName}
+                maxLength={60}
+              />
+
+              <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Target Amount ($)</Text>
+              <TextInput
+                style={[styles.amountInput, { backgroundColor: colors.cardElevated, color: colors.text, borderColor: colors.border, marginBottom: 20 }]}
+                placeholder="e.g. 5000"
+                placeholderTextColor={colors.mutedForeground}
+                keyboardType="numeric"
+                value={goalTarget}
+                onChangeText={setGoalTarget}
+              />
+
+              <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>Saved So Far ($ — optional)</Text>
+              <TextInput
+                style={[styles.amountInput, { backgroundColor: colors.cardElevated, color: colors.text, borderColor: colors.border }]}
+                placeholder="e.g. 500"
+                placeholderTextColor={colors.mutedForeground}
+                keyboardType="numeric"
+                value={goalSaved}
+                onChangeText={setGoalSaved}
+              />
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={[styles.modalCancelBtn, { borderColor: colors.border }]}
+                  onPress={() => setShowAddGoal(false)}
+                >
+                  <Text style={[styles.modalCancelText, { color: colors.mutedForeground }]}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalSaveBtn, { backgroundColor: colors.primary, opacity: (!canCreateGoal || creatingGoal) ? 0.6 : 1 }]}
+                  onPress={handleCreateGoal}
+                  disabled={!canCreateGoal || creatingGoal}
+                >
+                  {creatingGoal
+                    ? <ActivityIndicator size="small" color={colors.primaryForeground} />
+                    : <Text style={[styles.modalSaveText, { color: colors.primaryForeground }]}>Create Goal</Text>}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -501,9 +617,25 @@ function GoalCard({ item, colors }: { item: any; colors: ReturnType<typeof useCo
 export default function ProgressScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
   const { guardrailId } = useLocalSearchParams<{ guardrailId?: string }>();
   const scrollRef = useRef<ScrollView>(null);
   const guardrailSectionY = useRef(0);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/streaks"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/achievements"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/guardrails/standing"] }),
+        queryClient.invalidateQueries({ queryKey: getGetGoalsQueryKey() }),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     if (guardrailId && scrollRef.current) {
@@ -520,11 +652,11 @@ export default function ProgressScreen() {
       style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={{ paddingTop: insets.top + 20, paddingBottom: 120, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+      }
     >
-      <View style={styles.pageHeader}>
-        <Text style={[styles.pageTitle, { color: colors.text }]}>Progress</Text>
-        <Text style={[styles.pageSubtitle, { color: colors.mutedForeground }]}>Streaks, achievements & goals</Text>
-      </View>
+      <ScreenHeader title="Progress" subtitle="Streaks, achievements & goals" />
 
       <StreaksSection colors={colors} />
       <AchievementsSection colors={colors} />
@@ -542,24 +674,21 @@ export default function ProgressScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  pageHeader: { marginBottom: 28 },
-  pageTitle: { fontSize: 36, fontFamily: "Lora_700Bold", letterSpacing: -0.5 },
-  pageSubtitle: { fontSize: 16, fontFamily: "Outfit_400Regular", marginTop: 4 },
 
-  section: { marginBottom: 36 },
-  sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
-  sectionTitle: { fontSize: 20, fontFamily: "Lora_700Bold" },
+  section: { marginBottom: 32 },
+  sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 18 },
+  sectionTitle: { fontSize: 19, fontFamily: "Outfit_700Bold", letterSpacing: -0.3 },
   sectionSub: { fontSize: 14, fontFamily: "Outfit_500Medium" },
-  subSectionTitle: { fontSize: 18, fontFamily: "Lora_700Bold", marginBottom: 16, marginTop: 8 },
+  subSectionTitle: { fontSize: 17, fontFamily: "Outfit_700Bold", marginBottom: 16, marginTop: 8, letterSpacing: -0.2 },
 
-  streaksRow: { gap: 16 },
+  streaksRow: { gap: 14 },
   streakCard: {
-    width: 120,
-    padding: 20,
-    borderRadius: 24,
+    width: 118,
+    padding: 18,
+    borderRadius: Radius.lg,
     alignItems: "center",
     borderWidth: 1,
-    ...shadow({ opacity: 0.02, radius: 12, elevation: 2 }),
+    ...shadow({ opacity: 0.04, radius: 14, offsetY: 5, elevation: 2 }),
   },
   streakFlame: { fontSize: 32, marginBottom: 8 },
   streakCount: { fontSize: 40, fontFamily: "Outfit_800Black" },
@@ -570,7 +699,7 @@ const styles = StyleSheet.create({
   achBadge: {
     width: "31.5%",
     padding: 16,
-    borderRadius: 20,
+    borderRadius: Radius.md,
     alignItems: "center",
     borderWidth: 1,
     position: "relative",
@@ -580,7 +709,7 @@ const styles = StyleSheet.create({
   achDot: { position: "absolute", top: 10, right: 10, width: 8, height: 8, borderRadius: 4 },
 
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", alignItems: "center", padding: 24 },
-  achDetailCard: { borderRadius: 32, padding: 32, alignItems: "center", width: "100%", maxWidth: 340, ...shadow({ offsetY: 10, opacity: 0.1, radius: 20 }) },
+  achDetailCard: { borderRadius: Radius.xl, padding: 32, alignItems: "center", width: "100%", maxWidth: 340, ...shadow({ offsetY: 10, opacity: 0.15, radius: 24 }) },
   achDetailEmoji: { fontSize: 64, marginBottom: 16 },
   achDetailTitle: { fontSize: 24, fontFamily: "Lora_700Bold", marginBottom: 10 },
   achDetailDesc: { fontSize: 16, lineHeight: 24, fontFamily: "Outfit_400Regular", textAlign: "center", marginBottom: 16 },
@@ -588,7 +717,7 @@ const styles = StyleSheet.create({
   lockedBadge: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16 },
   lockedText: { fontSize: 14, fontFamily: "Outfit_500Medium" },
 
-  guardrailBar: { borderRadius: 24, padding: 20, marginBottom: 16, ...shadow({ opacity: 0.02, radius: 12, elevation: 2 }) },
+  guardrailBar: { borderRadius: Radius.lg, padding: 20, marginBottom: 14, ...shadow({ opacity: 0.04, radius: 14, offsetY: 5, elevation: 2 }) },
   guardrailBarHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   guardrailBarLeft: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
   guardrailDot: { width: 12, height: 12, borderRadius: 6 },
@@ -609,8 +738,8 @@ const styles = StyleSheet.create({
 
   addSmallBtn: { width: 36, height: 36, borderRadius: 18, justifyContent: "center", alignItems: "center" },
 
-  addModal: { borderRadius: 32, padding: 28, width: "100%", maxWidth: 380, ...shadow({ offsetY: 10, opacity: 0.1, radius: 20 }) },
-  addModalTitle: { fontSize: 24, fontFamily: "Lora_700Bold", marginBottom: 24 },
+  addModal: { borderRadius: Radius.xl, padding: 26, width: "100%", maxWidth: 380, ...shadow({ offsetY: 10, opacity: 0.15, radius: 24 }) },
+  addModalTitle: { fontSize: 23, fontFamily: "Outfit_700Bold", marginBottom: 22, letterSpacing: -0.4 },
   fieldLabel: { fontSize: 13, fontFamily: "Outfit_600SemiBold", marginBottom: 10, textTransform: "uppercase", letterSpacing: 0.5 },
   catChip: {
     paddingHorizontal: 14,
@@ -635,15 +764,15 @@ const styles = StyleSheet.create({
   modalCancelBtn: { flex: 1, paddingVertical: 16, borderRadius: 20, alignItems: "center", borderWidth: 1 },
   modalCancelText: { fontSize: 16, fontFamily: "Outfit_600SemiBold" },
   modalSaveBtn: { flex: 1, paddingVertical: 16, borderRadius: 20, alignItems: "center" },
-  modalSaveText: { fontSize: 16, fontFamily: "Outfit_700Bold", color: "#fff" },
+  modalSaveText: { fontSize: 16, fontFamily: "Outfit_600SemiBold" },
 
-  statsBar: { flexDirection: "row", padding: 24, borderRadius: 28, marginBottom: 24, alignItems: "center", ...shadow({ opacity: 0.02, radius: 12, elevation: 2 }) },
+  statsBar: { flexDirection: "row", padding: 22, borderRadius: Radius.lg, marginBottom: 20, alignItems: "center", ...shadow({ opacity: 0.04, radius: 14, offsetY: 5, elevation: 2 }) },
   statItem: { flex: 1, alignItems: "center" },
   statValue: { fontSize: 20, fontFamily: "Outfit_700Bold", marginBottom: 6 },
   statLabel: { fontSize: 13, fontFamily: "Outfit_500Medium" },
   statDivider: { width: 1, height: 40 },
 
-  goalCard: { borderRadius: 24, padding: 20, marginBottom: 16, ...shadow({ opacity: 0.02, radius: 12, elevation: 2 }) },
+  goalCard: { borderRadius: Radius.lg, padding: 20, marginBottom: 14, ...shadow({ opacity: 0.04, radius: 14, offsetY: 5, elevation: 2 }) },
   goalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   goalTitleContainer: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
   goalIcon: { width: 40, height: 40, borderRadius: 20, justifyContent: "center", alignItems: "center" },

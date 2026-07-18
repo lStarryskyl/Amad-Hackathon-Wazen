@@ -209,7 +209,9 @@ Unrelated fields must be 0. If the question is vague, make a sensible conservati
       ],
       max_tokens: 400,
       temperature: 0.2,
-    }, { timeout: 20000 });
+    // maxRetries: 0 — the SDK otherwise retries a timed-out request up to
+    // 2 more times before throwing, tripling the effective wait.
+    }, { timeout: 12000, maxRetries: 0 });
     const raw = response.choices[0]?.message?.content?.trim() ?? "";
     // Strip markdown code fences if present, then find the first complete JSON
     // object — this handles models that add preamble text before the JSON.

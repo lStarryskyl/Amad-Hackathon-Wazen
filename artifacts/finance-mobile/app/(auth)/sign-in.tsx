@@ -17,6 +17,8 @@ import { useRouter, Link } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { Radius } from "@/constants/colors";
+import { PrimaryButton } from "@/components/ui";
 
 const FEATURES = [
   { icon: "activity", label: "AI Financial Balance" },
@@ -25,7 +27,11 @@ const FEATURES = [
 ];
 
 export default function SignInScreen() {
-  const { isLoaded, signIn, setActive } = useSignIn();
+  // @clerk/react 5.54's useSignIn() returns a signal — { errors, fetchStatus, signIn }
+  // — not the classic { isLoaded, signIn, setActive } resource shape. `signIn` here
+  // is a "Future" resource whose methods return { error } instead of throwing, and
+  // whose session activation happens via signIn.finalize(), not a separate setActive.
+  const { signIn } = useSignIn();
   const router = useRouter();
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -51,26 +57,24 @@ export default function SignInScreen() {
   };
 
   const onSignInPress = async () => {
-    if (!isLoaded) return;
+    if (!signIn) return;
     setLoading(true);
     setFormError("");
     try {
-      const result = await signIn.create({ identifier: emailAddress, password });
+      // password() accepts identifier + password together — a single call
+      // that both starts the sign-in and attempts the password strategy.
+      const { error: passwordError } = await signIn.password({ identifier: emailAddress, password });
+      if (passwordError) throw passwordError;
 
-      if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
-        router.replace("/(home)/(tabs)");
-      } else if (
-        result.status === "needs_second_factor" ||
-        // @ts-ignore — Clerk may return needs_client_trust on new devices
-        result.status === "needs_client_trust"
-      ) {
-        // New-device verification or 2FA — send an email code
-        await signIn.prepareSecondFactor({ strategy: "email_code" });
+      if (signIn.status === "complete") {
+        await signIn.finalize({ navigate: () => router.replace("/(home)/(tabs)") });
+      } else if (signIn.status === "needs_second_factor") {
+        const { error: codeError } = await signIn.emailCode.sendCode({ emailAddress });
+        if (codeError) throw codeError;
         setVerifying(true);
-      } else if (result.status) {
+      } else if (signIn.status) {
         setFormError(
-          `Additional verification required: ${String(result.status).replace(/_/g, " ")}.`,
+          `Additional verification required: ${String(signIn.status).replace(/_/g, " ")}.`,
         );
       }
     } catch (err: unknown) {
@@ -81,15 +85,15 @@ export default function SignInScreen() {
   };
 
   const onVerifyPress = async () => {
-    if (!isLoaded) return;
+    if (!signIn) return;
     setLoading(true);
     setFormError("");
     try {
-      const result = await signIn.attemptSecondFactor({ strategy: "email_code", code });
+      const { error } = await signIn.emailCode.verifyCode({ code });
+      if (error) throw error;
 
-      if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
-        router.replace("/(home)/(tabs)");
+      if (signIn.status === "complete") {
+        await signIn.finalize({ navigate: () => router.replace("/(home)/(tabs)") });
       } else {
         setFormError("That code didn't work. Please try again.");
       }
@@ -106,7 +110,7 @@ export default function SignInScreen() {
     setFormError("");
   };
 
-  if (!isLoaded) {
+  if (!signIn) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -212,19 +216,12 @@ export default function SignInScreen() {
                 </View>
               ) : null}
 
-              <TouchableOpacity
-                style={[styles.cta, { backgroundColor: colors.primary, opacity: loading ? 0.75 : 1 }]}
+              <PrimaryButton
+                label="Sign In"
+                loading={loading}
                 onPress={onSignInPress}
-                disabled={loading}
-                activeOpacity={0.85}
-                testID="button-sign-in"
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Text style={styles.ctaText}>Sign In</Text>
-                )}
-              </TouchableOpacity>
+                style={{ marginTop: 8 }}
+              />
             </>
           ) : (
             <>
@@ -259,19 +256,12 @@ export default function SignInScreen() {
                 </View>
               ) : null}
 
-              <TouchableOpacity
-                style={[styles.cta, { backgroundColor: colors.primary, opacity: loading ? 0.75 : 1 }]}
+              <PrimaryButton
+                label="Verify"
+                loading={loading}
                 onPress={onVerifyPress}
-                disabled={loading}
-                activeOpacity={0.85}
-                testID="button-verify-code"
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Text style={styles.ctaText}>Verify</Text>
-                )}
-              </TouchableOpacity>
+                style={{ marginTop: 8 }}
+              />
 
               <TouchableOpacity style={styles.backBtn} onPress={onBackToSignIn}>
                 <Feather name="arrow-left" size={14} color={colors.mutedForeground} />
@@ -317,13 +307,13 @@ const styles = StyleSheet.create({
   pillText: { fontSize: 12, fontFamily: "Outfit_500Medium" },
 
   formCard: {
-    borderRadius: 24,
+    borderRadius: Radius.xl,
     borderWidth: 1,
-    padding: 28,
+    padding: 26,
     marginBottom: 20,
-    ...shadow({ opacity: 0.03, radius: 16, elevation: 2 }),
+    ...shadow({ opacity: 0.05, radius: 18, offsetY: 6, elevation: 3 }),
   },
-  formTitle: { fontSize: 22, fontFamily: "Lora_700Bold", marginBottom: 24 },
+  formTitle: { fontSize: 22, fontFamily: "Outfit_700Bold", marginBottom: 22, letterSpacing: -0.4 },
   verifyHint: { fontSize: 14, fontFamily: "Outfit_400Regular", marginBottom: 20, lineHeight: 22 },
 
   field: { marginBottom: 20 },
@@ -332,9 +322,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: Radius.md,
     paddingHorizontal: 16,
-    height: 56,
+    height: 54,
   },
   inputIcon: { marginRight: 12 },
   input: { flex: 1, fontSize: 16, fontFamily: "Outfit_400Regular" },

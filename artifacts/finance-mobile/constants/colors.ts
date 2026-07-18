@@ -1,8 +1,8 @@
 /**
- * Semantic design tokens — organic, warm, and intentional palette.
+ * Semantic design tokens — "Aurora" design language.
  *
- * Light mode is primary: warm eggshell, deep pine, terracotta.
- * Dark mode: deep charcoal, muted copper, sage.
+ * Light mode: cool porcelain neutrals, indigo→violet gradient heroes, teal accent.
+ * Dark mode: rich ink surfaces, luminous indigo, mint accent.
  *
  * Consumed via ThemeContext → useColors().
  */
@@ -10,58 +10,79 @@
 export type ColorTokens = typeof LightColors;
 
 export const LightColors = {
-  background:     "#FBF9F6",   // Warm eggshell/sand
+  background:     "#F6F7FB",   // Cool porcelain
   card:           "#FFFFFF",
-  cardElevated:   "#F3EFE7",   // Slightly darker sand
-  
-  primary:        "#2C4C3B",   // Deep Pine
-  primaryLight:   "#3E6A53",   // Lighter pine
+  cardElevated:   "#EEF0F8",   // Lavender-tinted panel
+
+  primary:        "#4F46E5",   // Indigo
+  primaryLight:   "#6366F1",
   primaryForeground:"#FFFFFF",
 
-  accent:         "#3A7D44",   // Organic green
-  accentLight:    "#4B9F5A",
-  danger:         "#C04A3B",   // Rust / Terracotta
-  dangerLight:    "#D97669",
-  warning:        "#D48C29",   // Ochre
+  accent:         "#0D9488",   // Deep teal
+  accentLight:    "#14B8A6",
+  danger:         "#E11D48",   // Rose
+  dangerLight:    "#FB7185",
+  warning:        "#D97706",   // Amber
 
-  text:           "#1C211F",   // Very dark green-black
-  textSecondary:  "#545E59",   // Charcoal
-  mutedForeground:"#8A948F",   // Muted sage
+  text:           "#101322",   // Ink
+  textSecondary:  "#3F4457",
+  mutedForeground:"#7A8095",
 
-  border:         "#E6E1D6",   // Soft beige border
-  borderLight:    "#D4CEBF",
-  
+  border:         "#E4E6F0",
+  borderLight:    "#D3D7E5",
+
   surface:        "#FFFFFF",
-  surfaceElevated:"#F3EFE7",
+  surfaceElevated:"#EEF0F8",
+
+  // Gradient pair used by hero cards and primary buttons
+  gradientStart:  "#4F46E5",
+  gradientEnd:    "#7C3AED",
+  // Foreground colors rendered on top of the gradient
+  onGradient:     "#FFFFFF",
+  onGradientMuted:"rgba(255,255,255,0.72)",
 };
 
 export const DarkColors: ColorTokens = {
-  background:     "#151716",   // Deep charcoal
-  card:           "#1D201E",
-  cardElevated:   "#272B29",
-  
-  primary:        "#D48C70",   // Soft clay/copper for dark mode
-  primaryLight:   "#E2A68F",
-  primaryForeground:"#151716",
+  background:     "#0B0D14",   // Rich ink
+  card:           "#141726",
+  cardElevated:   "#1D2136",
 
-  accent:         "#53A561",
-  accentLight:    "#6CBD7B",
-  danger:         "#D65E50",
-  dangerLight:    "#E28B81",
-  warning:        "#E8A843",
+  primary:        "#818CF8",   // Luminous indigo
+  primaryLight:   "#A5B4FC",
+  primaryForeground:"#0B0D14",
 
-  text:           "#EBEFEB",
-  textSecondary:  "#A1ADA7",
-  mutedForeground:"#6C7672",
+  accent:         "#2DD4BF",   // Mint
+  accentLight:    "#5EEAD4",
+  danger:         "#FB7185",
+  dangerLight:    "#FDA4AF",
+  warning:        "#FBBF24",
 
-  border:         "#303633",
-  borderLight:    "#3E4743",
-  
-  surface:        "#1D201E",
-  surfaceElevated:"#272B29",
+  text:           "#EEF0FA",
+  textSecondary:  "#A9AFC4",
+  mutedForeground:"#6E7488",
+
+  border:         "#262B40",
+  borderLight:    "#343A55",
+
+  surface:        "#141726",
+  surfaceElevated:"#1D2136",
+
+  gradientStart:  "#4338CA",
+  gradientEnd:    "#7C3AED",
+  onGradient:     "#FFFFFF",
+  onGradientMuted:"rgba(255,255,255,0.72)",
 };
 
 export const Colors = LightColors;
+
+/** Shared shape scale — keeps radii consistent across the app. */
+export const Radius = {
+  sm: 10,
+  md: 14,
+  lg: 20,
+  xl: 26,
+  pill: 999,
+};
 
 export default {
   light: LightColors,

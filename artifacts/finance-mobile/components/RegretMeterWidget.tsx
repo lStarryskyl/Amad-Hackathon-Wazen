@@ -6,13 +6,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
-  ActivityIndicator,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useGetRegretScore } from "@workspace/api-client-react";
-import type { RegretScore } from "@workspace/api-client-react";
 import { useRouter } from "expo-router";
+import { Radius } from "@/constants/colors";
+import { Chip, IconBadge, haptic } from "@/components/ui";
 
 function levelColor(level: string, colors: ReturnType<typeof useColors>) {
   if (level === "low") return colors.accent;
@@ -59,7 +59,7 @@ export default function RegretMeterWidget({ onPress }: Props) {
       if (score.level === "high") {
         Animated.loop(
           Animated.sequence([
-            Animated.timing(pulseAnim, { toValue: 1.06, duration: 900, useNativeDriver: true }),
+            Animated.timing(pulseAnim, { toValue: 1.04, duration: 900, useNativeDriver: true }),
             Animated.timing(pulseAnim, { toValue: 1, duration: 900, useNativeDriver: true }),
           ])
         ).start();
@@ -68,6 +68,7 @@ export default function RegretMeterWidget({ onPress }: Props) {
   }, [score?.score]);
 
   const handlePress = () => {
+    haptic("light");
     if (onPress) {
       onPress();
     } else {
@@ -88,7 +89,7 @@ export default function RegretMeterWidget({ onPress }: Props) {
       >
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <Feather name="bar-chart-2" size={18} color={colors.mutedForeground} />
+            <IconBadge icon="bar-chart-2" color={colors.mutedForeground} size={36} />
             <Text style={[styles.title, { color: colors.text }]}>Regret Meter</Text>
           </View>
         </View>
@@ -109,22 +110,20 @@ export default function RegretMeterWidget({ onPress }: Props) {
   return (
     <Animated.View style={{ transform: [{ scale: s.level === "high" ? pulseAnim : new Animated.Value(1) }] }}>
       <TouchableOpacity
-        style={[styles.container, { backgroundColor: colors.card, borderColor: color + "30" }]}
+        style={[styles.container, { backgroundColor: colors.card, borderColor: color + "35" }]}
         onPress={handlePress}
         activeOpacity={0.8}
       >
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <Feather name={levelIcon(s.level)} size={18} color={color} />
+            <IconBadge icon={levelIcon(s.level)} color={color} size={36} />
             <Text style={[styles.title, { color: colors.text }]}>Regret Meter</Text>
           </View>
-          <View style={[styles.levelBadge, { backgroundColor: color + "20" }]}>
-            <Text style={[styles.levelText, { color }]}>{levelLabel(s.level)}</Text>
-          </View>
+          <Chip label={levelLabel(s.level)} color={color} />
         </View>
 
         {/* Score arc bar */}
-        <View style={[styles.arcTrack, { backgroundColor: colors.border }]}>
+        <View style={[styles.arcTrack, { backgroundColor: colors.cardElevated }]}>
           <Animated.View
             style={[
               styles.arcFill,
@@ -137,9 +136,10 @@ export default function RegretMeterWidget({ onPress }: Props) {
           <Text style={[styles.scoreNum, { color }]}>{s.score}</Text>
           <Text style={[styles.scoreMax, { color: colors.mutedForeground }]}> / 100</Text>
           <View style={{ flex: 1 }} />
-          <Text style={[styles.tapHint, { color: colors.primary }]}>
-            View details →
-          </Text>
+          <View style={styles.tapHintRow}>
+            <Text style={[styles.tapHint, { color: colors.primary }]}>Details</Text>
+            <Feather name="arrow-right" size={13} color={colors.primary} />
+          </View>
         </View>
 
         <Text style={[styles.summary, { color: colors.mutedForeground }]} numberOfLines={2}>
@@ -153,23 +153,17 @@ export default function RegretMeterWidget({ onPress }: Props) {
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 20,
-    padding: 24,
-    borderRadius: 32,
+    padding: 20,
+    borderRadius: Radius.xl,
     borderWidth: 1,
-    marginBottom: 28,
-    ...shadow({ opacity: 0.03, radius: 16, elevation: 2 }),
-  },
-  loadingText: {
-    fontSize: 14,
-    fontFamily: "Outfit_500Medium",
-    textAlign: "center",
-    marginTop: 12,
+    marginBottom: 24,
+    ...shadow({ opacity: 0.04, radius: 16, offsetY: 6, elevation: 2 }),
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 18,
   },
   titleRow: {
     flexDirection: "row",
@@ -177,50 +171,41 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   title: {
-    fontSize: 18,
-    fontFamily: "Lora_700Bold",
-  },
-  levelBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  levelText: {
-    fontSize: 11,
+    fontSize: 17,
     fontFamily: "Outfit_700Bold",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: -0.2,
   },
   arcTrack: {
-    height: 10,
-    borderRadius: 5,
+    height: 8,
+    borderRadius: 4,
     overflow: "hidden",
-    marginBottom: 16,
+    marginBottom: 14,
   },
   arcFill: {
     height: "100%",
-    borderRadius: 5,
+    borderRadius: 4,
   },
   scoreRow: {
     flexDirection: "row",
     alignItems: "baseline",
-    marginBottom: 12,
+    marginBottom: 10,
   },
   scoreNum: {
-    fontSize: 48,
+    fontSize: 42,
     fontFamily: "Lora_700Bold",
     letterSpacing: -1,
   },
   scoreMax: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: "Outfit_600SemiBold",
   },
+  tapHintRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   tapHint: {
     fontSize: 13,
     fontFamily: "Outfit_600SemiBold",
   },
   summary: {
-    fontSize: 14,
+    fontSize: 13.5,
     fontFamily: "Outfit_400Regular",
     lineHeight: 20,
   },

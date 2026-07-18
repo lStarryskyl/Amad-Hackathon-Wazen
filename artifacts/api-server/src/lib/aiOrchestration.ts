@@ -4,6 +4,17 @@ import { eq } from "drizzle-orm";
 import { decryptApiKey } from "./encryption.js";
 import { generateFallbackRescueNarrative, generateFallbackMoneyStory } from "./fallbackNarratives.js";
 
+// NVIDIA's hosted models have highly variable latency (observed 8-66s for
+// equivalent prompts). Every AI narrative call already has a deterministic
+// fallback on error — capping the wait here means a slow provider response
+// degrades to the instant fallback instead of making the user wait a minute.
+// maxRetries must be 0: the OpenAI SDK retries timed-out requests up to
+// `maxRetries` (default 2) times BEFORE surfacing the error, so a 12s timeout
+// with default retries actually takes up to 36s to fail — observed directly
+// as ~40s round trips in testing until this was set.
+const AI_CALL_TIMEOUT_MS = 12_000;
+const AI_CALL_OPTS = { timeout: AI_CALL_TIMEOUT_MS, maxRetries: 0 } as const;
+
 export async function getAIClient(userId: string): Promise<{ client: import("openai").default; source: "user" | "server" } | null> {
   const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId)).limit(1);
 
@@ -80,7 +91,7 @@ Respond with just the narrative text — no headers, no bullet points.`;
       messages: [{ role: "user", content: prompt }],
       max_tokens: 150,
       temperature: 0.7,
-    });
+    }, AI_CALL_OPTS);
     const text = response.choices[0]?.message?.content?.trim();
     if (!text) {
       console.warn("[ai] generateRescueNarrative: Empty response from model. Serving fallback.", { userId, riskLevel });
@@ -141,7 +152,7 @@ Make it feel human and insightful — not like a spreadsheet summary. No bullet 
       messages: [{ role: "user", content: prompt }],
       max_tokens: 300,
       temperature: 0.75,
-    });
+    }, AI_CALL_OPTS);
     const text = response.choices[0]?.message?.content?.trim();
     if (!text) {
       console.warn("[ai] generateMoneyStory: Empty response from model. Serving fallback.", { userId, periodLabel });
@@ -217,7 +228,7 @@ Respond with just the narrative — no headers, no bullet points.`;
       messages: [{ role: "user", content: prompt }],
       max_tokens: 160,
       temperature: 0.65,
-    });
+    }, AI_CALL_OPTS);
     return response.choices[0]?.message?.content?.trim() ?? generateFallbackSimulationNarrative(inputs, results);
   } catch {
     return generateFallbackSimulationNarrative(inputs, results);

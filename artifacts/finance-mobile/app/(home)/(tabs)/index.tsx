@@ -10,27 +10,43 @@ import {
   TouchableOpacity,
   Dimensions,
   Modal,
-  Animated,
 } from "react-native";
 import { useUser } from "@clerk/expo";
+import { getDisplayName } from "@/utils/displayName";
 import {
   useGetFinancialSummary,
   useGetAccounts,
-  useGetRegretScore,
   useGetTodayCheckin,
   useSubmitCheckin,
   useGetAlerts,
   useMarkAlertRead,
   useMarkAllAlertsRead,
+  useGetTransactions,
+  getGetTransactionsQueryKey,
 } from "@workspace/api-client-react";
-import type { AppAlert } from "@workspace/api-client-react";
-import { useRouter } from "expo-router";
+import type { Transaction } from "@workspace/api-client-react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { toFeatherIcon } from "@/utils/iconMapping";
 import RegretMeterWidget from "@/components/RegretMeterWidget";
+import PwaInstallBanner from "@/components/PwaInstallBanner";
 import { useQueryClient } from "@tanstack/react-query";
+import { Radius } from "@/constants/colors";
+import {
+  Card,
+  Chip,
+  EmptyState,
+  FadeInView,
+  GradientCard,
+  IconBadge,
+  PrimaryButton,
+  ProgressBar,
+  SectionHeader,
+  Skeleton,
+  haptic,
+} from "@/components/ui";
 
 const { width } = Dimensions.get("window");
 
@@ -42,6 +58,7 @@ function DailyCheckinCard() {
   const { data: todayData, isLoading } = useGetTodayCheckin({ staleTime: 5 * 60 * 1000, retry: 1 });
   const { mutate: submitCheckin, isPending } = useSubmitCheckin({
     onSuccess: (result) => {
+      haptic("success");
       queryClient.invalidateQueries({ queryKey: ["/api/checkin/today"] });
       queryClient.invalidateQueries({ queryKey: ["/api/streaks"] });
       queryClient.invalidateQueries({ queryKey: ["/api/achievements"] });
@@ -67,9 +84,15 @@ function DailyCheckinCard() {
 
   return (
     <>
-      <View style={[styles.checkinCard, { backgroundColor: alreadyDone ? colors.card : colors.primary + "18", borderColor: alreadyDone ? colors.border : colors.primary + "40" }]}>
+      <Card
+        variant="elevated"
+        style={[
+          styles.checkinCard,
+          !alreadyDone && { borderColor: colors.primary + "45", backgroundColor: colors.primary + "0E" },
+        ]}
+      >
         <View style={styles.checkinLeft}>
-          <Text style={{ fontSize: 28 }}>{alreadyDone ? (checkin?.moodEmoji ?? "✅") : "☀️"}</Text>
+          <Text style={{ fontSize: 26 }}>{alreadyDone ? (checkin?.moodEmoji ?? "✅") : "☀️"}</Text>
           <View style={{ flex: 1 }}>
             <Text style={[styles.checkinTitle, { color: colors.text }]}>
               {alreadyDone ? "Today's Check-in" : "Daily Check-in"}
@@ -87,36 +110,34 @@ function DailyCheckinCard() {
         </View>
 
         {alreadyDone ? (
-          <View style={[styles.healthScoreBadge, { backgroundColor: healthColor + "20" }]}>
+          <View style={[styles.healthScoreBadge, { backgroundColor: healthColor + "18" }]}>
             <Text style={[styles.healthScoreNum, { color: healthColor }]}>{checkin?.healthScore}</Text>
             <Text style={[styles.healthScoreLabel, { color: healthColor }]}>Health</Text>
           </View>
         ) : (
-          <TouchableOpacity
-            style={[styles.checkinBtn, { backgroundColor: colors.primary, opacity: isPending ? 0.7 : 1 }]}
+          <PrimaryButton
+            label="Check In"
+            small
+            loading={isPending}
             onPress={() => submitCheckin()}
-            disabled={isPending}
-          >
-            {isPending
-              ? <ActivityIndicator size="small" color="#fff" />
-              : <Text style={styles.checkinBtnText}>Check In</Text>}
-          </TouchableOpacity>
+            hapticKind="medium"
+          />
         )}
-      </View>
+      </Card>
 
       <Modal visible={showAchModal} transparent animationType="fade" onRequestClose={() => setShowAchModal(false)}>
         <TouchableOpacity style={styles.achModalOverlay} activeOpacity={1} onPress={() => setShowAchModal(false)}>
           <View style={[styles.achModalCard, { backgroundColor: colors.card }]}>
             <Text style={styles.achModalEmoji}>{newAchievement?.icon ?? "🏆"}</Text>
-            <Text style={[styles.achModalTitle, { color: colors.text }]}>Achievement Unlocked!</Text>
+            <Text style={[styles.achModalTitle, { color: colors.mutedForeground }]}>Achievement Unlocked!</Text>
             <Text style={[styles.achModalName, { color: colors.primary }]}>{newAchievement?.title}</Text>
             <Text style={[styles.achModalDesc, { color: colors.mutedForeground }]}>{newAchievement?.description}</Text>
-            <TouchableOpacity
-              style={[styles.achModalClose, { backgroundColor: colors.primary }]}
+            <PrimaryButton
+              label="Awesome! 🎉"
               onPress={() => setShowAchModal(false)}
-            >
-              <Text style={styles.achModalCloseText}>Awesome! 🎉</Text>
-            </TouchableOpacity>
+              style={{ alignSelf: "stretch" }}
+              hapticKind="success"
+            />
           </View>
         </TouchableOpacity>
       </Modal>
@@ -160,7 +181,7 @@ function AlertsPanel({ visible, onClose }: { visible: boolean; onClose: () => vo
             <Text style={[styles.alertsTitle, { color: colors.text }]}>Notifications</Text>
             <View style={styles.alertsHeaderRight}>
               {(data?.unreadCount ?? 0) > 0 && (
-                <TouchableOpacity onPress={() => markAllRead()} style={[styles.markAllBtn, { borderColor: colors.border }]}>
+                <TouchableOpacity onPress={() => { haptic("light"); markAllRead(); }} style={[styles.markAllBtn, { borderColor: colors.border }]}>
                   <Text style={[styles.markAllText, { color: colors.primary }]}>Mark all read</Text>
                 </TouchableOpacity>
               )}
@@ -178,7 +199,7 @@ function AlertsPanel({ visible, onClose }: { visible: boolean; onClose: () => vo
 
           {!isLoading && (!data?.alerts || data.alerts.length === 0) && (
             <View style={styles.alertsEmpty}>
-              <Feather name="bell-off" size={40} color={colors.border} />
+              <IconBadge icon="bell-off" color={colors.mutedForeground} size={56} />
               <Text style={[styles.alertsEmptyText, { color: colors.mutedForeground }]}>No notifications yet</Text>
             </View>
           )}
@@ -189,16 +210,14 @@ function AlertsPanel({ visible, onClose }: { visible: boolean; onClose: () => vo
                 key={alert.id}
                 style={[
                   styles.alertRow,
-                  { borderBottomColor: colors.border, backgroundColor: alert.isRead ? "transparent" : colors.primary + "08" },
+                  { borderBottomColor: colors.border, backgroundColor: alert.isRead ? "transparent" : colors.primary + "0A" },
                 ]}
                 onPress={() => !alert.isRead && markRead(alert.id)}
                 activeOpacity={0.7}
               >
-                <View style={[styles.alertIcon, { backgroundColor: alertTypeColor(alert.type) + "20" }]}>
-                  <Feather name={alertTypeIcon(alert.type) as any} size={16} color={alertTypeColor(alert.type)} />
-                </View>
+                <IconBadge icon={alertTypeIcon(alert.type) as any} color={alertTypeColor(alert.type)} size={40} />
                 <View style={styles.alertContent}>
-                  <Text style={[styles.alertTitle, { color: colors.text, fontWeight: alert.isRead ? "500" : "700" }]}>
+                  <Text style={[styles.alertTitle, { color: colors.text, fontFamily: alert.isRead ? "Outfit_500Medium" : "Outfit_700Bold" }]}>
                     {alert.title}
                   </Text>
                   <Text style={[styles.alertMessage, { color: colors.mutedForeground }]} numberOfLines={2}>
@@ -218,34 +237,225 @@ function AlertsPanel({ visible, onClose }: { visible: boolean; onClose: () => vo
   );
 }
 
+// ─── Quick actions row ────────────────────────────────────────────────────────
+
+function QuickActions() {
+  const colors = useColors();
+  const router = useRouter();
+
+  const ACTIONS: { icon: React.ComponentProps<typeof Feather>["name"]; label: string; color: string; onPress: () => void }[] = [
+    {
+      icon: "zap",
+      label: "Simulate",
+      color: colors.primary,
+      onPress: () => router.push("/(home)/(tabs)/simulate" as any),
+    },
+    {
+      icon: "target",
+      label: "Goals",
+      color: colors.accent,
+      onPress: () => router.push("/(home)/(tabs)/progress" as any),
+    },
+    {
+      icon: "activity",
+      label: "Insights",
+      color: colors.warning,
+      onPress: () => router.push("/(home)/(tabs)/insights" as any),
+    },
+    {
+      icon: "shield",
+      label: "Privacy",
+      color: colors.danger,
+      onPress: () => router.push("/open-banking" as any),
+    },
+  ];
+
+  return (
+    <View style={styles.quickRow}>
+      {ACTIONS.map((a) => (
+        <TouchableOpacity
+          key={a.label}
+          style={[styles.quickTile, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => { haptic("light"); a.onPress(); }}
+          activeOpacity={0.75}
+        >
+          <IconBadge icon={a.icon} color={a.color} size={38} />
+          <Text style={[styles.quickLabel, { color: colors.textSecondary }]}>{a.label}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
+
+// ─── Transaction row (shared between recent list + full history) ─────────────
+
+function TransactionRow({ tx }: {
+  tx: Pick<Transaction, "merchantName" | "description" | "date" | "amount" | "type"> & {
+    categoryColor?: string | null;
+    categoryIcon?: string | null;
+  };
+}) {
+  const colors = useColors();
+  const isDebit = tx.type === "debit";
+  return (
+    <View style={styles.transactionItem}>
+      <View style={styles.txLeft}>
+        <IconBadge
+          icon={toFeatherIcon(tx.categoryIcon)}
+          color={tx.categoryColor || colors.mutedForeground}
+          size={40}
+        />
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.txMerchant, { color: colors.text }]} numberOfLines={1}>
+            {tx.merchantName || tx.description}
+          </Text>
+          <Text style={[styles.txDate, { color: colors.mutedForeground }]}>
+            {new Date(tx.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+          </Text>
+        </View>
+      </View>
+      <Text style={[styles.txAmount, { color: isDebit ? colors.text : colors.accent }]}>
+        {isDebit ? "-" : "+"}${parseFloat(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+      </Text>
+    </View>
+  );
+}
+
+// ─── Full transaction history modal ──────────────────────────────────────────
+
+function TransactionsModal({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+  const colors = useColors();
+  const [filter, setFilter] = useState<"all" | "debit" | "credit">("all");
+  const txParams = { limit: 100 };
+  const { data, isLoading } = useGetTransactions(txParams, {
+    query: { queryKey: getGetTransactionsQueryKey(txParams), enabled: visible, staleTime: 60_000 },
+  });
+
+  const items = (data?.items ?? []).filter((tx) => filter === "all" || tx.type === filter);
+
+  const FILTERS: { key: "all" | "debit" | "credit"; label: string }[] = [
+    { key: "all", label: "All" },
+    { key: "debit", label: "Money Out" },
+    { key: "credit", label: "Money In" },
+  ];
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.alertsOverlay}>
+        <View style={[styles.alertsPanel, { backgroundColor: colors.background }]}>
+          <View style={[styles.alertsHeader, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.alertsTitle, { color: colors.text }]}>Transactions</Text>
+            <TouchableOpacity onPress={onClose} style={[styles.closeBtn, { backgroundColor: colors.cardElevated }]}>
+              <Feather name="x" size={18} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.filterRow}>
+            {FILTERS.map((f) => {
+              const active = filter === f.key;
+              return (
+                <TouchableOpacity
+                  key={f.key}
+                  onPress={() => { haptic("light"); setFilter(f.key); }}
+                  style={[
+                    styles.filterChip,
+                    {
+                      backgroundColor: active ? colors.primary : colors.card,
+                      borderColor: active ? colors.primary : colors.border,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.filterChipText, { color: active ? colors.primaryForeground : colors.textSecondary }]}>
+                    {f.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {isLoading ? (
+            <View style={styles.alertsLoading}>
+              <ActivityIndicator color={colors.primary} />
+            </View>
+          ) : items.length === 0 ? (
+            <View style={styles.alertsEmpty}>
+              <IconBadge icon="inbox" color={colors.mutedForeground} size={56} />
+              <Text style={[styles.alertsEmptyText, { color: colors.mutedForeground }]}>No transactions found</Text>
+            </View>
+          ) : (
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 32 }}>
+              {items.map((tx) => (
+                <TransactionRow key={tx.id} tx={tx} />
+              ))}
+            </ScrollView>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+// ─── Loading skeleton ─────────────────────────────────────────────────────────
+
+function HomeSkeleton() {
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top + 24, paddingHorizontal: 20 }]}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 28 }}>
+        <View>
+          <Skeleton width={110} height={14} style={{ marginBottom: 10 }} />
+          <Skeleton width={180} height={28} />
+        </View>
+        <Skeleton width={46} height={46} radius={23} />
+      </View>
+      <Skeleton width={"100%" as const} height={180} radius={Radius.xl} style={{ marginBottom: 20 }} />
+      <Skeleton width={"100%" as const} height={90} radius={Radius.xl} style={{ marginBottom: 20 }} />
+      <Skeleton width={"60%" as const} height={20} style={{ marginBottom: 14 }} />
+      <View style={{ flexDirection: "row", gap: 14 }}>
+        <Skeleton width={width * 0.6} height={130} radius={Radius.xl} />
+        <Skeleton width={width * 0.3} height={130} radius={Radius.xl} />
+      </View>
+    </View>
+  );
+}
+
+// ─── Main Screen ──────────────────────────────────────────────────────────────
+
 export default function DashboardScreen() {
   const { user } = useUser();
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const [showAlerts, setShowAlerts] = useState(false);
+  const [showAllTx, setShowAllTx] = useState(false);
+  const [hideBalance, setHideBalance] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const {
     data: summary,
     isLoading: summaryLoading,
     isError: summaryError,
-    refetch: refetchSummary
+    refetch: refetchSummary,
   } = useGetFinancialSummary();
 
   const {
     data: accounts,
     isLoading: accountsLoading,
     isError: accountsError,
-    refetch: refetchAccounts
+    refetch: refetchAccounts,
   } = useGetAccounts();
 
-  const router = useRouter();
-  const { data: regretScore } = useGetRegretScore();
   const { data: alertsData } = useGetAlerts({ staleTime: 30_000 });
   const unreadCount = alertsData?.unreadCount ?? 0;
 
   const onRefresh = React.useCallback(async () => {
-    await Promise.all([refetchSummary(), refetchAccounts()]);
-  }, []);
+    setRefreshing(true);
+    try {
+      await Promise.all([refetchSummary(), refetchAccounts()]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refetchSummary, refetchAccounts]);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -254,12 +464,13 @@ export default function DashboardScreen() {
     return "Good evening";
   }, []);
 
+  const masked = "••••••";
+  const balanceText = hideBalance
+    ? masked
+    : `$${summary?.totalBalance?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? "0.00"}`;
+
   if ((summaryLoading && !summaryError) || (accountsLoading && !accountsError)) {
-    return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
+    return <HomeSkeleton />;
   }
 
   return (
@@ -267,252 +478,198 @@ export default function DashboardScreen() {
       <ScrollView
         style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={{
-          paddingTop: insets.top + 20,
-          paddingBottom: 100,
+          paddingTop: insets.top + 16,
+          paddingBottom: 110,
         }}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={false} onRefresh={onRefresh} tintColor={colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
       >
+        {/* ── Header ── */}
         <View style={styles.header}>
           <View>
             <Text style={[styles.greeting, { color: colors.mutedForeground }]}>{greeting},</Text>
-            <Text style={[styles.userName, { color: colors.text }]}>{user?.firstName || user?.username || "Friend"}</Text>
+            <Text style={[styles.userName, { color: colors.text }]}>{getDisplayName(user)}</Text>
           </View>
           <TouchableOpacity
-            style={[styles.notificationButton, { borderColor: colors.border }]}
-            onPress={() => setShowAlerts(true)}
+            style={[styles.notificationButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => { haptic("light"); setShowAlerts(true); }}
           >
-            <Feather name="bell" size={20} color={colors.text} />
+            <Feather name="bell" size={19} color={colors.text} />
             {unreadCount > 0 && (
-              <View style={[styles.badge, { backgroundColor: colors.danger }]}>
+              <View style={[styles.badge, { backgroundColor: colors.danger, borderColor: colors.background }]}>
                 <Text style={styles.badgeText}>{unreadCount > 9 ? "9+" : String(unreadCount)}</Text>
               </View>
             )}
           </TouchableOpacity>
         </View>
 
-        {/* Daily Check-in */}
-        <View style={{ paddingHorizontal: 20, marginBottom: 20 }}>
-          <DailyCheckinCard />
-        </View>
+        <PwaInstallBanner />
 
-        {/* Total Balance Card */}
-        <View style={[styles.balanceCard, { backgroundColor: colors.card }]}>
-          <Text style={[styles.balanceLabel, { color: colors.mutedForeground }]}>Total Balance</Text>
-          <Text style={[styles.balanceAmount, { color: colors.text }]}>
-            ${summary?.totalBalance?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </Text>
-          {summary && summary.savingsRate !== undefined && (
-            <View style={styles.balanceChangeContainer}>
-              <Feather
-                name={summary.savingsRate >= 0 ? "trending-up" : "trending-down"}
-                size={16}
-                color={summary.savingsRate >= 0 ? colors.accent : colors.danger}
-              />
-              <Text style={[styles.balanceChange, { color: summary.savingsRate >= 0 ? colors.accent : colors.danger }]}>
-                {summary.savingsRate >= 0 ? "+" : ""}{summary.savingsRate.toFixed(1)}% savings rate this month
-              </Text>
+        {/* ── Balance hero ── */}
+        <FadeInView style={{ paddingHorizontal: 20, marginBottom: 20 }}>
+          <GradientCard>
+            <View style={styles.heroTopRow}>
+              <Text style={[styles.balanceLabel, { color: colors.onGradientMuted }]}>Total Balance</Text>
+              <TouchableOpacity
+                onPress={() => { haptic("light"); setHideBalance(!hideBalance); }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Feather name={hideBalance ? "eye" : "eye-off"} size={17} color={colors.onGradientMuted} />
+              </TouchableOpacity>
             </View>
-          )}
-        </View>
+            <Text style={[styles.balanceAmount, { color: colors.onGradient }]}>{balanceText}</Text>
 
-        {/* Regret Meter Widget */}
-        <RegretMeterWidget />
+            {summary && summary.savingsRate !== undefined && (
+              <View style={styles.balanceChangeContainer}>
+                <Feather
+                  name={summary.savingsRate >= 0 ? "trending-up" : "trending-down"}
+                  size={15}
+                  color={colors.onGradient}
+                />
+                <Text style={[styles.balanceChange, { color: colors.onGradient }]}>
+                  {summary.savingsRate >= 0 ? "+" : ""}{summary.savingsRate.toFixed(1)}% savings rate this month
+                </Text>
+              </View>
+            )}
 
-        {/* Accounts Horizontal Scroll */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Accounts</Text>
+            <View style={[styles.heroDivider, { backgroundColor: "rgba(255,255,255,0.18)" }]} />
+
+            <View style={styles.heroStatsRow}>
+              <View style={styles.heroStat}>
+                <View style={styles.heroStatLabelRow}>
+                  <Feather name="arrow-down-left" size={13} color={colors.onGradientMuted} />
+                  <Text style={[styles.heroStatLabel, { color: colors.onGradientMuted }]}>Income</Text>
+                </View>
+                <Text style={[styles.heroStatValue, { color: colors.onGradient }]}>
+                  {hideBalance ? masked : `+$${summary?.totalIncome?.toLocaleString() ?? "0"}`}
+                </Text>
+              </View>
+              <View style={[styles.heroStatDivider, { backgroundColor: "rgba(255,255,255,0.18)" }]} />
+              <View style={styles.heroStat}>
+                <View style={styles.heroStatLabelRow}>
+                  <Feather name="arrow-up-right" size={13} color={colors.onGradientMuted} />
+                  <Text style={[styles.heroStatLabel, { color: colors.onGradientMuted }]}>Expenses</Text>
+                </View>
+                <Text style={[styles.heroStatValue, { color: colors.onGradient }]}>
+                  {hideBalance ? masked : `-$${summary?.totalExpenses?.toLocaleString() ?? "0"}`}
+                </Text>
+              </View>
+            </View>
+          </GradientCard>
+        </FadeInView>
+
+        {/* ── Quick actions ── */}
+        <FadeInView delay={40} style={{ paddingHorizontal: 20, marginBottom: 20 }}>
+          <QuickActions />
+        </FadeInView>
+
+        {/* ── Daily Check-in ── */}
+        <FadeInView delay={60} style={{ paddingHorizontal: 20, marginBottom: 24 }}>
+          <DailyCheckinCard />
+        </FadeInView>
+
+        {/* ── Regret Meter ── */}
+        <FadeInView delay={120}>
+          <RegretMeterWidget />
+        </FadeInView>
+
+        {/* ── Accounts ── */}
+        <FadeInView delay={160} style={styles.section}>
+          <SectionHeader title="Your Accounts" style={{ paddingHorizontal: 20 }} />
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.accountsScroll}
           >
             {accounts?.map((account) => (
-              <View key={account.id} style={[styles.accountCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Card key={account.id} variant="elevated" style={styles.accountCard}>
                 <View style={styles.accountHeader}>
                   <Text style={[styles.institution, { color: colors.mutedForeground }]}>{account.institutionName}</Text>
-                  <View style={[styles.accountTypeChip, { backgroundColor: colors.primary + "20" }]}>
-                    <Text style={[styles.accountType, { color: colors.primary }]}>{account.accountType}</Text>
-                  </View>
+                  <Chip label={account.accountType} color={colors.primary} />
                 </View>
-                <Text style={[styles.accountName, { color: colors.text }]}>{account.accountName}</Text>
+                <Text style={[styles.accountName, { color: colors.textSecondary }]}>{account.accountName}</Text>
                 <Text style={[styles.accountBalance, { color: colors.text }]}>
-                  ${parseFloat(account.balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  {hideBalance
+                    ? masked
+                    : `$${parseFloat(account.balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
                 </Text>
-              </View>
+              </Card>
             ))}
           </ScrollView>
-        </View>
+        </FadeInView>
 
-        {/* Monthly Summary */}
-        <View style={styles.summaryRow}>
-          <View style={[styles.summaryCard, { backgroundColor: colors.card }]}>
-            <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>Income</Text>
-            <Text style={[styles.summaryValue, { color: colors.accent }]}>
-              +${summary?.totalIncome?.toLocaleString()}
-            </Text>
-          </View>
-          <View style={[styles.summaryCard, { backgroundColor: colors.card }]}>
-            <Text style={[styles.summaryLabel, { color: colors.mutedForeground }]}>Expenses</Text>
-            <Text style={[styles.summaryValue, { color: colors.danger }]}>
-              -${summary?.totalExpenses?.toLocaleString()}
-            </Text>
-          </View>
-        </View>
-
-        {/* Savings Rate Pill */}
-        <View style={[styles.savingsRateContainer, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}>
-          <Feather name="pie-chart" size={18} color={colors.primary} />
-          <Text style={[styles.savingsRateText, { color: colors.text }]}>
-            Savings Rate: <Text style={{ color: colors.primary, fontWeight: "700" }}>{summary?.savingsRate}%</Text>
-          </Text>
-        </View>
-
-        {/* Regret Meter Teaser */}
-        {regretScore && !regretScore.noData && (
-          <TouchableOpacity
-            style={[
-              styles.regretTeaser,
-              {
-                backgroundColor:
-                  regretScore.level === "low"
-                    ? colors.accent + "12"
-                    : regretScore.level === "medium"
-                    ? colors.warning + "12"
-                    : colors.danger + "12",
-                borderColor:
-                  regretScore.level === "low"
-                    ? colors.accent + "40"
-                    : regretScore.level === "medium"
-                    ? colors.warning + "40"
-                    : colors.danger + "40",
-              },
-            ]}
-            onPress={() => router.push("/(home)/(tabs)/insights")}
-            activeOpacity={0.85}
-          >
-            <View style={styles.regretTeaserLeft}>
-              <Text style={{ fontSize: 22 }}>
-                {regretScore.level === "low" ? "🟢" : regretScore.level === "medium" ? "🟡" : "🔴"}
-              </Text>
-              <View>
-                <Text style={[styles.regretTeaserTitle, { color: colors.text }]}>Regret Meter</Text>
-                <Text
-                  style={[
-                    styles.regretTeaserLevel,
-                    {
-                      color:
-                        regretScore.level === "low"
-                          ? colors.accent
-                          : regretScore.level === "medium"
-                          ? colors.warning
-                          : colors.danger,
-                    },
-                  ]}
-                >
-                  {regretScore.level === "low"
-                    ? "Safe Zone"
-                    : regretScore.level === "medium"
-                    ? "Caution"
-                    : "High Risk"}{" "}
-                  · {regretScore.score}/100
-                </Text>
-              </View>
-            </View>
-            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
-          </TouchableOpacity>
-        )}
-
-        {/* Spending Categories */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Top Spending</Text>
-          <View style={[styles.categoriesCard, { backgroundColor: colors.card }]}>
-            {summary?.topCategories?.slice(0, 4).map((cat) => (
-              <View key={cat.categoryId} style={styles.categoryRow}>
+        {/* ── Top Spending ── */}
+        <FadeInView delay={200} style={styles.section}>
+          <SectionHeader title="Top Spending" subtitle="This month by category" style={{ paddingHorizontal: 20 }} />
+          <Card variant="elevated" style={{ marginHorizontal: 20 }}>
+            {(!summary?.topCategories || summary.topCategories.length === 0) && (
+              <EmptyState
+                icon="pie-chart"
+                title="Nothing to show yet"
+                description="Your category breakdown appears once you have spending this month."
+              />
+            )}
+            {summary?.topCategories?.slice(0, 4).map((cat, i) => (
+              <View key={cat.categoryId} style={[styles.categoryRow, i > 0 && { marginTop: 18 }]}>
                 <View style={styles.categoryInfo}>
-                  <View style={[styles.categoryIcon, { backgroundColor: cat.categoryColor + "20" }]}>
-                    <Feather name={toFeatherIcon(cat.categoryIcon)} size={14} color={cat.categoryColor} />
-                  </View>
+                  <IconBadge icon={toFeatherIcon(cat.categoryIcon)} color={cat.categoryColor} size={32} />
                   <Text style={[styles.categoryName, { color: colors.text }]}>{cat.categoryName}</Text>
-                </View>
-                <View style={styles.categoryBarContainer}>
-                  <View style={[styles.categoryBar, { backgroundColor: colors.border }]}>
-                    <View
-                      style={[
-                        styles.categoryBarFill,
-                        {
-                          backgroundColor: cat.categoryColor,
-                          width: `${cat.percentage}%`
-                        }
-                      ]}
-                    />
-                  </View>
                   <Text style={[styles.categoryPercent, { color: colors.mutedForeground }]}>{cat.percentage}%</Text>
                 </View>
+                <ProgressBar progress={cat.percentage / 100} color={cat.categoryColor} height={7} />
               </View>
             ))}
-          </View>
-        </View>
+          </Card>
+        </FadeInView>
 
-        {/* Recent Transactions */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Recent Transactions</Text>
-            <TouchableOpacity>
-              <Text style={{ color: colors.primary }}>See All</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={[styles.transactionsList, { backgroundColor: colors.card }]}>
+        {/* ── Recent Transactions ── */}
+        <FadeInView delay={240} style={styles.section}>
+          <SectionHeader
+            title="Recent Transactions"
+            actionLabel="See All"
+            onAction={() => setShowAllTx(true)}
+            style={{ paddingHorizontal: 20 }}
+          />
+          <Card variant="elevated" style={{ marginHorizontal: 20, paddingVertical: 8 }}>
+            {(!summary?.recentTransactions || summary.recentTransactions.length === 0) && (
+              <EmptyState
+                icon="credit-card"
+                title="No transactions yet"
+                description="Your latest activity will show up here."
+                style={{ marginVertical: 12 }}
+              />
+            )}
             {summary?.recentTransactions?.slice(0, 5).map((tx) => (
-              <View key={tx.id} style={styles.transactionItem}>
-                <View style={styles.txLeft}>
-                  <View style={[styles.txIcon, { backgroundColor: tx.categoryColor ? tx.categoryColor + "20" : colors.border }]}>
-                    <Feather name={toFeatherIcon(tx.categoryIcon)} size={16} color={tx.categoryColor || colors.text} />
-                  </View>
-                  <View>
-                    <Text style={[styles.txMerchant, { color: colors.text }]} numberOfLines={1}>
-                      {tx.merchantName || tx.description}
-                    </Text>
-                    <Text style={[styles.txDate, { color: colors.mutedForeground }]}>
-                      {new Date(tx.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                    </Text>
-                  </View>
-                </View>
-                <Text style={[
-                  styles.txAmount,
-                  { color: tx.type === 'debit' ? colors.text : colors.accent }
-                ]}>
-                  {tx.type === 'debit' ? '-' : '+'}${parseFloat(tx.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </Text>
-              </View>
+              <TransactionRow key={tx.id} tx={tx as any} />
             ))}
-          </View>
-        </View>
+          </Card>
+        </FadeInView>
       </ScrollView>
 
       <AlertsPanel visible={showAlerts} onClose={() => setShowAlerts(false)} />
+      <TransactionsModal visible={showAllTx} onClose={() => setShowAllTx(false)} />
     </>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
 
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    marginBottom: 24,
+    marginBottom: 20,
   },
-  greeting: { fontSize: 18, fontFamily: "Lora_400Regular_Italic", marginBottom: 2 },
-  userName: { fontSize: 32, fontFamily: "Outfit_700Bold", letterSpacing: -0.5 },
+  greeting: { fontSize: 15, fontFamily: "Outfit_400Regular", marginBottom: 2 },
+  userName: { fontSize: 28, fontFamily: "Outfit_700Bold", letterSpacing: -0.6 },
   notificationButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
@@ -520,156 +677,119 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: "absolute",
-    top: -2,
-    right: -2,
-    width: 20,
+    top: -3,
+    right: -3,
+    minWidth: 20,
     height: 20,
     borderRadius: 10,
+    borderWidth: 2,
+    paddingHorizontal: 4,
     justifyContent: "center",
     alignItems: "center",
   },
   badgeText: { color: "#fff", fontSize: 10, fontFamily: "Outfit_700Bold" },
 
+  // Hero
+  heroTopRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
+  balanceLabel: { fontSize: 13, fontFamily: "Outfit_600SemiBold", textTransform: "uppercase", letterSpacing: 1 },
+  balanceAmount: { fontSize: 40, fontFamily: "Lora_700Bold", letterSpacing: -1, marginBottom: 10 },
+  balanceChangeContainer: { flexDirection: "row", alignItems: "center", gap: 6 },
+  balanceChange: { fontSize: 13.5, fontFamily: "Outfit_600SemiBold" },
+  heroDivider: { height: StyleSheet.hairlineWidth, marginVertical: 16 },
+  heroStatsRow: { flexDirection: "row", alignItems: "center" },
+  heroStat: { flex: 1 },
+  heroStatLabelRow: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 4 },
+  heroStatLabel: { fontSize: 12, fontFamily: "Outfit_500Medium" },
+  heroStatValue: { fontSize: 19, fontFamily: "Outfit_700Bold" },
+  heroStatDivider: { width: StyleSheet.hairlineWidth, height: 36, marginHorizontal: 16 },
+
+  // Check-in
   checkinCard: {
-    borderRadius: 24,
-    padding: 20,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 16,
-    borderWidth: 1,
-    ...shadow({ opacity: 0.03, radius: 16, elevation: 2 }),
+    gap: 14,
   },
-  checkinLeft: { flexDirection: "row", alignItems: "center", gap: 16, flex: 1 },
-  checkinTitle: { fontSize: 16, fontFamily: "Outfit_600SemiBold", marginBottom: 4 },
-  checkinSummary: { fontSize: 13, lineHeight: 18, fontFamily: "Outfit_400Regular" },
-  checkinBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 20,
-    minWidth: 88,
-    alignItems: "center",
-  },
-  checkinBtnText: { color: "#fff", fontSize: 14, fontFamily: "Outfit_600SemiBold" },
-  healthScoreBadge: { padding: 12, borderRadius: 16, alignItems: "center", minWidth: 64 },
-  healthScoreNum: { fontSize: 24, fontFamily: "Outfit_700Bold" },
-  healthScoreLabel: { fontSize: 11, fontFamily: "Outfit_600SemiBold", marginTop: 2, textTransform: "uppercase", letterSpacing: 0.5 },
+  checkinLeft: { flexDirection: "row", alignItems: "center", gap: 14, flex: 1 },
+  checkinTitle: { fontSize: 15.5, fontFamily: "Outfit_600SemiBold", marginBottom: 3 },
+  checkinSummary: { fontSize: 12.5, lineHeight: 17, fontFamily: "Outfit_400Regular" },
+  healthScoreBadge: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: Radius.md, alignItems: "center", minWidth: 60 },
+  healthScoreNum: { fontSize: 22, fontFamily: "Outfit_700Bold" },
+  healthScoreLabel: { fontSize: 10, fontFamily: "Outfit_600SemiBold", marginTop: 1, textTransform: "uppercase", letterSpacing: 0.5 },
 
-  achModalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.7)", justifyContent: "center", alignItems: "center", padding: 24 },
-  achModalCard: { borderRadius: 32, padding: 32, alignItems: "center", width: "100%", maxWidth: 340, ...shadow({ offsetY: 10, opacity: 0.1, radius: 20 }) },
-  achModalEmoji: { fontSize: 64, marginBottom: 16 },
-  achModalTitle: { fontSize: 14, fontFamily: "Outfit_600SemiBold", marginBottom: 6, opacity: 0.7, textTransform: "uppercase", letterSpacing: 1 },
-  achModalName: { fontSize: 28, fontFamily: "Lora_700Bold", marginBottom: 12, textAlign: "center" },
-  achModalDesc: { fontSize: 16, fontFamily: "Outfit_400Regular", lineHeight: 24, textAlign: "center", marginBottom: 32 },
-  achModalClose: { paddingHorizontal: 32, paddingVertical: 16, borderRadius: 24, width: "100%", alignItems: "center" },
-  achModalCloseText: { color: "#fff", fontSize: 16, fontFamily: "Outfit_600SemiBold" },
+  achModalOverlay: { flex: 1, backgroundColor: "rgba(8,9,20,0.72)", justifyContent: "center", alignItems: "center", padding: 24 },
+  achModalCard: { borderRadius: Radius.xl, padding: 30, alignItems: "center", width: "100%", maxWidth: 340, ...shadow({ offsetY: 10, opacity: 0.15, radius: 24 }) },
+  achModalEmoji: { fontSize: 60, marginBottom: 14 },
+  achModalTitle: { fontSize: 13, fontFamily: "Outfit_600SemiBold", marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 },
+  achModalName: { fontSize: 26, fontFamily: "Lora_700Bold", marginBottom: 10, textAlign: "center" },
+  achModalDesc: { fontSize: 15, fontFamily: "Outfit_400Regular", lineHeight: 22, textAlign: "center", marginBottom: 26 },
 
-  alertsOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
-  alertsPanel: { borderTopLeftRadius: 32, borderTopRightRadius: 32, maxHeight: "85%", minHeight: "50%" },
+  alertsOverlay: { flex: 1, backgroundColor: "rgba(8,9,20,0.55)", justifyContent: "flex-end" },
+  alertsPanel: { borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: "85%", minHeight: "55%" },
   alertsHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 24,
+    padding: 22,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  alertsTitle: { fontSize: 22, fontFamily: "Lora_700Bold" },
+  alertsTitle: { fontSize: 21, fontFamily: "Outfit_700Bold", letterSpacing: -0.3 },
   alertsHeaderRight: { flexDirection: "row", alignItems: "center", gap: 12 },
-  markAllBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 16, borderWidth: 1 },
+  markAllBtn: { paddingHorizontal: 13, paddingVertical: 8, borderRadius: Radius.pill, borderWidth: 1 },
   markAllText: { fontSize: 13, fontFamily: "Outfit_600SemiBold" },
-  closeBtn: { width: 36, height: 36, borderRadius: 18, justifyContent: "center", alignItems: "center" },
+  closeBtn: { width: 34, height: 34, borderRadius: 17, justifyContent: "center", alignItems: "center" },
   alertsLoading: { padding: 40, alignItems: "center" },
   alertsEmpty: { padding: 60, alignItems: "center", gap: 16 },
-  alertsEmptyText: { fontSize: 16, fontFamily: "Outfit_400Regular" },
+  alertsEmptyText: { fontSize: 15, fontFamily: "Outfit_400Regular" },
   alertRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    padding: 20,
+    padding: 18,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 16,
+    gap: 14,
   },
-  alertIcon: { width: 44, height: 44, borderRadius: 22, justifyContent: "center", alignItems: "center" },
   alertContent: { flex: 1 },
-  alertTitle: { fontSize: 15, marginBottom: 4, fontFamily: "Outfit_500Medium" },
-  alertMessage: { fontSize: 14, lineHeight: 20, marginBottom: 6, fontFamily: "Outfit_400Regular" },
-  alertTime: { fontSize: 12, fontFamily: "Outfit_400Regular" },
-  unreadDot: { width: 10, height: 10, borderRadius: 5, marginTop: 8 },
+  alertTitle: { fontSize: 15, marginBottom: 3 },
+  alertMessage: { fontSize: 13.5, lineHeight: 19, marginBottom: 5, fontFamily: "Outfit_400Regular" },
+  alertTime: { fontSize: 11.5, fontFamily: "Outfit_400Regular" },
+  unreadDot: { width: 9, height: 9, borderRadius: 5, marginTop: 8 },
 
-  balanceCard: { marginHorizontal: 20, padding: 28, borderRadius: 32, marginBottom: 28, ...shadow({ opacity: 0.03, radius: 16, elevation: 2 }) },
-  balanceLabel: { fontSize: 14, fontFamily: "Outfit_500Medium", marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 },
-  balanceAmount: { fontSize: 44, fontFamily: "Lora_700Bold", marginBottom: 16, letterSpacing: -1 },
-  balanceChangeContainer: { flexDirection: "row", alignItems: "center" },
-  balanceChange: { fontSize: 15, fontFamily: "Outfit_600SemiBold", marginLeft: 6 },
-
-  section: { marginBottom: 32 },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  quickRow: { flexDirection: "row", gap: 10 },
+  quickTile: {
+    flex: 1,
     alignItems: "center",
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  sectionTitle: { fontSize: 20, fontFamily: "Lora_700Bold", paddingHorizontal: 20, marginBottom: 20 },
-  accountsScroll: { paddingLeft: 20, paddingRight: 10 },
-  accountCard: { width: width * 0.75, padding: 24, borderRadius: 24, marginRight: 16, borderWidth: 1 },
-  accountHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 },
-  institution: { fontSize: 13, fontFamily: "Outfit_600SemiBold", textTransform: "uppercase", letterSpacing: 0.5 },
-  accountTypeChip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  accountType: { fontSize: 11, fontFamily: "Outfit_700Bold", textTransform: "uppercase" },
-  accountName: { fontSize: 18, fontFamily: "Outfit_500Medium", marginBottom: 8 },
-  accountBalance: { fontSize: 24, fontFamily: "Lora_700Bold" },
-
-  summaryRow: { flexDirection: "row", paddingHorizontal: 20, gap: 16, marginBottom: 16 },
-  summaryCard: { flex: 1, padding: 20, borderRadius: 24 },
-  summaryLabel: { fontSize: 13, fontFamily: "Outfit_500Medium", marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5 },
-  summaryValue: { fontSize: 22, fontFamily: "Outfit_700Bold" },
-
-  savingsRateContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginHorizontal: 20,
-    padding: 20,
-    borderRadius: 24,
-    borderWidth: 1,
-    marginBottom: 28,
-    gap: 16,
-  },
-  savingsRateText: { fontSize: 16, fontFamily: "Outfit_500Medium" },
-
-  regretTeaser: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginHorizontal: 20,
-    marginBottom: 32,
-    padding: 20,
-    borderRadius: 24,
+    gap: 7,
+    paddingVertical: 14,
+    borderRadius: Radius.lg,
     borderWidth: 1,
   },
-  regretTeaserLeft: { flexDirection: "row", alignItems: "center", gap: 16 },
-  regretTeaserTitle: { fontSize: 15, fontFamily: "Outfit_700Bold", marginBottom: 4 },
-  regretTeaserLevel: { fontSize: 14, fontFamily: "Outfit_600SemiBold" },
+  quickLabel: { fontSize: 11.5, fontFamily: "Outfit_600SemiBold" },
 
-  categoriesCard: { marginHorizontal: 20, padding: 24, borderRadius: 28, ...shadow({ opacity: 0.03, radius: 16, elevation: 2 }) },
-  categoryRow: { marginBottom: 20 },
-  categoryInfo: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
-  categoryIcon: { width: 32, height: 32, borderRadius: 16, justifyContent: "center", alignItems: "center", marginRight: 12 },
-  categoryName: { fontSize: 15, fontFamily: "Outfit_600SemiBold" },
-  categoryBarContainer: { flexDirection: "row", alignItems: "center", gap: 16 },
-  categoryBar: { flex: 1, height: 8, borderRadius: 4, overflow: "hidden" },
-  categoryBarFill: { height: "100%", borderRadius: 4 },
-  categoryPercent: { fontSize: 13, fontFamily: "Outfit_600SemiBold", width: 40 },
+  filterRow: { flexDirection: "row", gap: 10, paddingHorizontal: 20, paddingVertical: 14 },
+  filterChip: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: Radius.pill, borderWidth: 1 },
+  filterChipText: { fontSize: 13, fontFamily: "Outfit_600SemiBold" },
 
-  transactionsList: { marginHorizontal: 20, borderRadius: 28, padding: 20, ...shadow({ opacity: 0.03, radius: 16, elevation: 2 }) },
+  section: { marginBottom: 26 },
+  accountsScroll: { paddingLeft: 20, paddingRight: 8 },
+  accountCard: { width: width * 0.68, marginRight: 14 },
+  accountHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
+  institution: { fontSize: 12, fontFamily: "Outfit_600SemiBold", textTransform: "uppercase", letterSpacing: 0.6, flex: 1, marginRight: 8 },
+  accountName: { fontSize: 15, fontFamily: "Outfit_500Medium", marginBottom: 6 },
+  accountBalance: { fontSize: 23, fontFamily: "Lora_700Bold", letterSpacing: -0.5 },
+
+  categoryRow: {},
+  categoryInfo: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 },
+  categoryName: { fontSize: 14.5, fontFamily: "Outfit_600SemiBold", flex: 1 },
+  categoryPercent: { fontSize: 13, fontFamily: "Outfit_600SemiBold" },
+
   transactionItem: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 16,
+    paddingVertical: 12,
   },
-  txLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
-  txIcon: { width: 44, height: 44, borderRadius: 22, justifyContent: "center", alignItems: "center", marginRight: 16 },
-  txMerchant: { fontSize: 16, fontFamily: "Outfit_600SemiBold", marginBottom: 4 },
-  txDate: { fontSize: 13, fontFamily: "Outfit_400Regular" },
-  txAmount: { fontSize: 17, fontFamily: "Outfit_700Bold" },
+  txLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1, marginRight: 12 },
+  txMerchant: { fontSize: 15, fontFamily: "Outfit_600SemiBold", marginBottom: 2 },
+  txDate: { fontSize: 12.5, fontFamily: "Outfit_400Regular" },
+  txAmount: { fontSize: 15.5, fontFamily: "Outfit_700Bold" },
 });

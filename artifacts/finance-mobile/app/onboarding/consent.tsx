@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useAcceptConsent } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
+import { PrimaryButton } from "@/components/ui";
 
 export default function ConsentScreen() {
   const router = useRouter();
@@ -108,21 +109,13 @@ export default function ConsentScreen() {
             )}
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity
-            style={[
-              styles.button,
-              { backgroundColor: colors.primary },
-              isPending && styles.buttonDisabled,
-            ]}
+          <PrimaryButton
+            label="I Understand & Consent"
+            icon="check"
+            loading={isPending}
             onPress={handleConsent}
-            disabled={isPending}
-          >
-            {isPending ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.buttonText}>I Understand & Consent</Text>
-            )}
-          </TouchableOpacity>
+            hapticKind="success"
+          />
         )}
       </View>
     </View>

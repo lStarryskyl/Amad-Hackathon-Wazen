@@ -25,6 +25,8 @@ import {
 } from "@workspace/api-client-react";
 import type { SimulationRun, MonthDataPoint } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
+import { Radius } from "@/constants/colors";
+import { haptic } from "@/components/ui";
 import {
   checkCompareEligibility,
   hasEnoughChartData,
@@ -505,7 +507,7 @@ function ScenarioCard({
 }
 
 const cardStyles = StyleSheet.create({
-  container: { borderRadius: 24, borderWidth: 1, padding: 20, marginBottom: 16, ...shadow({ opacity: 0.02, radius: 12, elevation: 2 }) },
+  container: { borderRadius: Radius.lg, borderWidth: 1, padding: 20, marginBottom: 14, ...shadow({ opacity: 0.04, radius: 14, offsetY: 5, elevation: 2 }) },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
   dot: { width: 10, height: 10, borderRadius: 5 },
@@ -548,15 +550,15 @@ function EmptyState({ onNew, onExample, colors }: { onNew: () => void; onExample
 }
 
 const emptyStyles = StyleSheet.create({
-  container: { alignItems: "center", paddingTop: 60, paddingBottom: 40 },
-  icon: { width: 96, height: 96, borderRadius: 48, justifyContent: "center", alignItems: "center", marginBottom: 24 },
-  title: { fontSize: 24, fontFamily: "Lora_700Bold", marginBottom: 12 },
-  desc: { fontSize: 16, fontFamily: "Outfit_400Regular", textAlign: "center", lineHeight: 24, marginBottom: 32, maxWidth: 300 },
-  chips: { gap: 10, marginBottom: 40, alignSelf: "stretch" },
-  chip: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 16, borderWidth: 1, padding: 16 },
+  container: { alignItems: "center", paddingTop: 52, paddingBottom: 40 },
+  icon: { width: 88, height: 88, borderRadius: 32, justifyContent: "center", alignItems: "center", marginBottom: 24 },
+  title: { fontSize: 23, fontFamily: "Outfit_700Bold", marginBottom: 10, letterSpacing: -0.4 },
+  desc: { fontSize: 15, fontFamily: "Outfit_400Regular", textAlign: "center", lineHeight: 23, marginBottom: 30, maxWidth: 300 },
+  chips: { gap: 10, marginBottom: 36, alignSelf: "stretch" },
+  chip: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: Radius.md, borderWidth: 1, padding: 15 },
   chipText: { fontSize: 14, fontFamily: "Outfit_500Medium" },
-  btn: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 28, paddingVertical: 18, borderRadius: 24 },
-  btnText: { color: "#fff", fontSize: 16, fontFamily: "Outfit_700Bold" },
+  btn: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 28, paddingVertical: 17, borderRadius: Radius.pill },
+  btnText: { color: "#fff", fontSize: 16, fontFamily: "Outfit_600SemiBold" },
 });
 
 // ─── Goal timeline row ────────────────────────────────────────────────────────
@@ -674,6 +676,7 @@ export default function SimulateScreen() {
   const handleRun = useCallback(() => {
     const trimmed = promptText.trim();
     if (!trimmed) { Alert.alert("Question needed", "Type a what-if question first, like \u201cWhat if I cut dining out by 30%?\u201d"); return; }
+    haptic("medium");
     const payload: { prompt: string; priorPrompt?: string } = { prompt: trimmed };
     if (refinedFromRun?.inputs.prompt) {
       payload.priorPrompt = refinedFromRun.inputs.prompt;
@@ -1558,7 +1561,7 @@ export default function SimulateScreen() {
 // ─── Compare column header styles ─────────────────────────────────────────────
 
 const compareColStyles = StyleSheet.create({
-  headerRow: { flexDirection: "row", marginBottom: 20, borderRadius: 24, overflow: "hidden", borderWidth: 1, backgroundColor: "transparent" },
+  headerRow: { flexDirection: "row", marginBottom: 20, borderRadius: Radius.lg, overflow: "hidden", borderWidth: 1, backgroundColor: "transparent" },
   labelCol: { flex: 1 },
   col: { flex: 2, borderLeftWidth: 1, padding: 16, alignItems: "center" },
   colorDot: { width: 12, height: 12, borderRadius: 6, marginBottom: 8 },
@@ -1578,27 +1581,27 @@ const compareHintStyles = StyleSheet.create({
 const gs = StyleSheet.create({
   flex: { flex: 1 },
   center: { alignItems: "center", paddingVertical: 60 },
-  pageHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28 },
-  pageTitle: { fontSize: 36, fontFamily: "Lora_700Bold", marginBottom: 4, letterSpacing: -0.5 },
-  pageSubtitle: { fontSize: 16, fontFamily: "Outfit_400Regular" },
-  newBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20 },
+  pageHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 },
+  pageTitle: { fontSize: 30, fontFamily: "Outfit_700Bold", marginBottom: 4, letterSpacing: -0.8 },
+  pageSubtitle: { fontSize: 15, fontFamily: "Outfit_400Regular" },
+  newBtn: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 12, borderRadius: Radius.pill },
   newBtnText: { color: "#fff", fontFamily: "Outfit_700Bold", fontSize: 14 },
   navRow: { flexDirection: "row", alignItems: "center", marginBottom: 24 },
   navBtn: { width: 44, height: 44, borderRadius: 22, justifyContent: "center", alignItems: "center", backgroundColor: "transparent" },
-  navTitle: { fontSize: 22, fontFamily: "Lora_700Bold", flex: 1, textAlign: "center", marginHorizontal: 8 },
-  section: { borderRadius: 24, borderWidth: 1, padding: 20, marginBottom: 24, ...shadow({ opacity: 0.02, radius: 12, elevation: 2 }) },
+  navTitle: { fontSize: 19, fontFamily: "Outfit_700Bold", flex: 1, textAlign: "center", marginHorizontal: 8, letterSpacing: -0.3 },
+  section: { borderRadius: Radius.lg, borderWidth: 1, padding: 20, marginBottom: 20, ...shadow({ opacity: 0.04, radius: 14, offsetY: 5, elevation: 2 }) },
   sectionLabel: { fontSize: 12, fontFamily: "Outfit_700Bold", letterSpacing: 1, marginBottom: 16, textTransform: "uppercase" },
-  nameInput: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 16, fontSize: 16, fontFamily: "Outfit_500Medium" },
-  promptInput: { borderWidth: 1, borderRadius: 16, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16, fontSize: 16, fontFamily: "Outfit_500Medium", minHeight: 100, textAlignVertical: "top", lineHeight: 24 },
+  nameInput: { borderWidth: 1, borderRadius: Radius.md, paddingHorizontal: 16, paddingVertical: 16, fontSize: 16, fontFamily: "Outfit_500Medium" },
+  promptInput: { borderWidth: 1, borderRadius: Radius.md, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16, fontSize: 16, fontFamily: "Outfit_500Medium", minHeight: 100, textAlignVertical: "top", lineHeight: 24 },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  chip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 16, borderWidth: 1 },
+  chip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: Radius.md, borderWidth: 1 },
   chipText: { fontSize: 14, fontFamily: "Outfit_600SemiBold" },
-  fixedBottom: { paddingHorizontal: 20, paddingTop: 16, borderTopWidth: 1 },
-  runBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 18, borderRadius: 24 },
-  runBtnText: { color: "#fff", fontSize: 16, fontFamily: "Outfit_700Bold" },
-  heroCard: { borderRadius: 32, borderWidth: 1, padding: 32, alignItems: "center", marginBottom: 24 },
-  heroLabel: { fontSize: 15, marginBottom: 12, fontFamily: "Outfit_500Medium" },
-  heroValue: { fontSize: 56, fontFamily: "Lora_700Bold", marginBottom: 8, letterSpacing: -1.5 },
-  heroSub: { fontSize: 16, fontFamily: "Outfit_400Regular" },
+  fixedBottom: { paddingHorizontal: 20, paddingTop: 14, borderTopWidth: StyleSheet.hairlineWidth },
+  runBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 17, borderRadius: Radius.pill },
+  runBtnText: { color: "#fff", fontSize: 16, fontFamily: "Outfit_600SemiBold" },
+  heroCard: { borderRadius: Radius.xl, borderWidth: 1, padding: 30, alignItems: "center", marginBottom: 20 },
+  heroLabel: { fontSize: 14, marginBottom: 10, fontFamily: "Outfit_500Medium", textTransform: "uppercase", letterSpacing: 0.8 },
+  heroValue: { fontSize: 52, fontFamily: "Lora_700Bold", marginBottom: 8, letterSpacing: -1.5 },
+  heroSub: { fontSize: 15, fontFamily: "Outfit_400Regular" },
   metricsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12, marginBottom: 24 },
 });

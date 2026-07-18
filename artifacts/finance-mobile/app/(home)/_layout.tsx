@@ -6,11 +6,13 @@ import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { useGetOnboardingStatus } from "@workspace/api-client-react";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { DEV_BYPASS_AUTH } from "@/constants/devFlags";
+import { useColors } from "@/hooks/useColors";
 
 function LoadingScreen() {
+  const colors = useColors();
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#0D1117" }}>
-      <ActivityIndicator size="large" color="#2563EB" />
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
+      <ActivityIndicator size="large" color={colors.primary} />
     </View>
   );
 }

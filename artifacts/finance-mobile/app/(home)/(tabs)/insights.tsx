@@ -10,13 +10,16 @@ import {
   Animated,
   LayoutAnimation,
   Platform,
+  RefreshControl,
   UIManager,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import Svg, { Polyline, Circle } from "react-native-svg";
 import {
   useGetRegretScore,
+  useGetRegretScoreHistory,
   useGenerateRescuePlan,
   useGetLatestRescuePlan,
   useGenerateMoneyStory,
@@ -27,6 +30,8 @@ import {
 import type { RegretFactor, RescueAction, BehavioralPattern } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useColors } from "@/hooks/useColors";
+import { Radius } from "@/constants/colors";
+import { ScreenHeader, haptic } from "@/components/ui";
 
 if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -152,6 +157,53 @@ function PatternCard({
         <Text style={[styles.patternDesc, { color: colors.textSecondary }]}>{pattern.description}</Text>
       )}
     </TouchableOpacity>
+  );
+}
+
+// ─── Regret score trend sparkline ────────────────────────────────────────────
+
+function RegretTrend({ colors }: { colors: ReturnType<typeof useColors> }) {
+  const { data: history } = useGetRegretScoreHistory({ staleTime: 5 * 60 * 1000, retry: 0 });
+  const [width, setWidth] = useState(0);
+
+  if (!history || history.length < 2) return null;
+
+  // History arrives newest-first; chart oldest → newest
+  const points = [...history].reverse();
+  const H = 56;
+  const PAD = 6;
+
+  const scores = points.map((p) => p.score);
+  const minV = Math.min(...scores);
+  const maxV = Math.max(...scores);
+  const range = maxV - minV || 1;
+
+  const toX = (i: number) => PAD + (i / (points.length - 1)) * (width - PAD * 2);
+  const toY = (v: number) => PAD + ((maxV - v) / range) * (H - PAD * 2);
+
+  const pts = points.map((p, i) => `${toX(i).toFixed(1)},${toY(p.score).toFixed(1)}`).join(" ");
+  const last = points[points.length - 1];
+  const first = points[0];
+  const improving = last.score <= first.score; // lower regret is better
+  const lineColor = improving ? colors.accent : colors.warning;
+
+  return (
+    <View style={{ marginTop: 20 }} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+        <Text style={{ fontSize: 13, fontFamily: "Outfit_600SemiBold", color: colors.text }}>
+          Score Trend
+        </Text>
+        <Text style={{ fontSize: 12, fontFamily: "Outfit_600SemiBold", color: lineColor }}>
+          {improving ? "▼ Improving" : "▲ Rising"} · last {points.length} checks
+        </Text>
+      </View>
+      {width > 10 && (
+        <Svg width={width} height={H}>
+          <Polyline points={pts} fill="none" stroke={lineColor} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+          <Circle cx={toX(points.length - 1)} cy={toY(last.score)} r={4} fill={lineColor} />
+        </Svg>
+      )}
+    </View>
   );
 }
 
@@ -305,6 +357,8 @@ function RegretMeterSection() {
           <StatPill label="vs Prior Month" value={`${Math.round(s.spendingVelocityRatio * 100)}%`} color={s.spendingVelocityRatio <= 1.05 ? colors.accent : colors.danger} colors={colors} />
           <StatPill label="Fixed Costs" value={`${s.recurringBurdenPct}%`} color={s.recurringBurdenPct <= 40 ? colors.accent : colors.warning} colors={colors} />
         </View>
+
+        <RegretTrend colors={colors} />
       </View>
     </Animated.View>
   );
@@ -373,7 +427,7 @@ function RescuePlanSection() {
         </View>
         <TouchableOpacity
           style={[styles.generateBtn, { backgroundColor: colors.primary }]}
-          onPress={() => generate()}
+          onPress={() => { haptic("medium"); generate(); }}
           disabled={isPending}
         >
           {isPending
@@ -564,7 +618,7 @@ function MoneyStoriesSection() {
         {!hasNoTransactions && (
           <TouchableOpacity
             style={[styles.generateBtn, { backgroundColor: colors.accent }]}
-            onPress={() => generate()}
+            onPress={() => { haptic("medium"); generate(); }}
             disabled={isPending}
           >
             {isPending
@@ -626,6 +680,23 @@ function MoneyStoriesSection() {
 export default function InsightsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["/api/ai/regret-score"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/ai/regret-score/history"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/patterns"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/ai/rescue-plan/latest"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/ai/money-story/latest"] }),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <ScrollView
@@ -636,13 +707,11 @@ export default function InsightsScreen() {
         paddingHorizontal: 20,
       }}
       showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
+      }
     >
-      <View style={styles.pageHeader}>
-        <Text style={[styles.pageTitle, { color: colors.text }]}>Insights</Text>
-        <Text style={[styles.pageSubtitle, { color: colors.mutedForeground }]}>
-          AI-powered financial intelligence
-        </Text>
-      </View>
+      <ScreenHeader title="Insights" subtitle="AI-powered financial intelligence" />
 
       <BehavioralPatternsSection />
       <RegretMeterSection />
@@ -654,37 +723,34 @@ export default function InsightsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  pageHeader: { marginBottom: 28 },
-  pageTitle: { fontSize: 36, fontFamily: "Lora_700Bold", letterSpacing: -0.5 },
-  pageSubtitle: { fontSize: 16, fontFamily: "Outfit_400Regular", marginTop: 4 },
 
   card: {
-    borderRadius: 32,
-    padding: 24,
-    marginBottom: 24,
-    ...shadow({ opacity: 0.03, radius: 16, elevation: 2 }),
+    borderRadius: Radius.xl,
+    padding: 20,
+    marginBottom: 20,
+    ...shadow({ opacity: 0.05, radius: 18, offsetY: 6, elevation: 3 }),
   },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 20,
   },
-  cardTitle: { fontSize: 20, fontFamily: "Lora_700Bold" },
-  cardSubtitle: { fontSize: 13, fontFamily: "Outfit_400Regular", marginTop: 2 },
-  row: { flexDirection: "row", alignItems: "center", gap: 14, flex: 1 },
+  cardTitle: { fontSize: 18, fontFamily: "Outfit_700Bold", letterSpacing: -0.3 },
+  cardSubtitle: { fontSize: 12.5, fontFamily: "Outfit_400Regular", marginTop: 2 },
+  row: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
   iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
   },
 
   refreshBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
@@ -692,7 +758,7 @@ const styles = StyleSheet.create({
   generateBtn: {
     paddingHorizontal: 18,
     paddingVertical: 10,
-    borderRadius: 20,
+    borderRadius: Radius.pill,
     minWidth: 88,
     alignItems: "center",
   },
@@ -703,7 +769,7 @@ const styles = StyleSheet.create({
   patternsContainer: { gap: 12 },
   patternCard: {
     padding: 16,
-    borderRadius: 20,
+    borderRadius: Radius.md,
     marginBottom: 0,
   },
   patternHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
@@ -720,9 +786,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     gap: 16,
   },
-  bigScore: { fontSize: 64, fontFamily: "Lora_700Bold", letterSpacing: -2 },
+  bigScore: { fontSize: 60, fontFamily: "Lora_700Bold", letterSpacing: -2 },
   scoreRight: { justifyContent: "center" },
-  levelBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, alignSelf: "flex-start", marginBottom: 4 },
+  levelBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: Radius.pill, alignSelf: "flex-start", marginBottom: 4 },
   levelBadgeText: { fontSize: 12, fontFamily: "Outfit_700Bold", textTransform: "uppercase", letterSpacing: 0.5 },
   scoreOf: { fontSize: 14, fontFamily: "Outfit_500Medium" },
 
@@ -732,7 +798,7 @@ const styles = StyleSheet.create({
   markerLabels: { flexDirection: "row", justifyContent: "space-between", marginBottom: 24, paddingHorizontal: 2 },
   markerLabel: { fontSize: 11, fontFamily: "Outfit_600SemiBold", textTransform: "uppercase" },
 
-  summaryBox: { padding: 16, borderRadius: 20, marginBottom: 24 },
+  summaryBox: { padding: 16, borderRadius: Radius.md, marginBottom: 24 },
   summaryText: { fontSize: 15, fontFamily: "Outfit_400Regular", lineHeight: 22 },
 
   factorsTitle: { fontSize: 16, fontFamily: "Outfit_600SemiBold", marginBottom: 12 },
@@ -743,16 +809,16 @@ const styles = StyleSheet.create({
   factorDesc: { marginTop: 8, marginLeft: 22, fontSize: 14, lineHeight: 20, fontFamily: "Outfit_400Regular" },
 
   statsGrid: { flexDirection: "row", gap: 12, marginTop: 24 },
-  statPill: { flex: 1, padding: 14, borderRadius: 16, alignItems: "center" },
+  statPill: { flex: 1, padding: 14, borderRadius: Radius.md, alignItems: "center" },
   statValue: { fontSize: 18, fontFamily: "Outfit_700Bold", marginBottom: 4 },
   statLabel: { fontSize: 11, fontFamily: "Outfit_500Medium", textAlign: "center", textTransform: "uppercase" },
 
-  emptyState: { padding: 32, borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  emptyState: { padding: 32, borderRadius: Radius.lg, alignItems: "center", justifyContent: "center" },
   emptyTitle: { fontSize: 18, fontFamily: "Outfit_600SemiBold", marginBottom: 8 },
   emptyDesc: { fontSize: 14, fontFamily: "Outfit_400Regular", textAlign: "center", lineHeight: 22 },
 
   actionsTitle: { fontSize: 16, fontFamily: "Outfit_600SemiBold", marginBottom: 16 },
-  actionCard: { padding: 16, borderRadius: 20, marginBottom: 12, borderLeftWidth: 4 },
+  actionCard: { padding: 16, borderRadius: Radius.md, marginBottom: 12, borderLeftWidth: 4 },
   actionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   actionLeft: { flex: 1, paddingRight: 16 },
   actionTag: { fontSize: 11, fontFamily: "Outfit_600SemiBold", textTransform: "uppercase", marginBottom: 6, letterSpacing: 0.5 },
@@ -764,7 +830,7 @@ const styles = StyleSheet.create({
   impactChip: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
   impactText: { fontSize: 11, fontFamily: "Outfit_700Bold", letterSpacing: 0.5 },
 
-  narrativeBox: { padding: 20, borderRadius: 20, marginBottom: 24, borderLeftWidth: 4 },
+  narrativeBox: { padding: 20, borderRadius: Radius.md, marginBottom: 24, borderLeftWidth: 4 },
   narrativeText: { fontSize: 15, fontFamily: "Outfit_400Regular", lineHeight: 24 },
   aiUnavailableBadge: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 12, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, alignSelf: "flex-start", borderWidth: 1 },
   aiUnavailableText: { fontSize: 11, fontFamily: "Outfit_500Medium" },

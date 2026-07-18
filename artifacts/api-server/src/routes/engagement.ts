@@ -289,8 +289,13 @@ router.post("/checkin", requireAuth, requireConsent, async (req, res): Promise<v
         messages: [{ role: "user", content: prompt }],
         max_tokens: 60,
         temperature: 0.7,
-      });
-      summary = resp.choices[0]?.message?.content?.trim() ?? summary;
+      // maxRetries: 0 — the SDK otherwise retries a timed-out request up to
+      // 2 more times before throwing, tripling the effective wait.
+      }, { timeout: 12_000, maxRetries: 0 });
+      // Models occasionally wrap their one-liner in quotation marks despite the
+      // prompt not asking for it — strip a single matching pair if present.
+      const raw = resp.choices[0]?.message?.content?.trim();
+      summary = raw ? raw.replace(/^["“](.*)["”]$/s, "$1").trim() : summary;
     }
   } catch (err) {
     console.error("checkin compute error", err);

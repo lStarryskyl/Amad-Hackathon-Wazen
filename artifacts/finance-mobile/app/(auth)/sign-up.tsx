@@ -17,9 +17,15 @@ import { useRouter, Link } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { Radius } from "@/constants/colors";
+import { PrimaryButton } from "@/components/ui";
 
 export default function SignUpScreen() {
-  const { isLoaded, signUp, setActive } = useSignUp();
+  // @clerk/react 5.54's useSignUp() returns a signal — { errors, fetchStatus, signUp }
+  // — not the classic { isLoaded, signUp, setActive } resource shape. `signUp` here
+  // is a "Future" resource whose methods return { error } instead of throwing, and
+  // whose session activation happens via signUp.finalize(), not a separate setActive.
+  const { signUp } = useSignUp();
   const router = useRouter();
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -45,12 +51,18 @@ export default function SignUpScreen() {
   };
 
   const onSignUpPress = async () => {
-    if (!isLoaded) return;
+    if (!signUp) return;
     setLoading(true);
     setFormError("");
     try {
-      await signUp.create({ emailAddress, password });
-      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      // password() accepts emailAddress + password together — a single call
+      // that both creates the sign-up and attaches the password strategy.
+      const { error: passwordError } = await signUp.password({ emailAddress, password });
+      if (passwordError) throw passwordError;
+
+      const { error: codeError } = await signUp.verifications.sendEmailCode();
+      if (codeError) throw codeError;
+
       setStep("verify");
     } catch (err: unknown) {
       setFormError(extractError(err));
@@ -60,14 +72,15 @@ export default function SignUpScreen() {
   };
 
   const onPressVerify = async () => {
-    if (!isLoaded) return;
+    if (!signUp) return;
     setLoading(true);
     setFormError("");
     try {
-      const result = await signUp.attemptEmailAddressVerification({ code });
-      if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
-        router.replace("/onboarding");
+      const { error } = await signUp.verifications.verifyEmailCode({ code });
+      if (error) throw error;
+
+      if (signUp.status === "complete") {
+        await signUp.finalize({ navigate: () => router.replace("/onboarding") });
       } else {
         setFormError("Verification didn't complete. Please check the code and try again.");
       }
@@ -86,7 +99,7 @@ export default function SignUpScreen() {
 
   const isVerifying = step === "verify";
 
-  if (!isLoaded) {
+  if (!signUp) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -179,19 +192,12 @@ export default function SignUpScreen() {
                 </View>
               ) : null}
 
-              <TouchableOpacity
-                style={[styles.cta, { backgroundColor: colors.primary, opacity: loading ? 0.75 : 1 }]}
+              <PrimaryButton
+                label="Create Account"
+                loading={loading}
                 onPress={onSignUpPress}
-                disabled={loading}
-                activeOpacity={0.85}
-                testID="button-create-account"
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.ctaText}>Create Account</Text>
-                )}
-              </TouchableOpacity>
+                style={{ marginTop: 8 }}
+              />
 
               <View style={styles.footer}>
                 <Text style={[styles.footerText, { color: colors.mutedForeground }]}>
@@ -233,19 +239,12 @@ export default function SignUpScreen() {
                 </View>
               ) : null}
 
-              <TouchableOpacity
-                style={[styles.cta, { backgroundColor: colors.primary, opacity: loading ? 0.75 : 1 }]}
+              <PrimaryButton
+                label="Verify Email"
+                loading={loading}
                 onPress={onPressVerify}
-                disabled={loading}
-                activeOpacity={0.85}
-                testID="button-verify-email"
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.ctaText}>Verify Email</Text>
-                )}
-              </TouchableOpacity>
+                style={{ marginTop: 8 }}
+              />
 
               <TouchableOpacity style={styles.backBtn} onPress={onBackToRegister}>
                 <Feather name="arrow-left" size={14} color={colors.mutedForeground} />
@@ -271,13 +270,13 @@ const styles = StyleSheet.create({
   tagline: { fontSize: 18, fontFamily: "Lora_400Regular_Italic", textAlign: "center", marginTop: 4 },
 
   formCard: {
-    borderRadius: 24,
+    borderRadius: Radius.xl,
     borderWidth: 1,
-    padding: 28,
+    padding: 26,
     marginBottom: 20,
-    ...shadow({ opacity: 0.03, radius: 16, elevation: 2 }),
+    ...shadow({ opacity: 0.05, radius: 18, offsetY: 6, elevation: 3 }),
   },
-  formTitle: { fontSize: 22, fontFamily: "Lora_700Bold", marginBottom: 24 },
+  formTitle: { fontSize: 22, fontFamily: "Outfit_700Bold", marginBottom: 22, letterSpacing: -0.4 },
   verifyHint: { fontSize: 14, fontFamily: "Outfit_400Regular", marginBottom: 20, lineHeight: 22 },
 
   field: { marginBottom: 20 },
@@ -287,9 +286,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: Radius.md,
     paddingHorizontal: 16,
-    height: 56,
+    height: 54,
   },
   inputIcon: { marginRight: 12 },
   input: { flex: 1, fontSize: 16, fontFamily: "Outfit_400Regular" },

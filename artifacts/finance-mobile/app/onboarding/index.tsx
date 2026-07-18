@@ -11,6 +11,7 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
+import { PrimaryButton } from "@/components/ui";
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -50,12 +51,11 @@ export default function WelcomeScreen() {
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.primary }]}
+        <PrimaryButton
+          label="Get Started"
+          icon="arrow-right"
           onPress={() => router.push("/onboarding/consent")}
-        >
-          <Text style={styles.buttonText}>Get Started</Text>
-        </TouchableOpacity>
+        />
       </View>
     </View>
   );

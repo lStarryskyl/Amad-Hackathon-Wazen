@@ -15,8 +15,12 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { DEV_BYPASS_AUTH } from "@/constants/devFlags";
 
+// EXPO_PUBLIC_API_URL (full URL, e.g. http://localhost:8080) wins for local
+// development; EXPO_PUBLIC_DOMAIN (https-only host) is the Replit deploy path.
+const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 const domain = process.env.EXPO_PUBLIC_DOMAIN;
-if (domain) setBaseUrl(`https://${domain}`);
+if (apiUrl) setBaseUrl(apiUrl);
+else if (domain) setBaseUrl(`https://${domain}`);
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 const proxyUrl = process.env.EXPO_PUBLIC_CLERK_PROXY_URL || undefined;

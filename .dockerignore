@@ -1,0 +1,9 @@
+**/node_modules
+**/dist
+**/.expo
+**/static-build
+**/.metro-cache
+**/.git
+**/*.tsbuildinfo
+artifacts/finance-mobile/android
+artifacts/finance-mobile/ios
